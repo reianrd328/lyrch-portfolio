@@ -12,7 +12,5 @@ services:
         value: production
       - key: SECRET_KEY
         generateValue: true
-      - key: DATABASE_URL
-        sync: false
-      - key: TIDB_SSL
-        value: "true"
+      - key: PYTHON_VERSION
+        value: 3.11.9

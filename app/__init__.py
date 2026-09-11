@@ -19,12 +19,22 @@ def create_app(config_name="default"):
 
     # Ensure upload directories exist
     upload_root = app.config["UPLOAD_FOLDER"]
-    for sub in ["projects", "videos", "gallery", "documents"]:
+    for sub in ["projects", "videos", "gallery", "documents", "profile"]:
         os.makedirs(os.path.join(upload_root, sub), exist_ok=True)
 
     # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
+
+    # Auto-initialize database tables and seed demo data on fresh deployment (e.g. Render)
+    with app.app_context():
+        try:
+            db.create_all()
+            if not app.config.get("TESTING") and User.query.count() == 0:
+                from app.seed import seed_initial_data
+                seed_initial_data()
+        except Exception as e:
+            app.logger.warning(f"Database auto-setup notice: {e}")
 
     # Register blueprints
     from app.routes.public import public_bp
