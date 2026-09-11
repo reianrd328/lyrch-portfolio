@@ -1,0 +1,66 @@
+/* RESPONSIVE COMMAND CENTER BREAKPOINTS */
+
+@media (max-width: 1200px) {
+    .command-grid-layout {
+        grid-template-columns: 180px 1fr;
+    }
+    .command-right-sidebar {
+        grid-column: span 2;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .projects-command-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 992px) {
+    .command-grid-layout {
+        grid-template-columns: 1fr;
+    }
+    .command-left-sidebar {
+        display: none; /* Collapsible on mobile */
+    }
+    .command-right-sidebar {
+        grid-column: span 1;
+        grid-template-columns: 1fr;
+    }
+    .hero-command-card {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+    .hero-profile-side {
+        margin: 0 auto;
+    }
+    .hero-constellation-map {
+        justify-content: center;
+        margin-top: 10px;
+    }
+    .mission-actions {
+        justify-content: center;
+    }
+    .command-metrics-bar {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .capsule-nav {
+        display: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .command-viewport {
+        padding: 8px;
+    }
+    .projects-command-grid {
+        grid-template-columns: 1fr;
+    }
+    .command-metrics-bar {
+        grid-template-columns: 1fr;
+    }
+    .footer-content {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+}
+

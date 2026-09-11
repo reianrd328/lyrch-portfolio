@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}AI Video Studio — LYRCH Command Center{% endblock %}
+
+{% block content %}
+<main class="command-grid-layout" style="grid-template-columns: 1fr;">
+    <div class="telemetry-card" style="max-width: 1200px; margin: 0 auto; width: 100%;">
+        <div class="card-header-bar">
+            <div class="header-label">
+                <i class="fa-solid fa-clapperboard"></i>
+                <span>AI CREATIVE VIDEO STUDIO</span>
+            </div>
+            <a href="{{ url_for('public.home') }}" class="header-link">&larr; Return to Dashboard</a>
+        </div>
+
+        <div style="margin: 16px 0 24px;">
+            <p style="color: #cbd5e1; max-width: 700px; line-height: 1.5;">
+                Explore AI-generated commercials, viral reels, and creative video workflows designed with Gemini, prompt engineering, and cinematic post-production.
+            </p>
+        </div>
+
+        <div class="projects-command-grid" style="grid-template-columns: repeat(3, 1fr);">
+            {% for v in videos %}
+                <div class="telemetry-card" style="padding: 12px; background: rgba(15,23,42,0.8);">
+                    <div class="video-preview-wrapper" style="height: 180px;" onclick="openVideoModal()">
+                        {% if v.thumbnail_url %}
+                            <img src="{{ v.thumbnail_url }}" alt="{{ v.title }}" class="video-thumb-img">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="{{ v.title }}" class="video-thumb-img">
+                        {% endif %}
+                        <div class="video-play-overlay">
+                            <div class="play-btn-circle">
+                                <i class="fa-solid fa-play"></i>
+                            </div>
+                        </div>
+                        <span class="video-duration-badge">{{ v.duration }}</span>
+                    </div>
+
+                    <div style="margin-top: 10px;">
+                        <h4 style="color: #ffffff; font-size: 14px; font-weight: 700;">{{ v.title }}</h4>
+                        <p style="color: var(--neon-cyan); font-size: 11px; margin-top: 2px;">{{ v.category }} &bull; {{ v.tools_used }}</p>
+                        <p style="color: #94a3b8; font-size: 11px; margin-top: 6px; line-height: 1.4;">{{ v.description }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</main>
+{% endblock %}
+

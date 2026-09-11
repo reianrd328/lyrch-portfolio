@@ -1,0 +1,69 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Documents — MY WORK CMS{% endblock %}
+
+{% block admin_content %}
+<div class="telemetry-card">
+    <div class="card-header-bar">
+        <div class="header-label">
+            <i class="fa-solid fa-folder-open"></i>
+            <span>DOCUMENT REPOSITORY &amp; WHITE PAPERS</span>
+        </div>
+        <a href="{{ url_for('admin_documents.upload') }}" class="btn-command-primary" style="font-size: 12px; padding: 6px 14px;">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Upload Document
+        </a>
+    </div>
+
+    <div style="margin-top: 18px; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px; color: #cbd5e1;">
+            <thead>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left; color: var(--text-muted);">
+                    <th style="padding: 10px 12px;">DOCUMENT</th>
+                    <th style="padding: 10px 12px;">CATEGORY</th>
+                    <th style="padding: 10px 12px;">TYPE</th>
+                    <th style="padding: 10px 12px;">PUBLIC</th>
+                    <th style="padding: 10px 12px; text-align: right;">ACTIONS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doc in documents %}
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 12px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <i class="fa-solid fa-file-lines" style="font-size: 20px; color: var(--neon-cyan);"></i>
+                                <div>
+                                    <div style="font-weight: 600; color: #ffffff;">{{ doc.title }}</div>
+                                    <div style="font-size: 10px; color: var(--text-muted);">{{ doc.file_path }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="padding: 12px;">{{ doc.category }}</td>
+                        <td style="padding: 12px;"><span class="tech-pill">{{ doc.file_type }}</span></td>
+                        <td style="padding: 12px;">
+                            {% if doc.is_public %}
+                                <span style="color: var(--neon-green);">YES</span>
+                            {% else %}
+                                <span style="color: #f87171;">PRIVATE</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 12px; text-align: right;">
+                            <form method="POST" action="{{ url_for('admin_documents.delete', id=doc.id) }}" onsubmit="return confirm('Delete file?');">
+                                <button type="submit" class="btn-command-secondary" style="padding: 4px 10px; font-size: 11px; color: #f87171;">
+                                    <i class="fa-regular fa-trash-can"></i> Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                            No documents uploaded yet.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

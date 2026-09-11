@@ -1,0 +1,36 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Blog — MY WORK CMS{% endblock %}
+
+{% block admin_content %}
+<div class="telemetry-card">
+    <div class="card-header-bar">
+        <div class="header-label">
+            <i class="fa-regular fa-newspaper"></i>
+            <span>LAB NOTES &amp; TECH BLOG MANAGER</span>
+        </div>
+        <a href="{{ url_for('admin_blog.create') }}" class="btn-command-primary" style="font-size: 12px; padding: 6px 14px;">
+            <i class="fa-solid fa-plus"></i> New Article
+        </a>
+    </div>
+
+    <div style="margin-top: 18px; display: flex; flex-direction: column; gap: 10px;">
+        {% for post in posts %}
+            <div style="background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 14px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h4 style="font-size: 14px; color: #fff;">{{ post.title }}</h4>
+                    <span style="font-size: 11px; color: var(--text-muted);">{{ post.created_at.strftime('%b %d, %Y') }} &bull; {{ post.views_count }} views</span>
+                </div>
+                <span class="badge-status badge-{{ 'live' if post.is_published else 'draft' }}">
+                    &bull; {{ 'LIVE' if post.is_published else 'DRAFT' }}
+                </span>
+            </div>
+        {% else %}
+            <div style="text-align: center; color: var(--text-muted); padding: 30px;">
+                No blog articles published yet.
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+

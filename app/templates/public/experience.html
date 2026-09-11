@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}IT Operations &amp; Experience — LYRCH Command Center{% endblock %}
+
+{% block content %}
+<main class="command-grid-layout" style="grid-template-columns: 1fr;">
+    <div class="telemetry-card" style="max-width: 950px; margin: 0 auto; width: 100%;">
+        <div class="card-header-bar">
+            <div class="header-label">
+                <i class="fa-solid fa-timeline"></i>
+                <span>CAREER TELEMETRY // 18+ YEARS EXPERIENCE TIMELINE</span>
+            </div>
+            <a href="{{ url_for('public.home') }}" class="header-link">&larr; Return to Dashboard</a>
+        </div>
+
+        <div style="margin-top: 24px;">
+            <div class="activity-timeline" style="gap: 24px;">
+                <div class="timeline-item" style="gap: 16px;">
+                    <div class="timeline-icon-dot project" style="width: 32px; height: 32px; font-size: 14px;">
+                        <i class="fa-solid fa-server"></i>
+                    </div>
+                    <div class="timeline-body">
+                        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                            <h3 style="color: #ffffff; font-size: 16px; font-family: var(--font-display);">Senior IT Support Specialist &amp; Systems Administrator</h3>
+                            <span style="color: var(--neon-cyan); font-family: var(--font-mono); font-size: 12px;">2018 — Present</span>
+                        </div>
+                        <div style="color: var(--neon-purple); font-size: 12px; margin-top: 2px;">Nationwide Multi-Branch Support &bull; Philippines</div>
+                        <p style="color: #cbd5e1; font-size: 12.5px; line-height: 1.5; margin-top: 8px;">
+                            Orchestrating hardware, networking, and software systems across 100+ branches. Engineered custom helpdesk ticketing tools, automated triage scripts, and centralized remote desktop support infrastructure.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item" style="gap: 16px;">
+                    <div class="timeline-icon-dot network" style="width: 32px; height: 32px; font-size: 14px;">
+                        <i class="fa-solid fa-network-wired"></i>
+                    </div>
+                    <div class="timeline-body">
+                        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                            <h3 style="color: #ffffff; font-size: 16px; font-family: var(--font-display);">IT Infrastructure &amp; Technical Support Engineer</h3>
+                            <span style="color: var(--neon-cyan); font-family: var(--font-mono); font-size: 12px;">2012 — 2018</span>
+                        </div>
+                        <div style="color: var(--neon-blue); font-size: 12px; margin-top: 2px;">Corporate IT Operations</div>
+                        <p style="color: #cbd5e1; font-size: 12.5px; line-height: 1.5; margin-top: 8px;">
+                            Delivered Level 2/3 technical diagnostics, network routing, point-of-sale integrations, and database migrations. Reduced mean time to resolution (MTTR) by 45% through custom automated diagnostic routines.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item" style="gap: 16px;">
+                    <div class="timeline-icon-dot ai" style="width: 32px; height: 32px; font-size: 14px;">
+                        <i class="fa-solid fa-microchip"></i>
+                    </div>
+                    <div class="timeline-body">
+                        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                            <h3 style="color: #ffffff; font-size: 16px; font-family: var(--font-display);">IT Systems Support Technician</h3>
+                            <span style="color: var(--neon-cyan); font-family: var(--font-mono); font-size: 12px;">2008 — 2012</span>
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 12px; margin-top: 2px;">Hardware &amp; Network Field Operations</div>
+                        <p style="color: #cbd5e1; font-size: 12.5px; line-height: 1.5; margin-top: 8px;">
+                            Frontline diagnostics, workstation rollout, server maintenance, and remote user support. Established the foundational discipline of 24/7 problem solving and customer-first technical triage.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+

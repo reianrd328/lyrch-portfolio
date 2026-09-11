@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Lab Notes &amp; Engineering Blog — LYRCH Command Center{% endblock %}
+
+{% block content %}
+<main class="command-grid-layout" style="grid-template-columns: 1fr;">
+    <div class="telemetry-card" style="max-width: 900px; margin: 0 auto; width: 100%;">
+        <div class="card-header-bar">
+            <div class="header-label">
+                <i class="fa-solid fa-book-journal-whills"></i>
+                <span>LAB NOTES // TECH LOG &amp; FIELD ARTICLES</span>
+            </div>
+            <a href="{{ url_for('public.home') }}" class="header-link">&larr; Return to Dashboard</a>
+        </div>
+
+        <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 16px;">
+            {% for p in posts %}
+                <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 16px;">
+                    <h3 style="color: #ffffff; font-size: 16px;">{{ p.title }}</h3>
+                    <div style="font-size: 11px; color: var(--text-muted); margin: 4px 0 8px;">
+                        Published on {{ p.created_at.strftime('%b %d, %Y') }} &bull; {{ p.views_count }} views
+                    </div>
+                    <p style="color: #cbd5e1; font-size: 12.5px; line-height: 1.5;">{{ p.excerpt }}</p>
+                </div>
+            {% else %}
+                <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 16px;">
+                    <h3 style="color: #ffffff; font-size: 16px;">Architecting Multi-Branch IT Telemetry from Scratch</h3>
+                    <div style="font-size: 11px; color: var(--text-muted); margin: 4px 0 8px;">
+                        Sep 01, 2026 &bull; Systems Architecture &bull; 10 min read
+                    </div>
+                    <p style="color: #cbd5e1; font-size: 12.5px; line-height: 1.5;">
+                        A deep dive into how we unified 100+ branches using lightweight Python agents, WebSocket telemetry, and resilient failover databases.
+                    </p>
+                </div>
+                <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 16px;">
+                    <h3 style="color: #ffffff; font-size: 16px;">Controlling Prompt-to-Video Timing with Gemini 1.5</h3>
+                    <div style="font-size: 11px; color: var(--text-muted); margin: 4px 0 8px;">
+                        Aug 24, 2026 &bull; AI Video Lab &bull; 6 min read
+                    </div>
+                    <p style="color: #cbd5e1; font-size: 12.5px; line-height: 1.5;">
+                        Techniques for achieving consistent character keyframes and dynamic camera motion in generative commercial spots.
+                    </p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</main>
+{% endblock %}
+

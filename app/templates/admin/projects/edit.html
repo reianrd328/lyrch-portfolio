@@ -1,0 +1,102 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit {{ project.title }} — MY WORK CMS{% endblock %}
+
+{% block admin_content %}
+<div class="telemetry-card">
+    <div class="card-header-bar">
+        <div class="header-label">
+            <i class="fa-regular fa-pen-to-square"></i>
+            <span>EDIT PROJECT // {{ project.title|upper }}</span>
+        </div>
+        <a href="{{ url_for('admin_projects.index') }}" class="header-link">&larr; Back to Projects</a>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin_projects.edit', id=project.id) }}" enctype="multipart/form-data" style="margin-top: 18px; display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+            <div>
+                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">PROJECT NAME</label>
+                <input type="text" name="title" value="{{ project.title }}" required style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+            </div>
+
+            <div>
+                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">SHORT SUBTITLE</label>
+                <input type="text" name="subtitle" value="{{ project.subtitle }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div>
+                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">CATEGORY</label>
+                    <select name="category" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+                        <option value="IT Operations" {% if project.category == 'IT Operations' %}selected{% endif %}>IT Operations</option>
+                        <option value="Software Projects" {% if project.category == 'Software Projects' %}selected{% endif %}>Software Projects</option>
+                        <option value="Desktop Application" {% if project.category == 'Desktop Application' %}selected{% endif %}>Desktop Application</option>
+                        <option value="AI Lab" {% if project.category == 'AI Lab' %}selected{% endif %}>AI Lab</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">SYSTEM STATUS</label>
+                    <select name="status_badge" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+                        <option value="Live" {% if project.status_badge == 'Live' %}selected{% endif %}>Live</option>
+                        <option value="Beta" {% if project.status_badge == 'Beta' %}selected{% endif %}>Beta</option>
+                        <option value="Online" {% if project.status_badge == 'Online' %}selected{% endif %}>Online</option>
+                        <option value="Demo" {% if project.status_badge == 'Demo' %}selected{% endif %}>Demo</option>
+                        <option value="In Progress" {% if project.status_badge == 'In Progress' %}selected{% endif %}>In Progress</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">TECHNOLOGIES</label>
+                <input type="text" name="technologies" value="{{ project.technologies }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+            </div>
+
+            <div>
+                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">SHORT DESCRIPTION</label>
+                <textarea name="short_description" rows="2" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">{{ project.short_description }}</textarea>
+            </div>
+
+            <div>
+                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">DETAILED DESCRIPTION</label>
+                <textarea name="full_description" rows="4" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">{{ project.full_description }}</textarea>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div style="background: rgba(15,23,42,0.6); padding: 16px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 12px;">
+                <h4 style="font-size: 12px; color: #ffffff;">VISIBILITY</h4>
+                <select name="visibility" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 8px 10px; color: #fff; font-size: 12px;">
+                    <option value="published" {% if project.visibility == 'published' %}selected{% endif %}>● Published</option>
+                    <option value="draft" {% if project.visibility == 'draft' %}selected{% endif %}>○ Draft</option>
+                    <option value="private" {% if project.visibility == 'private' %}selected{% endif %}>🔒 Private</option>
+                </select>
+
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #cbd5e1; cursor: pointer;">
+                    <input type="checkbox" name="featured" value="1" {% if project.featured %}checked{% endif %}>
+                    <span>⭐ Display on Featured row</span>
+                </label>
+            </div>
+
+            <div style="background: rgba(15,23,42,0.6); padding: 16px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 12px;">
+                <h4 style="font-size: 12px; color: #ffffff;">CURRENT THUMBNAIL</h4>
+                {% if project.thumbnail_url %}
+                    <img src="{{ project.thumbnail_url }}" alt="" style="width: 100%; height: 120px; object-fit: cover; border-radius: 6px;">
+                {% endif %}
+                <input type="file" name="thumbnail" accept="image/*" style="font-size: 11px; color: var(--text-muted);">
+            </div>
+
+            <div style="background: rgba(15,23,42,0.6); padding: 16px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 10px;">
+                <h4 style="font-size: 12px; color: #ffffff;">LINKS</h4>
+                <input type="url" name="github_url" value="{{ project.github_url or '' }}" placeholder="GitHub URL" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 7px 10px; color: #fff; font-size: 11px;">
+                <input type="url" name="demo_url" value="{{ project.demo_url or '' }}" placeholder="Demo URL" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 7px 10px; color: #fff; font-size: 11px;">
+            </div>
+
+            <button type="submit" class="btn-command-primary">
+                Update Project
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

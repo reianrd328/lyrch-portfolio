@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.title }} — Case Study | LYRCH Command Center{% endblock %}
+
+{% block content %}
+<main class="command-grid-layout" style="grid-template-columns: 1fr;">
+    <div class="telemetry-card" style="max-width: 1000px; margin: 0 auto; width: 100%;">
+        <div class="card-header-bar">
+            <div class="header-label">
+                <i class="fa-solid fa-folder-tree"></i>
+                <span>PROJECT DOSSIER // {{ project.title|upper }}</span>
+            </div>
+            <a href="{{ url_for('public.projects') }}" class="header-link">&larr; Return to Projects</a>
+        </div>
+
+        <div style="margin-top: 14px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+                <div>
+                    <h1 style="font-family: var(--font-display); font-size: 28px; color: #ffffff;">{{ project.title }}</h1>
+                    <p style="color: var(--neon-cyan); font-size: 14px;">{{ project.subtitle }}</p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <span class="badge-status badge-{{ project.status_badge|lower }}" style="font-size: 12px; padding: 4px 12px;">
+                        &bull; {{ project.status_badge }}
+                    </span>
+                    <span class="tech-pill" style="font-size: 12px; padding: 4px 12px;">
+                        {{ project.category }}
+                    </span>
+                </div>
+            </div>
+
+            {% if project.thumbnail_url %}
+                <div style="border-radius: var(--radius-md); overflow: hidden; max-height: 380px; margin-bottom: 24px; border: 1px solid rgba(0,240,255,0.2);">
+                    <img src="{{ project.thumbnail_url }}" alt="{{ project.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+            {% endif %}
+
+            <!-- Case Study Sections -->
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <!-- Overview -->
+                    <div>
+                        <h3 style="color: var(--neon-cyan); font-family: var(--font-display); font-size: 18px; margin-bottom: 8px;">
+                            SYSTEM OVERVIEW
+                        </h3>
+                        <p style="color: #cbd5e1; line-height: 1.6;">
+                            {{ project.full_description or project.short_description }}
+                        </p>
+                    </div>
+
+                    <!-- Problem & Solution -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div style="background: rgba(15, 23, 42, 0.6); padding: 14px; border-radius: var(--radius-sm); border-left: 3px solid #f87171;">
+                            <h4 style="color: #f87171; font-size: 13px; margin-bottom: 6px;">THE CHALLENGE / PROBLEM</h4>
+                            <p style="font-size: 12px; color: #cbd5e1; line-height: 1.5;">
+                                {{ project.problem or "Managing multi-branch operations with disparate systems created delays, high ticket resolution times, and operational bottlenecks." }}
+                            </p>
+                        </div>
+                        <div style="background: rgba(15, 23, 42, 0.6); padding: 14px; border-radius: var(--radius-sm); border-left: 3px solid var(--neon-cyan);">
+                            <h4 style="color: var(--neon-cyan); font-size: 13px; margin-bottom: 6px;">THE SOLUTION</h4>
+                            <p style="font-size: 12px; color: #cbd5e1; line-height: 1.5;">
+                                {{ project.solution or "Engineered a centralized, role-based command dashboard enabling real-time telemetry, automated triage, and branch dispatch." }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Key Features -->
+                    <div>
+                        <h3 style="color: var(--neon-purple); font-family: var(--font-display); font-size: 18px; margin-bottom: 8px;">
+                            KEY CAPABILITIES &amp; FEATURES
+                        </h3>
+                        <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; color: #cbd5e1;">
+                            {% for feature in project.features_list %}
+                                <li style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="cyan-dot"></span> {{ feature }}
+                                </li>
+                            {% else %}
+                                <li style="display: flex; align-items: center; gap: 8px;"><span class="cyan-dot"></span> Centralized incident and ticket management</li>
+                                <li style="display: flex; align-items: center; gap: 8px;"><span class="cyan-dot"></span> Multi-branch routing and technician dispatch</li>
+                                <li style="display: flex; align-items: center; gap: 8px;"><span class="cyan-dot"></span> Automated audit logging and reporting exports</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Meta Sidebar -->
+                <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-md); padding: 18px; display: flex; flex-direction: column; gap: 16px;">
+                    <div>
+                        <h4 style="color: var(--text-muted); font-size: 11px; letter-spacing: 1px; margin-bottom: 8px;">TECHNOLOGY STACK</h4>
+                        <div class="project-tech-pills">
+                            {% for tech in project.tech_list %}
+                                <span class="tech-pill">{{ tech }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    {% if project.demo_url %}
+                        <div>
+                            <h4 style="color: var(--text-muted); font-size: 11px; letter-spacing: 1px; margin-bottom: 6px;">LIVE DEMO</h4>
+                            <a href="{{ project.demo_url }}" target="_blank" rel="noopener" class="btn-command-primary" style="width: 100%;">
+                                Launch System &rarr;
+                            </a>
+                        </div>
+                    {% endif %}
+
+                    {% if project.github_url %}
+                        <div>
+                            <h4 style="color: var(--text-muted); font-size: 11px; letter-spacing: 1px; margin-bottom: 6px;">SOURCE REPOSITORY</h4>
+                            <a href="{{ project.github_url }}" target="_blank" rel="noopener" class="btn-command-secondary" style="width: 100%;">
+                                <i class="fa-brands fa-github"></i> View GitHub
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+

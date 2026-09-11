@@ -1,0 +1,35 @@
+/* ADMIN CMS SPECIALIZED STYLES */
+
+.admin-body {
+    background-color: #030612;
+}
+
+.admin-header {
+    border-color: rgba(168, 85, 247, 0.25);
+}
+
+table tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+input[type="text"],
+input[type="url"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+select,
+textarea {
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: var(--neon-purple) !important;
+    box-shadow: 0 0 12px rgba(168, 85, 247, 0.35) !important;
+}
+
+select option {
+    background: #090e24;
+    color: #ffffff;
+}
+

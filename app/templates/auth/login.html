@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Authentication — LYRCH Command Center{% endblock %}
+
+{% block content %}
+<main style="display: flex; align-items: center; justify-content: center; min-height: 70vh;">
+    <div class="telemetry-card" style="width: 100%; max-width: 420px; border-color: var(--border-cyan-glow); box-shadow: 0 0 30px rgba(0,240,255,0.2);">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div class="brand-symbol" style="margin: 0 auto 12px; width: 46px; height: 46px;">
+                <span class="symbol-inner" style="font-size: 26px;">L</span>
+            </div>
+            <h2 style="font-family: var(--font-display); font-size: 20px; color: #ffffff; letter-spacing: 1px;">
+                COMMAND ACCESS TERMINAL
+            </h2>
+            <p style="color: var(--neon-cyan); font-size: 11px; margin-top: 4px;">
+                IDENTITY VERIFICATION REQUIRED
+            </p>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.login') }}" style="display: flex; flex-direction: column; gap: 14px;">
+            <div>
+                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">CALLSIGN / USERNAME</label>
+                <div style="position: relative;">
+                    <i class="fa-solid fa-user-shield" style="position: absolute; left: 12px; top: 12px; color: var(--text-muted); font-size: 13px;"></i>
+                    <input type="text" name="username" required autofocus placeholder="admin" value="admin" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 10px 12px 10px 36px; color: #fff; font-size: 13px;">
+                </div>
+            </div>
+
+            <div>
+                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">ACCESS KEY / PASSWORD</label>
+                <div style="position: relative;">
+                    <i class="fa-solid fa-key" style="position: absolute; left: 12px; top: 12px; color: var(--text-muted); font-size: 13px;"></i>
+                    <input type="password" name="password" required placeholder="admin123" value="admin123" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 10px 12px 10px 36px; color: #fff; font-size: 13px;">
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted);">
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="checkbox" name="remember" checked> Remember clearance
+                </label>
+                <span>Default: admin / admin123</span>
+            </div>
+
+            <button type="submit" class="btn-command-primary" style="padding: 11px; font-size: 13px; margin-top: 8px;">
+                Authenticate Clearance &rarr;
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 12px;">
+            <a href="{{ url_for('public.home') }}" style="color: var(--text-muted); font-size: 11px;">
+                &larr; Return to Public Command Center
+            </a>
+        </div>
+    </div>
+</main>
+{% endblock %}
+

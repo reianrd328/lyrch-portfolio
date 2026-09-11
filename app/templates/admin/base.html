@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ settings.default_theme if settings else 'cyber' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LYRCH // ADMIN CMS{% endblock %}</title>
+    <script>
+        const savedTheme = localStorage.getItem('lyrch_theme');
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        }
+    </script>
+    <style id="customThemeStyles">
+        :root {
+            --custom-primary: {{ settings.custom_primary_color if settings and settings.custom_primary_color else '#00f0ff' }};
+            --custom-secondary: {{ settings.custom_secondary_color if settings and settings.custom_secondary_color else '#a855f7' }};
+        }
+    </style>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/command-center.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="command-center-body admin-body">
+    <!-- Flash Notifications Container -->
+    <div class="command-flash-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="command-alert alert-{{ category }}">
+                        <i class="fa-solid fa-satellite-dish"></i>
+                        <span>{{ message }}</span>
+                        <button type="button" class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="command-viewport">
+        <!-- Admin Header -->
+        <header class="command-header admin-header">
+            <div class="header-brand">
+                <a href="{{ url_for('admin.dashboard') }}" class="brand-link">
+                    <div class="brand-symbol" style="border-color: var(--neon-purple); box-shadow: 0 0 14px rgba(168,85,247,0.4);">
+                        <span class="symbol-inner" style="color: var(--neon-purple);">✦</span>
+                    </div>
+                    <div class="brand-text">
+                        <div class="brand-title">LYRCH <span>/ ADMIN CMS</span></div>
+                        <div class="brand-tagline">PERSONAL WORK &amp; SYSTEM MANAGER</div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="header-telemetry">
+                <a href="{{ url_for('public.home') }}" target="_blank" class="btn-command-secondary" style="font-size: 11.5px; padding: 6px 14px;">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Public Website
+                </a>
+                <div class="online-pulse">
+                    <span class="pulse-dot"></span>
+                    <span class="status-label">SYSTEM ONLINE</span>
+                </div>
+                <a href="{{ url_for('auth.logout') }}" class="telemetry-btn" title="Logout" style="color: #f87171;">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Layout with Admin Sidebar -->
+        <div class="command-grid-layout" style="grid-template-columns: 210px 1fr;">
+            <!-- Admin Nav Sidebar -->
+            <aside class="command-left-sidebar">
+                <div class="sidebar-nav-container">
+                    <ul class="sidebar-menu">
+                        <li class="sidebar-item {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                            <a href="{{ url_for('admin.dashboard') }}" class="sidebar-link">
+                                <i class="fa-solid fa-gauge-high"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item {% if 'project' in request.endpoint %}active{% endif %}">
+                            <a href="{{ url_for('admin_projects.index') }}" class="sidebar-link">
+                                <i class="fa-solid fa-code"></i>
+                                <span>Projects</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item {% if 'video' in request.endpoint %}active{% endif %}">
+                            <a href="{{ url_for('admin_videos.index') }}" class="sidebar-link">
+                                <i class="fa-solid fa-circle-play"></i>
+                                <span>AI Videos</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item {% if 'gallery' in request.endpoint %}active{% endif %}">
+                            <a href="{{ url_for('admin_gallery.index') }}" class="sidebar-link">
+                                <i class="fa-regular fa-image"></i>
+                                <span>Gallery</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item {% if 'document' in request.endpoint %}active{% endif %}">
+                            <a href="{{ url_for('admin_documents.index') }}" class="sidebar-link">
+                                <i class="fa-solid fa-folder-open"></i>
+                                <span>Files / Docs</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item {% if 'skills' in request.endpoint %}active{% endif %}">
+                            <a href="{{ url_for('admin_skills.index') }}" class="sidebar-link">
+                                <i class="fa-solid fa-microchip"></i>
+                                <span>Skills</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item {% if 'experience' in request.endpoint %}active{% endif %}">
+                            <a href="{{ url_for('admin_experience.index') }}" class="sidebar-link">
+                                <i class="fa-solid fa-briefcase"></i>
+                                <span>Experience</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item {% if 'blog' in request.endpoint %}active{% endif %}">
+                            <a href="{{ url_for('admin_blog.index') }}" class="sidebar-link">
+                                <i class="fa-regular fa-newspaper"></i>
+                                <span>Blog</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="sidebar-inspiration-card">
+                    <div style="font-size: 11px; color: var(--text-muted);">
+                        AUTHENTICATED AS:
+                    </div>
+                    <div style="font-size: 13px; font-weight: 700; color: #ffffff;">
+                        {{ current_user.display_name }}
+                    </div>
+                    <div style="font-size: 10px; color: var(--neon-cyan);">
+                        SUPERADMIN CLEARANCE
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Admin Body Block -->
+            <main class="command-center-hub" style="min-height: 75vh;">
+                {% block admin_content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

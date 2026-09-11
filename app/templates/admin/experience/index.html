@@ -1,0 +1,38 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Experience — MY WORK CMS{% endblock %}
+
+{% block admin_content %}
+<div class="telemetry-card">
+    <div class="card-header-bar">
+        <div class="header-label">
+            <i class="fa-solid fa-briefcase"></i>
+            <span>CAREER TIMELINE LOGS</span>
+        </div>
+        <a href="{{ url_for('admin_experience.create') }}" class="btn-command-primary" style="font-size: 12px; padding: 6px 14px;">
+            <i class="fa-solid fa-plus"></i> Add Experience
+        </a>
+    </div>
+
+    <div style="margin-top: 18px; display: flex; flex-direction: column; gap: 12px;">
+        {% for exp in experiences %}
+            <div style="background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 14px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h4 style="font-size: 14px; color: #fff;">{{ exp.role_title }}</h4>
+                    <span style="font-size: 11px; color: var(--neon-cyan);">{{ exp.company }} &bull; {{ exp.period }}</span>
+                </div>
+                <form method="POST" action="{{ url_for('admin_experience.delete', id=exp.id) }}" onsubmit="return confirm('Delete experience entry?');">
+                    <button type="submit" class="btn-command-secondary" style="padding: 4px 8px; font-size: 11px; color: #f87171;">
+                        <i class="fa-regular fa-trash-can"></i>
+                    </button>
+                </form>
+            </div>
+        {% else %}
+            <div style="text-align: center; color: var(--text-muted); padding: 30px;">
+                No custom experience logs created.
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+

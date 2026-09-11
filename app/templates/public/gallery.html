@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}UI &amp; Media Gallery — LYRCH Command Center{% endblock %}
+
+{% block content %}
+<main class="command-grid-layout" style="grid-template-columns: 1fr;">
+    <div class="telemetry-card" style="max-width: 1100px; margin: 0 auto; width: 100%;">
+        <div class="card-header-bar">
+            <div class="header-label">
+                <i class="fa-regular fa-image"></i>
+                <span>VISUAL DESIGN &amp; UI SHOWCASE</span>
+            </div>
+            <a href="{{ url_for('public.home') }}" class="header-link">&larr; Return to Dashboard</a>
+        </div>
+
+        <div class="projects-command-grid" style="grid-template-columns: repeat(3, 1fr); margin-top: 20px;">
+            <div class="project-holo-card">
+                <div class="project-preview-wrap" style="height: 180px;">
+                    <img src="{{ url_for('static', filename='images/branding/command_center_preview.jpg') }}" alt="Command Center Design" class="project-preview-img">
+                </div>
+                <div class="project-info-wrap">
+                    <h4 style="color: #ffffff; font-size: 14px;">Digital Command Center UI</h4>
+                    <p style="color: var(--neon-cyan); font-size: 11px;">Dark Mode &bull; Cybernetic &bull; Glassmorphism</p>
+                </div>
+            </div>
+            <div class="project-holo-card">
+                <div class="project-preview-wrap" style="height: 180px;">
+                    <img src="{{ url_for('static', filename='images/projects/pawshop_thumb.jpg') }}" alt="PAWSHOP UI" class="project-preview-img">
+                </div>
+                <div class="project-info-wrap">
+                    <h4 style="color: #ffffff; font-size: 14px;">PAWSHOP Helpdesk Interface</h4>
+                    <p style="color: var(--neon-yellow); font-size: 11px;">Operations &bull; Branch Triage &bull; Desktop</p>
+                </div>
+            </div>
+            <div class="project-holo-card">
+                <div class="project-preview-wrap" style="height: 180px;">
+                    <img src="{{ url_for('static', filename='images/projects/tobias_thumb.jpg') }}" alt="TobiasConnect" class="project-preview-img">
+                </div>
+                <div class="project-info-wrap">
+                    <h4 style="color: #ffffff; font-size: 14px;">TobiasConnect Remote Client</h4>
+                    <p style="color: var(--neon-blue); font-size: 11px;">PySide6 &bull; Diagnostics &bull; Secure Auth</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+

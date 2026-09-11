@@ -1,0 +1,424 @@
+{% extends "base.html" %}
+
+{% block title %}LYRCH / DEV — Digital Command Center{% endblock %}
+
+{% block content %}
+<main class="command-grid-layout">
+    <!-- LEFT COLUMN: Command Sidebar -->
+    <aside class="command-left-sidebar">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar-nav-container">
+            <ul class="sidebar-menu">
+                <li class="sidebar-item active">
+                    <a href="{{ url_for('public.home') }}" class="sidebar-link">
+                        <i class="fa-solid fa-house-laptop"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="{{ url_for('public.experience') }}" class="sidebar-link">
+                        <i class="fa-solid fa-desktop"></i>
+                        <span>IT Operations</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="{{ url_for('public.projects') }}" class="sidebar-link">
+                        <i class="fa-solid fa-code"></i>
+                        <span>Software Projects</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="{{ url_for('public.ai_lab') }}" class="sidebar-link">
+                        <i class="fa-solid fa-brain"></i>
+                        <span>AI Lab</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="{{ url_for('public.video_studio') }}" class="sidebar-link">
+                        <i class="fa-solid fa-circle-play"></i>
+                        <span>Creative Studio</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="{{ url_for('public.files') }}" class="sidebar-link">
+                        <i class="fa-solid fa-folder-open"></i>
+                        <span>My Files</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="{{ url_for('public.gallery') }}" class="sidebar-link">
+                        <i class="fa-regular fa-image"></i>
+                        <span>Gallery</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="{{ url_for('public.about') }}" class="sidebar-link">
+                        <i class="fa-regular fa-file-lines"></i>
+                        <span>Resume</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="{{ url_for('public.contact') }}" class="sidebar-link">
+                        <i class="fa-regular fa-envelope"></i>
+                        <span>Contact</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Inspiration & Copyright Widget -->
+        <div class="sidebar-inspiration-card">
+            <div class="inspiration-art">
+                <img src="{{ url_for('static', filename='images/branding/mountain_glow.jpg') }}" alt="Inspiration graphic" class="art-bg" onerror="this.style.display='none'">
+            </div>
+            <div class="inspiration-text">
+                <p>{{ settings.quote_text if settings else '"Technology makes work easier. Creativity makes life better."' }}</p>
+                <div class="inspiration-signature">{{ settings.quote_signature if settings else 'Lyrch' }}</div>
+            </div>
+            <div class="sidebar-copyright">
+                {{ settings.copyright_text if settings else '&copy; 2026 LYRCH DEV<br>All rights reserved.'|safe }}
+            </div>
+        </div>
+    </aside>
+
+    <!-- CENTER COLUMN: Mission Control Core -->
+    <section class="command-center-hub">
+        <!-- Hero Profile & Constellation Banner -->
+        <div class="hero-command-card">
+            <div class="hero-profile-side">
+                <!-- Avatar with Radiant Glowing Neon Ring -->
+                <div class="avatar-glow-ring">
+                    <div class="ring-gradient-anim"></div>
+                    <img src="{{ settings.avatar_url if settings and settings.avatar_url else url_for('static', filename='images/profile/avatar.jpg') }}" alt="{{ settings.display_name if settings else 'DROP FARMD' }}" class="avatar-photo" onerror="this.src='https://ui-avatars.com/api/?name=Drop+Farmd&background=0b112c&color=00f0ff&size=180'">
+                </div>
+                <div class="avatar-meta">
+                    <h2 class="avatar-name">{{ settings.display_name if settings else 'DROP FARMD' }}</h2>
+                    <p class="avatar-role">{{ settings.job_title if settings else 'IT SUPPORT SPECIALIST &amp; DEVELOPER' }}</p>
+                    <span class="avatar-location"><i class="fa-solid fa-location-dot"></i> {{ settings.location if settings else 'Philippines' }}</span>
+                </div>
+            </div>
+
+            <div class="hero-mission-side">
+                <div class="mission-header">
+                    <span class="mission-pretitle">{{ settings.hero_pretitle if settings else 'WELCOME TO MY' }}</span>
+                    <h1 class="mission-title">
+                        {{ settings.hero_title if settings else 'DIGITAL <span class="cyan-gradient">COMMAND</span> <span class="purple-gradient">CENTER</span>'|safe }}
+                    </h1>
+                    <div class="mission-tags">
+                        <span>{{ settings.hero_tags if settings else 'IT SUPPORT • DEVELOPER • AI CREATOR' }}</span>
+                    </div>
+                </div>
+
+                <p class="mission-bio">
+                    {{ settings.hero_bio if settings else '18 years of technical support experience, supporting 100+ branches. Building systems, solving problems, and creating with AI.' }}
+                </p>
+
+                <div class="mission-actions">
+                    <a href="{{ url_for('public.projects') }}" class="btn-command-primary">
+                        <span>Explore My Work &rarr;</span>
+                    </a>
+                    <a href="{{ url_for('public.files') }}" class="btn-command-secondary">
+                        <i class="fa-solid fa-download"></i> <span>Download Resume</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Constellation Telemetry Map -->
+            <div class="hero-constellation-map">
+                <img src="{{ url_for('static', filename='images/branding/ph_constellation.png') }}" alt="Philippines Network Constellation" class="ph-map-img" onerror="this.style.display='none'">
+                <div class="constellation-stats">
+                    <div class="c-stat">
+                        <span class="c-num cyan">{{ settings.map_stat1_num if settings else '100+' }}</span>
+                        <span class="c-label">{{ settings.map_stat1_label if settings else 'BRANCHES SUPPORTED' }}</span>
+                    </div>
+                    <div class="c-stat">
+                        <span class="c-num cyan">{{ settings.map_stat2_num if settings else '1000+' }}</span>
+                        <span class="c-label">{{ settings.map_stat2_label if settings else 'USERS POTENTIAL' }}</span>
+                    </div>
+                    <div class="c-stat">
+                        <span class="c-num purple">{{ settings.map_stat3_num if settings else '18+' }}</span>
+                        <span class="c-label">{{ settings.map_stat3_label if settings else 'YEARS EXPERIENCE' }}</span>
+                    </div>
+                    <div class="c-tagline">
+                        <em>{{ settings.map_tagline if settings else 'Stronger Together Through Technology' }}</em>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5-Column Telemetry Metrics Bar -->
+        <div class="command-metrics-bar">
+            <!-- Metric 1 -->
+            <div class="metric-glass-card">
+                <div class="metric-icon-box cyan">
+                    <i class="fa-solid fa-display"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value">{{ settings.metric1_num if settings else metrics.experience }}</div>
+                    <div class="metric-title">{{ settings.metric1_title if settings else 'Years Experience' }}</div>
+                    <div class="metric-desc">{{ settings.metric1_desc if settings else 'IT Technical Support' }}</div>
+                </div>
+            </div>
+
+            <!-- Metric 2 -->
+            <div class="metric-glass-card">
+                <div class="metric-icon-box cyan">
+                    <i class="fa-solid fa-building-circle-check"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value">{{ settings.metric2_num if settings else metrics.branches }}</div>
+                    <div class="metric-title">{{ settings.metric2_title if settings else 'Branches Supported' }}</div>
+                    <div class="metric-desc">{{ settings.metric2_desc if settings else 'Nationwide' }}</div>
+                </div>
+            </div>
+
+            <!-- Metric 3 -->
+            <div class="metric-glass-card">
+                <div class="metric-icon-box blue">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value">{{ settings.metric3_num if settings else metrics.users }}</div>
+                    <div class="metric-title">{{ settings.metric3_title if settings else 'Users Potential' }}</div>
+                    <div class="metric-desc">{{ settings.metric3_desc if settings else 'System Ready' }}</div>
+                </div>
+            </div>
+
+            <!-- Metric 4 -->
+            <div class="metric-glass-card">
+                <div class="metric-icon-box purple">
+                    <i class="fa-solid fa-headset"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value">{{ settings.metric4_num if settings else metrics.support }}</div>
+                    <div class="metric-title">{{ settings.metric4_title if settings else 'Problem Solving' }}</div>
+                    <div class="metric-desc">{{ settings.metric4_desc if settings else 'IT Operations' }}</div>
+                </div>
+            </div>
+
+            <!-- Metric 5 -->
+            <div class="metric-glass-card">
+                <div class="metric-icon-box cyan">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value small">{{ settings.metric5_num if settings else metrics.growth }}</div>
+                    <div class="metric-desc">{{ settings.metric5_desc if settings else 'Growing with AI' }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Featured Projects Grid Section -->
+        <div class="featured-projects-section">
+            <div class="section-title-bar">
+                <div class="title-left">
+                    <i class="fa-solid fa-play section-icon"></i>
+                    <h2>FEATURED PROJECTS</h2>
+                </div>
+                <a href="{{ url_for('public.projects') }}" class="title-link">
+                    View All Projects &rarr;
+                </a>
+            </div>
+
+            <div class="projects-command-grid">
+                {% for p in featured_projects %}
+                    <div class="project-holo-card project-card-{{ loop.index }}">
+                        <!-- Card Header Preview -->
+                        <div class="project-preview-wrap">
+                            {% if p.thumbnail_url %}
+                                <img src="{{ p.thumbnail_url }}" alt="{{ p.title }}" class="project-preview-img">
+                            {% else %}
+                                <div class="project-placeholder-preview">
+                                    <i class="fa-solid fa-laptop-code"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="project-info-wrap">
+                            <div class="project-header-row">
+                                <div class="project-brand-badge">
+                                    {% if loop.index == 1 %}
+                                        <span class="icon-brand yellow">R</span>
+                                    {% elif loop.index == 2 %}
+                                        <i class="fa-solid fa-laptop-medical icon-brand blue"></i>
+                                    {% elif loop.index == 3 %}
+                                        <span class="icon-brand cyan">L</span>
+                                    {% else %}
+                                        <i class="fa-solid fa-cart-shopping icon-brand orange"></i>
+                                    {% endif %}
+                                    <div class="project-title-group">
+                                        <h3 class="project-name">{{ p.title }}</h3>
+                                        <div class="project-subtitle">{{ p.subtitle }}</div>
+                                    </div>
+                                </div>
+                                <span class="badge-status badge-{{ p.status_badge|lower }}">
+                                    &bull; {{ p.status_badge }}
+                                </span>
+                            </div>
+
+                            <!-- Tech Stack Pills -->
+                            <div class="project-tech-pills">
+                                {% for tech in p.tech_list %}
+                                    <span class="tech-pill">{{ tech }}</span>
+                                {% endfor %}
+                            </div>
+
+                            <p class="project-summary">
+                                {{ p.short_description }}
+                            </p>
+
+                            <!-- Actions -->
+                            <div class="project-action-row">
+                                <a href="{{ url_for('public.project_detail', slug=p.slug) }}" class="btn-card-view">
+                                    View Project &rarr;
+                                </a>
+                                {% if p.demo_url %}
+                                    <a href="{{ p.demo_url }}" target="_blank" rel="noopener" class="btn-card-ext" title="Live Demo">
+                                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    </a>
+                                {% elif p.github_url %}
+                                    <a href="{{ p.github_url }}" target="_blank" rel="noopener" class="btn-card-ext" title="GitHub">
+                                        <i class="fa-brands fa-github"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- RIGHT COLUMN: Telemetry & Media Stream -->
+    <aside class="command-right-sidebar">
+        <!-- AI Creative Studio Card -->
+        <div class="telemetry-card ai-studio-card">
+            <div class="card-header-bar">
+                <div class="header-label">
+                    <i class="fa-regular fa-circle-play"></i>
+                    <span>AI CREATIVE STUDIO</span>
+                </div>
+                <a href="{{ url_for('public.video_studio') }}" class="header-link">View All &rarr;</a>
+            </div>
+            
+            <div class="video-preview-wrapper" onclick="openVideoModal()">
+                {% if featured_video and featured_video.thumbnail_url %}
+                    <img src="{{ featured_video.thumbnail_url }}" alt="{{ featured_video.title }}" class="video-thumb-img">
+                {% else %}
+                    <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="AI Kung Fu Scene" class="video-thumb-img" onerror="this.src='https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&auto=format&fit=crop&q=80'">
+                {% endif %}
+                <div class="video-play-overlay">
+                    <div class="play-btn-circle">
+                        <i class="fa-solid fa-play"></i>
+                    </div>
+                </div>
+                <span class="video-duration-badge">{{ featured_video.duration if featured_video else '0:10' }}</span>
+            </div>
+
+            <div class="video-meta-info">
+                <h4 class="video-title">{{ featured_video.title if featured_video else 'AI Kung Fu Scene' }}</h4>
+                <p class="video-tools-label">
+                    Generated with Gemini &bull; Video Edit &bull; {{ featured_video.duration if featured_video else '10s' }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Recent Activity Stream -->
+        <div class="telemetry-card recent-activity-card">
+            <div class="card-header-bar">
+                <div class="header-label">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>RECENT ACTIVITY</span>
+                </div>
+                <span class="live-activity-badge">&bull; Live</span>
+            </div>
+
+            <ul class="activity-timeline">
+                {% for act in recent_activities %}
+                    <li class="timeline-item">
+                        <div class="timeline-icon-dot {{ act.activity_type }}">
+                            {% if act.activity_type == 'project' %}
+                                <i class="fa-regular fa-circle-check"></i>
+                            {% elif act.activity_type == 'video' %}
+                                <i class="fa-solid fa-video"></i>
+                            {% elif act.activity_type == 'ai' %}
+                                <i class="fa-solid fa-brain"></i>
+                            {% elif act.activity_type == 'network' %}
+                                <i class="fa-solid fa-network-wired"></i>
+                            {% elif act.activity_type == 'git' %}
+                                <i class="fa-brands fa-github"></i>
+                            {% else %}
+                                <i class="fa-solid fa-bolt"></i>
+                            {% endif %}
+                        </div>
+                        <div class="timeline-body">
+                            <div class="timeline-title">{{ act.title }}</div>
+                            <div class="timeline-time">{{ act.time_label }}</div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Let's Work Together Card -->
+        <div class="telemetry-card contact-cta-card">
+            <div class="cta-handshake-icon">
+                <i class="fa-solid fa-handshake-simple"></i>
+            </div>
+            <h3 class="cta-title">LET'S WORK TOGETHER</h3>
+            <ul class="cta-check-list">
+                <li><span class="cyan-dot"></span> Need IT Support?</li>
+                <li><span class="cyan-dot"></span> Need a Business System?</li>
+                <li><span class="cyan-dot"></span> Need AI Content?</li>
+            </ul>
+            <p class="cta-sub">Let's make it happen.</p>
+            <a href="{{ url_for('public.contact') }}" class="btn-cta-contact">
+                Contact Me &rarr;
+            </a>
+
+            <!-- Social Links Bar -->
+            <div class="cta-social-bar">
+                <a href="{{ settings.github_url if settings and settings.github_url else 'https://github.com' }}" target="_blank" rel="noopener" class="social-icon" title="GitHub"><i class="fa-brands fa-github"></i></a>
+                <a href="{{ settings.linkedin_url if settings and settings.linkedin_url else 'https://linkedin.com' }}" target="_blank" rel="noopener" class="social-icon" title="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                <a href="{{ settings.youtube_url if settings and settings.youtube_url else 'https://youtube.com' }}" target="_blank" rel="noopener" class="social-icon" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                <a href="{{ settings.facebook_url if settings and settings.facebook_url else 'https://facebook.com' }}" target="_blank" rel="noopener" class="social-icon" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                <a href="mailto:{{ settings.contact_email if settings and settings.contact_email else 'contact@lyrch.dev' }}" class="social-icon" title="Email"><i class="fa-regular fa-envelope"></i></a>
+            </div>
+        </div>
+    </aside>
+</main>
+
+<!-- Video Play Modal -->
+<div class="command-modal-backdrop" id="videoModal" style="display: none;">
+    <div class="command-modal-box">
+        <div class="modal-header">
+            <h3 class="modal-title">{{ featured_video.title if featured_video else 'AI Kung Fu Scene' }}</h3>
+            <button class="modal-close-btn" onclick="closeVideoModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="video-container">
+                {% if featured_video and featured_video.video_url %}
+                    <video controls autoplay class="modal-video-player">
+                        <source src="{{ featured_video.video_url }}" type="video/mp4">
+                        Your browser does not support HTML video.
+                    </video>
+                {% else %}
+                    <div class="demo-video-screen">
+                        <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="Kung Fu Scene" class="modal-preview-img">
+                        <div class="demo-overlay">
+                            <i class="fa-solid fa-film"></i>
+                            <p>AI Generation Workflow: Prompt &rarr; Gemini &rarr; Upscale &rarr; Video Edit</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="modal-notes">
+                <p><strong>Tools:</strong> {{ featured_video.tools_used if featured_video else 'Gemini, Video Editing' }}</p>
+                <p><strong>Aspect Ratio:</strong> {{ featured_video.aspect_ratio if featured_video else '16:9' }} &bull; <strong>Platforms:</strong> {{ featured_video.platforms if featured_video else 'Reels, TikTok' }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

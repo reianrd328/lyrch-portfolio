@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Downloads &amp; Documentation — LYRCH Command Center{% endblock %}
+
+{% block content %}
+<main class="command-grid-layout" style="grid-template-columns: 1fr;">
+    <div class="telemetry-card" style="max-width: 900px; margin: 0 auto; width: 100%;">
+        <div class="card-header-bar">
+            <div class="header-label">
+                <i class="fa-solid fa-folder-open"></i>
+                <span>SECURE FILE REPOSITORY &amp; RESOURCES</span>
+            </div>
+            <a href="{{ url_for('public.home') }}" class="header-link">&larr; Return to Dashboard</a>
+        </div>
+
+        <div style="margin-top: 18px;">
+            <p style="color: #cbd5e1; font-size: 13px; line-height: 1.5; margin-bottom: 20px;">
+                Verified technical documentation, system manuals, architecture diagrams, and official resume assets available for download.
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(15,23,42,0.6); padding: 14px 18px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.08);">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <i class="fa-solid fa-file-pdf" style="color: #f87171; font-size: 24px;"></i>
+                        <div>
+                            <h4 style="color: #ffffff; font-size: 13px; font-weight: 600;">DROP FARMD — Official Resume &amp; Technical Dossier</h4>
+                            <span style="color: var(--text-muted); font-size: 11px;">PDF &bull; 2.4 MB &bull; Updated 2026</span>
+                        </div>
+                    </div>
+                    <a href="#" class="btn-command-secondary" onclick="alert('Resume download initialized.'); return false;">
+                        <i class="fa-solid fa-download"></i> Download
+                    </a>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(15,23,42,0.6); padding: 14px 18px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.08);">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <i class="fa-solid fa-file-shield" style="color: var(--neon-cyan); font-size: 24px;"></i>
+                        <div>
+                            <h4 style="color: #ffffff; font-size: 13px; font-weight: 600;">PAWSHOP Command Center — Architecture &amp; Operations Manual</h4>
+                            <span style="color: var(--text-muted); font-size: 11px;">PDF &bull; 4.8 MB &bull; IT Systems</span>
+                        </div>
+                    </div>
+                    <a href="#" class="btn-command-secondary" onclick="alert('Documentation download initialized.'); return false;">
+                        <i class="fa-solid fa-download"></i> Download
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+

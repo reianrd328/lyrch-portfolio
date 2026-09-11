@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}About — DROP FARMD | LYRCH Command Center{% endblock %}
+
+{% block content %}
+<main class="command-grid-layout" style="grid-template-columns: 1fr;">
+    <div class="telemetry-card" style="max-width: 1000px; margin: 0 auto; width: 100%;">
+        <div class="card-header-bar">
+            <div class="header-label">
+                <i class="fa-solid fa-user-astronaut"></i>
+                <span>COMMANDER PROFILE // DROP FARMD</span>
+            </div>
+            <a href="{{ url_for('public.home') }}" class="header-link">&larr; Return to Dashboard</a>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 240px 1fr; gap: 24px; margin-top: 16px;">
+            <div style="text-align: center;">
+                <div class="avatar-glow-ring" style="margin: 0 auto 16px;">
+                    <div class="ring-gradient-anim"></div>
+                    <img src="{{ url_for('static', filename='images/profile/avatar.jpg') }}" alt="DROP FARMD" class="avatar-photo" style="width: 140px; height: 140px;">
+                </div>
+                <h2 style="font-family: var(--font-display); font-size: 20px;">DROP FARMD</h2>
+                <p style="color: var(--neon-cyan); font-size: 12px; margin-top: 4px;">IT Support Specialist &amp; Developer</p>
+                <p style="color: var(--text-muted); font-size: 11px;"><i class="fa-solid fa-location-dot"></i> Philippines</p>
+            </div>
+
+            <div>
+                <h3 style="font-family: var(--font-display); font-size: 22px; color: var(--neon-cyan); margin-bottom: 12px;">
+                    18 Years of Technical Support &amp; Digital Engineering
+                </h3>
+                <p style="color: #cbd5e1; line-height: 1.6; margin-bottom: 16px;">
+                    With over 18 years in frontline IT operations, network architecture, and multi-branch infrastructure support, I bridge the gap between technical reliability and creative software engineering. Supporting 100+ branches and 1000+ users, I specialize in building mission-critical business systems, remote diagnostics, and AI-powered workflows.
+                </p>
+
+                <h4 style="font-family: var(--font-display); font-size: 16px; color: var(--neon-purple); margin-bottom: 10px;">
+                    MISSION PHILOSOPHY
+                </h4>
+                <blockquote style="border-left: 3px solid var(--neon-cyan); padding-left: 14px; font-style: italic; color: #94a3b8; margin-bottom: 20px;">
+                    "Technology makes work easier. Creativity makes life better. Think clearly, solve decisively, build robustly, and create confidently."
+                </blockquote>
+
+                <h4 style="font-family: var(--font-display); font-size: 16px; color: #ffffff; margin-bottom: 12px;">
+                    TECHNICAL SKILL MATRIX
+                </h4>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                    {% for skill in skills %}
+                        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 10px 14px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600;">
+                                <span>{{ skill.name }}</span>
+                                <span style="color: var(--neon-cyan);">{{ skill.level }}%</span>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; margin-top: 6px; overflow: hidden;">
+                                <div style="background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple)); width: {{ skill.level }}%; height: 100%;"></div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+

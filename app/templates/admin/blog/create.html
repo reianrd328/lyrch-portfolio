@@ -1,0 +1,47 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Write Article — MY WORK CMS{% endblock %}
+
+{% block admin_content %}
+<div class="telemetry-card" style="max-width: 800px; margin: 0 auto; width: 100%;">
+    <div class="card-header-bar">
+        <div class="header-label">
+            <i class="fa-regular fa-newspaper"></i>
+            <span>COMPOSE LAB NOTE / BLOG POST</span>
+        </div>
+        <a href="{{ url_for('admin_blog.index') }}" class="header-link">&larr; Back to Blog</a>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin_blog.create') }}" style="margin-top: 18px; display: flex; flex-direction: column; gap: 14px;">
+        <div>
+            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">POST TITLE</label>
+            <input type="text" name="title" required placeholder="Optimizing Multi-Branch Operations with Python" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+        </div>
+
+        <div>
+            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">SHORT EXCERPT</label>
+            <textarea name="excerpt" rows="2" placeholder="Brief summary for previews..." style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;"></textarea>
+        </div>
+
+        <div>
+            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">ARTICLE CONTENT (Markdown / HTML)</label>
+            <textarea name="content" rows="8" placeholder="Detailed technical content..." style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px; font-family: var(--font-mono);"></textarea>
+        </div>
+
+        <div>
+            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">TAGS (Comma separated)</label>
+            <input type="text" name="tags" placeholder="Python, Systems, Infrastructure, AI" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+        </div>
+
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #cbd5e1; cursor: pointer;">
+            <input type="checkbox" name="is_published" value="1" checked>
+            <span>Publish immediately</span>
+        </label>
+
+        <button type="submit" class="btn-command-primary" style="margin-top: 8px;">
+            Publish Article
+        </button>
+    </form>
+</div>
+{% endblock %}
+

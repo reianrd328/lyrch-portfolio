@@ -1,0 +1,86 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Manage Projects — MY WORK CMS{% endblock %}
+
+{% block admin_content %}
+<div class="telemetry-card">
+    <div class="card-header-bar">
+        <div class="header-label">
+            <i class="fa-solid fa-code"></i>
+            <span>SOFTWARE &amp; IT PROJECTS REPOSITORY</span>
+        </div>
+        <a href="{{ url_for('admin_projects.create') }}" class="btn-command-primary" style="font-size: 12px; padding: 6px 14px;">
+            <i class="fa-solid fa-plus"></i> Add New Project
+        </a>
+    </div>
+
+    <div style="margin-top: 18px; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px; color: #cbd5e1;">
+            <thead>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left; color: var(--text-muted);">
+                    <th style="padding: 10px 12px;">PROJECT</th>
+                    <th style="padding: 10px 12px;">CATEGORY</th>
+                    <th style="padding: 10px 12px;">BADGE</th>
+                    <th style="padding: 10px 12px;">FEATURED</th>
+                    <th style="padding: 10px 12px;">VISIBILITY</th>
+                    <th style="padding: 10px 12px; text-align: right;">ACTIONS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in projects %}
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 12px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                {% if p.thumbnail_url %}
+                                    <img src="{{ p.thumbnail_url }}" alt="" style="width: 42px; height: 42px; border-radius: 6px; object-fit: cover;">
+                                {% else %}
+                                    <div style="width: 42px; height: 42px; border-radius: 6px; background: #1e293b; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fa-solid fa-code"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <div style="font-weight: 600; color: #ffffff;">{{ p.title }}</div>
+                                    <div style="font-size: 10px; color: var(--text-muted);">{{ p.subtitle }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="padding: 12px;">{{ p.category }}</td>
+                        <td style="padding: 12px;">
+                            <span class="badge-status badge-{{ p.status_badge|lower }}">&bull; {{ p.status_badge }}</span>
+                        </td>
+                        <td style="padding: 12px;">
+                            {% if p.featured %}
+                                <span style="color: #facc15;">⭐ YES</span>
+                            {% else %}
+                                <span style="color: var(--text-muted);">NO</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 12px;">
+                            {% if p.visibility == 'published' %}
+                                <span style="color: var(--neon-green); font-weight: 600;">● LIVE</span>
+                            {% elif p.visibility == 'draft' %}
+                                <span style="color: var(--neon-yellow); font-weight: 600;">○ DRAFT</span>
+                            {% else %}
+                                <span style="color: #f87171; font-weight: 600;">🔒 PRIVATE</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 12px; text-align: right;">
+                            <div style="display: inline-flex; gap: 6px;">
+                                <a href="{{ url_for('admin_projects.edit', id=p.id) }}" class="btn-command-secondary" style="padding: 4px 10px; font-size: 11px;">
+                                    <i class="fa-regular fa-pen-to-square"></i> Edit
+                                </a>
+                                <form method="POST" action="{{ url_for('admin_projects.delete', id=p.id) }}" onsubmit="return confirm('Delete this project?');" style="display: inline;">
+                                    <button type="submit" class="btn-command-secondary" style="padding: 4px 10px; font-size: 11px; color: #f87171; border-color: rgba(248,113,113,0.3);">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

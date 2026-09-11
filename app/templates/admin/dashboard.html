@@ -1,0 +1,141 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Dashboard — MY WORK CMS{% endblock %}
+
+{% block admin_content %}
+<div class="telemetry-card">
+    <div class="card-header-bar">
+        <div class="header-label">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>MY WORK // CMS OPERATIONS DESK</span>
+        </div>
+        <div>
+            <a href="{{ url_for('admin_projects.create') }}" class="btn-command-primary" style="font-size: 12px; padding: 7px 16px;">
+                <i class="fa-solid fa-plus"></i> ADD NEW WORK
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Count Badges -->
+    <div class="command-metrics-bar" style="margin: 18px 0 24px;">
+        <a href="{{ url_for('admin_projects.index') }}" class="metric-glass-card" style="border-color: rgba(0,240,255,0.3);">
+            <div class="metric-icon-box cyan">
+                <i class="fa-solid fa-code"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-value">{{ stats.projects }}</div>
+                <div class="metric-title">PROJECTS</div>
+                <div class="metric-desc">Systems &amp; Apps</div>
+            </div>
+        </a>
+
+        <a href="{{ url_for('admin_videos.index') }}" class="metric-glass-card" style="border-color: rgba(168,85,247,0.3);">
+            <div class="metric-icon-box purple">
+                <i class="fa-solid fa-circle-play"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-value">{{ stats.videos }}</div>
+                <div class="metric-title">AI VIDEOS</div>
+                <div class="metric-desc">Studio Reels</div>
+            </div>
+        </a>
+
+        <a href="{{ url_for('admin_gallery.index') }}" class="metric-glass-card" style="border-color: rgba(59,130,246,0.3);">
+            <div class="metric-icon-box blue">
+                <i class="fa-regular fa-image"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-value">{{ stats.gallery }}</div>
+                <div class="metric-title">GALLERY</div>
+                <div class="metric-desc">UI Mockups</div>
+            </div>
+        </a>
+
+        <a href="{{ url_for('admin_documents.index') }}" class="metric-glass-card">
+            <div class="metric-icon-box cyan">
+                <i class="fa-solid fa-file-shield"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-value">{{ stats.documents }}</div>
+                <div class="metric-title">DOCUMENTS</div>
+                <div class="metric-desc">PDFs &amp; Files</div>
+            </div>
+        </a>
+
+        <a href="{{ url_for('admin_skills.index') }}" class="metric-glass-card">
+            <div class="metric-icon-box purple">
+                <i class="fa-solid fa-microchip"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-value">{{ stats.skills }}</div>
+                <div class="metric-title">SKILLS</div>
+                <div class="metric-desc">Capability Matrix</div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Recent Work Table -->
+    <div style="margin-top: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h3 style="font-family: var(--font-display); font-size: 15px; color: #ffffff; letter-spacing: 1px;">
+                RECENT WORK PORTFOLIO
+            </h3>
+            <a href="{{ url_for('admin_projects.index') }}" style="color: var(--neon-blue); font-size: 11.5px;">View all projects &rarr;</a>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; color: #cbd5e1;">
+                <thead>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left; color: var(--text-muted);">
+                        <th style="padding: 10px 12px;">WORK ITEM</th>
+                        <th style="padding: 10px 12px;">CATEGORY</th>
+                        <th style="padding: 10px 12px;">STATUS</th>
+                        <th style="padding: 10px 12px;">VISIBILITY</th>
+                        <th style="padding: 10px 12px; text-align: right;">ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in recent_projects %}
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 12px;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    {% if p.thumbnail_url %}
+                                        <img src="{{ p.thumbnail_url }}" alt="" style="width: 38px; height: 38px; border-radius: 6px; object-fit: cover;">
+                                    {% else %}
+                                        <div style="width: 38px; height: 38px; border-radius: 6px; background: #1e293b; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fa-solid fa-code"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <div style="font-weight: 600; color: #ffffff;">{{ p.title }}</div>
+                                        <div style="font-size: 10px; color: var(--text-muted);">{{ p.subtitle }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="padding: 12px;">{{ p.category }}</td>
+                            <td style="padding: 12px;">
+                                <span class="badge-status badge-{{ p.status_badge|lower }}">&bull; {{ p.status_badge }}</span>
+                            </td>
+                            <td style="padding: 12px;">
+                                {% if p.visibility == 'published' %}
+                                    <span style="color: var(--neon-green); font-weight: 600;">● LIVE</span>
+                                {% elif p.visibility == 'draft' %}
+                                    <span style="color: var(--neon-yellow); font-weight: 600;">○ DRAFT</span>
+                                {% else %}
+                                    <span style="color: #f87171; font-weight: 600;">🔒 PRIVATE</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 12px; text-align: right;">
+                                <a href="{{ url_for('admin_projects.edit', id=p.id) }}" class="btn-command-secondary" style="padding: 4px 10px; font-size: 11px;">
+                                    <i class="fa-regular fa-pen-to-square"></i> Edit
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

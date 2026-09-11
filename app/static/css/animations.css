@@ -1,0 +1,46 @@
+/* CYBERNETIC COMMAND CENTER ANIMATIONS */
+
+@keyframes spinGlow {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes beaconPulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+        box-shadow: 0 0 8px #10b981;
+    }
+    50% {
+        transform: scale(1.35);
+        opacity: 0.6;
+        box-shadow: 0 0 16px #10b981;
+    }
+}
+
+@keyframes neonFlicker {
+    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+        text-shadow: 0 0 8px rgba(0, 240, 255, 0.6), 0 0 20px rgba(0, 240, 255, 0.4);
+    }
+    20%, 24%, 55% {
+        text-shadow: none;
+    }
+}
+
+@keyframes radarSweep {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.pulsing-dot {
+    animation: beaconPulse 2s infinite ease-in-out;
+}
+

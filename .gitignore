@@ -1,0 +1,46 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# Environment variables & secrets
+.env
+.env.local
+*.key
+*.pem
+claude.py
+
+# Database & Instance folder
+instance/
+*.sqlite
+*.sqlite3
+*.db
+
+# Uploaded media (keep folder structure with .gitkeep)
+uploads/profile/*
+!uploads/profile/.gitkeep
+uploads/projects/*
+!uploads/projects/.gitkeep
+uploads/videos/*
+!uploads/videos/.gitkeep
+uploads/gallery/*
+!uploads/gallery/.gitkeep
+uploads/documents/*
+!uploads/documents/.gitkeep
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+

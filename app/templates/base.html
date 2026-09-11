@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ settings.default_theme if settings else 'cyber' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LYRCH / DEV — Digital Command Center{% endblock %}</title>
+    <script>
+        const savedTheme = localStorage.getItem('lyrch_theme');
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        }
+    </script>
+    <style id="customThemeStyles">
+        :root {
+            --custom-primary: {{ settings.custom_primary_color if settings and settings.custom_primary_color else '#00f0ff' }};
+            --custom-secondary: {{ settings.custom_secondary_color if settings and settings.custom_secondary_color else '#a855f7' }};
+        }
+    </style>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Main Style Sheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/command-center.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="command-center-body">
+    <!-- Flash Notifications Container -->
+    <div class="command-flash-container" id="flashContainer">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="command-alert alert-{{ category }}">
+                        <i class="fa-solid fa-satellite-dish"></i>
+                        <span>{{ message }}</span>
+                        <button type="button" class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Command Center Wrapper -->
+    <div class="command-viewport">
+        <!-- Top Command Header -->
+        <header class="command-header">
+            <!-- Brand Logo -->
+            <div class="header-brand">
+                <a href="{{ url_for('public.home') }}" class="brand-link">
+                    <div class="brand-symbol">
+                        <span class="symbol-inner">L</span>
+                    </div>
+                    <div class="brand-text">
+                        <div class="brand-title">LYRCH <span>/ DEV</span></div>
+                        <div class="brand-tagline">THINK CLEARLY. CREATE CONFIDENTLY.</div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Capsule Navbar -->
+            <nav class="capsule-nav">
+                <a href="{{ url_for('public.home') }}" class="nav-pill {% if request.endpoint == 'public.home' %}active{% endif %}">
+                    <i class="fa-solid fa-house"></i> Home
+                </a>
+                <a href="{{ url_for('public.about') }}" class="nav-pill {% if request.endpoint == 'public.about' %}active{% endif %}">
+                    About
+                </a>
+                <a href="{{ url_for('public.experience') }}" class="nav-pill {% if request.endpoint == 'public.experience' %}active{% endif %}">
+                    Experience
+                </a>
+                <a href="{{ url_for('public.projects') }}" class="nav-pill {% if request.endpoint == 'public.projects' %}active{% endif %}">
+                    Projects
+                </a>
+                <a href="{{ url_for('public.ai_lab') }}" class="nav-pill {% if request.endpoint == 'public.ai_lab' %}active{% endif %}">
+                    AI Lab
+                </a>
+                <a href="{{ url_for('public.video_studio') }}" class="nav-pill {% if request.endpoint == 'public.video_studio' %}active{% endif %}">
+                    Video Studio
+                </a>
+                <a href="{{ url_for('public.blog') }}" class="nav-pill {% if request.endpoint == 'public.blog' %}active{% endif %}">
+                    Blog
+                </a>
+                <a href="{{ url_for('public.contact') }}" class="nav-pill {% if request.endpoint == 'public.contact' %}active{% endif %}">
+                    Contact
+                </a>
+            </nav>
+
+            <!-- Telemetry & Controls -->
+            <div class="header-telemetry">
+                <!-- Search Box -->
+                <div class="header-search">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" placeholder="Search anything..." class="search-input" id="commandSearch">
+                </div>
+
+                <!-- Cyber Theme Picker Dropdown -->
+                <div class="theme-picker-container">
+                    <button class="telemetry-btn" title="Choose Cyber Theme" id="themeToggleBtn">
+                        <i class="fa-solid fa-palette"></i>
+                    </button>
+                    <div class="theme-dropdown-menu" id="themeDropdownMenu">
+                        <div style="font-size: 10px; color: var(--text-muted); padding: 4px 8px; font-weight: 700; letter-spacing: 0.5px;">COMMAND PALETTES</div>
+                        <button type="button" class="theme-option-btn" data-theme-name="cyber">
+                            <span class="theme-color-dot" style="background: #00f0ff; box-shadow: 0 0 6px #00f0ff;"></span>
+                            <span>Cyber Neon</span>
+                        </button>
+                        <button type="button" class="theme-option-btn" data-theme-name="matrix">
+                            <span class="theme-color-dot" style="background: #00ff66; box-shadow: 0 0 6px #00ff66;"></span>
+                            <span>Matrix Protocol</span>
+                        </button>
+                        <button type="button" class="theme-option-btn" data-theme-name="synthwave">
+                            <span class="theme-color-dot" style="background: #ff007f; box-shadow: 0 0 6px #ff007f;"></span>
+                            <span>Synthwave</span>
+                        </button>
+                        <button type="button" class="theme-option-btn" data-theme-name="cobalt">
+                            <span class="theme-color-dot" style="background: #38bdf8; box-shadow: 0 0 6px #38bdf8;"></span>
+                            <span>Cobalt Space</span>
+                        </button>
+                        <button type="button" class="theme-option-btn" data-theme-name="crimson">
+                            <span class="theme-color-dot" style="background: #ef4444; box-shadow: 0 0 6px #ef4444;"></span>
+                            <span>Red Alert Ops</span>
+                        </button>
+                        <button type="button" class="theme-option-btn" data-theme-name="custom">
+                            <span class="theme-color-dot" style="background: {{ settings.custom_primary_color if settings and settings.custom_primary_color else '#00f0ff' }}; box-shadow: 0 0 6px {{ settings.custom_primary_color if settings and settings.custom_primary_color else '#00f0ff' }};"></span>
+                            <span>Custom Palette</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Admin Access Button -->
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('admin.dashboard') }}" class="telemetry-btn admin-btn active" title="Admin CMS">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="telemetry-btn admin-btn" title="Admin Login">
+                        <i class="fa-solid fa-lock"></i>
+                    </a>
+                {% endif %}
+
+                <!-- System Online Indicator & Live Clock -->
+                <div class="system-status-indicator">
+                    <div class="online-pulse">
+                        <span class="pulse-dot"></span>
+                        <span class="status-label">SYSTEM ONLINE</span>
+                    </div>
+                    <div class="telemetry-clock">
+                        <div class="clock-time" id="systemClock">17:24</div>
+                        <div class="clock-date" id="systemDate">Mon, Sep 1, 2026</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Specific Body Content -->
+        {% block content %}{% endblock %}
+
+        <!-- Cyber Circuit Footer -->
+        <footer class="command-footer">
+            <div class="circuit-lines">
+                <div class="circuit-glow"></div>
+            </div>
+            <div class="footer-content">
+                <div class="footer-motto">
+                    <span class="motto-bold">{{ settings.footer_motto if settings else '" THINK → SOLVE → BUILD → CREATE "' }}</span>
+                    <span class="motto-sub">{{ settings.footer_sub if settings else 'IDEAS INTO REAL SOLUTIONS' }}</span>
+                </div>
+                <div class="footer-signature">
+                    <span class="sig-script">{{ settings.quote_signature if settings else 'Lyrch' }}</span>
+                    <span class="sig-est">EST. 2026</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/command-center.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

@@ -1,0 +1,362 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Dashboard Customizer — MY WORK CMS{% endblock %}
+
+{% block admin_content %}
+<div class="telemetry-card">
+    <div class="card-header-bar">
+        <div class="header-label">
+            <i class="fa-solid fa-sliders"></i>
+            <span>DASHBOARD CUSTOMIZER &amp; SYSTEM SETTINGS</span>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button type="submit" form="settingsForm" class="btn-command-primary" style="font-size: 12px; padding: 7px 18px; box-shadow: 0 0 14px var(--border-cyan-glow);">
+                <i class="fa-solid fa-floppy-disk"></i> Save Changes
+            </button>
+            <a href="{{ url_for('public.home') }}" target="_blank" class="btn-command-secondary" style="font-size: 11.5px; padding: 6px 14px;">
+                <i class="fa-solid fa-eye"></i> View Live Result
+            </a>
+        </div>
+    </div>
+
+    <form id="settingsForm" method="POST" action="{{ url_for('admin.settings') }}" enctype="multipart/form-data" style="margin-top: 18px; display: flex; flex-direction: column; gap: 24px;">
+        <!-- 1. PROFILE & IDENTITY -->
+        <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(0,240,255,0.25); border-radius: var(--radius-md); padding: 18px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-user-gear" style="color: var(--neon-cyan); font-size: 18px;"></i>
+                    <h3 style="font-family: var(--font-display); font-size: 16px; color: #ffffff; letter-spacing: 1px;">
+                        1. PROFILE IDENTITY // COMMANDER
+                    </h3>
+                </div>
+                <span style="font-size: 10.5px; color: var(--neon-cyan);"><i class="fa-solid fa-shield-halved"></i> Live Synchronization Active</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 170px 1fr 1fr; gap: 20px; align-items: center;">
+                <!-- Avatar Live Customizer -->
+                <div style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+                    <div class="avatar-customizer-wrap" id="avatarCustomizerWrap" title="Click or drop an image here to change photo">
+                        <div class="avatar-preview-circle">
+                            <img id="avatarPreviewImg" src="{{ s.avatar_url }}" alt="Avatar" onerror="this.src='https://ui-avatars.com/api/?name=User&background=0b112c&color=00f0ff&size=180'">
+                            <div class="avatar-hover-overlay">
+                                <i class="fa-solid fa-camera" style="font-size: 16px;"></i>
+                                <span>Change</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Explicit File Input -->
+                    <input type="file" id="avatarInput" name="avatar" accept="image/png, image/jpeg, image/jpg, image/webp, image/gif, image/svg+xml, image/jfif, image/bmp" style="display: none;">
+                    
+                    <button type="button" class="btn-command-secondary" onclick="document.getElementById('avatarInput').click()" style="font-size: 11px; padding: 6px 14px; margin-top: 4px; border-color: var(--neon-cyan);">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Choose Photo
+                    </button>
+
+                    <div id="avatarStatusText" class="avatar-status-pill">
+                        Click avatar to upload
+                    </div>
+                </div>
+
+                <!-- Profile Meta Inputs -->
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div>
+                        <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">DISPLAY NAME / CALLSIGN</label>
+                        <input type="text" name="display_name" value="{{ s.display_name }}" required style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 8px 12px; color: #fff; font-size: 13px;">
+                    </div>
+                    <div>
+                        <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">LOCATION / REGION</label>
+                        <input type="text" name="location" value="{{ s.location }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 8px 12px; color: #fff; font-size: 13px;">
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div>
+                        <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">JOB TITLE / PRIMARY SPECIALIZATION</label>
+                        <input type="text" name="job_title" value="{{ s.job_title }}" required style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 8px 12px; color: #fff; font-size: 13px;">
+                    </div>
+                    <div>
+                        <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">IMAGE URL (OPTIONAL DIRECT LINK)</label>
+                        <input type="text" name="avatar_url_text" id="avatarUrlInput" value="{{ s.avatar_url }}" placeholder="Or paste image URL (e.g. https://...)" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 8px 12px; color: #94a3b8; font-size: 11.5px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. THEME ENGINE & CUSTOMIZED COLOR SELECTION -->
+        <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(168,85,247,0.25); border-radius: var(--radius-md); padding: 18px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-palette" style="color: var(--neon-purple); font-size: 18px;"></i>
+                    <h3 style="font-family: var(--font-display); font-size: 16px; color: #ffffff; letter-spacing: 1px;">
+                        2. CYBERNETIC COLOR THEME ENGINE
+                    </h3>
+                </div>
+                <span style="font-size: 11px; color: #94a3b8;">Click any palette to live preview instantly</span>
+            </div>
+
+            <p style="font-size: 12px; color: #cbd5e1; margin-bottom: 14px;">
+                Choose one of the 5 signature cyberpunk presets, or choose <strong>Custom Palette</strong> to pick any customized colors:
+            </p>
+
+            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px;">
+                <!-- Theme 1: Cyber Neon -->
+                <div class="theme-select-card {% if s.default_theme == 'cyber' %}active{% endif %}" data-theme-val="cyber">
+                    <input type="radio" name="default_theme" value="cyber" {% if s.default_theme == 'cyber' %}checked{% endif %} style="display: none;">
+                    <div style="display: flex; justify-content: center; gap: 6px; margin-bottom: 8px;">
+                        <span style="width: 16px; height: 16px; border-radius: 50%; background: #00f0ff; box-shadow: 0 0 8px #00f0ff;"></span>
+                        <span style="width: 16px; height: 16px; border-radius: 50%; background: #a855f7; box-shadow: 0 0 8px #a855f7;"></span>
+                    </div>
+                    <div style="font-weight: 700; font-size: 12px; color: #fff;">Cyber Neon</div>
+                    <span style="font-size: 9.5px; color: #00f0ff; display: block;">Cyan &amp; Purple</span>
+                    <span class="theme-selected-badge"><i class="fa-solid fa-circle-check"></i> ACTIVE</span>
+                </div>
+
+                <!-- Theme 2: Matrix Protocol -->
+                <div class="theme-select-card {% if s.default_theme == 'matrix' %}active{% endif %}" data-theme-val="matrix">
+                    <input type="radio" name="default_theme" value="matrix" {% if s.default_theme == 'matrix' %}checked{% endif %} style="display: none;">
+                    <div style="display: flex; justify-content: center; gap: 6px; margin-bottom: 8px;">
+                        <span style="width: 16px; height: 16px; border-radius: 50%; background: #00ff66; box-shadow: 0 0 8px #00ff66;"></span>
+                        <span style="width: 16px; height: 16px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
+                    </div>
+                    <div style="font-weight: 700; font-size: 12px; color: #fff;">Matrix Protocol</div>
+                    <span style="font-size: 9.5px; color: #00ff66; display: block;">Terminal Green</span>
+                    <span class="theme-selected-badge"><i class="fa-solid fa-circle-check"></i> ACTIVE</span>
+                </div>
+
+                <!-- Theme 3: Synthwave Sunset -->
+                <div class="theme-select-card {% if s.default_theme == 'synthwave' %}active{% endif %}" data-theme-val="synthwave">
+                    <input type="radio" name="default_theme" value="synthwave" {% if s.default_theme == 'synthwave' %}checked{% endif %} style="display: none;">
+                    <div style="display: flex; justify-content: center; gap: 6px; margin-bottom: 8px;">
+                        <span style="width: 16px; height: 16px; border-radius: 50%; background: #ff007f; box-shadow: 0 0 8px #ff007f;"></span>
+                        <span style="width: 16px; height: 16px; border-radius: 50%; background: #ff9900; box-shadow: 0 0 8px #ff9900;"></span>
+                    </div>
+                    <div style="font-weight: 700; font-size: 12px; color: #fff;">Synthwave</div>
+                    <span style="font-size: 9.5px; color: #ff007f; display: block;">Pink &amp; Amber</span>
+                    <span class="theme-selected-badge"><i class="fa-solid fa-circle-check"></i> ACTIVE</span>
+                </div>
+
+                <!-- Theme 4: Cobalt Space -->
+                <div class="theme-select-card {% if s.default_theme == 'cobalt' %}active{% endif %}" data-theme-val="cobalt">
+                    <input type="radio" name="default_theme" value="cobalt" {% if s.default_theme == 'cobalt' %}checked{% endif %} style="display: none;">
+                    <div style="display: flex; justify-content: center; gap: 6px; margin-bottom: 8px;">
+                        <span style="width: 16px; height: 16px; border-radius: 50%; background: #38bdf8; box-shadow: 0 0 8px #38bdf8;"></span>
+                        <span style="width: 16px; height: 16px; border-radius: 50%; background: #3b82f6; box-shadow: 0 0 8px #3b82f6;"></span>
+                    </div>
+                    <div style="font-weight: 700; font-size: 12px; color: #fff;">Cobalt Space</div>
+                    <span style="font-size: 9.5px; color: #38bdf8; display: block;">Ice &amp; Royal Blue</span>
+                    <span class="theme-selected-badge"><i class="fa-solid fa-circle-check"></i> ACTIVE</span>
+                </div>
+
+                <!-- Theme 5: Red Alert Ops -->
+                <div class="theme-select-card {% if s.default_theme == 'crimson' %}active{% endif %}" data-theme-val="crimson">
+                    <input type="radio" name="default_theme" value="crimson" {% if s.default_theme == 'crimson' %}checked{% endif %} style="display: none;">
+                    <div style="display: flex; justify-content: center; gap: 6px; margin-bottom: 8px;">
+                        <span style="width: 16px; height: 16px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 8px #ef4444;"></span>
+                        <span style="width: 16px; height: 16px; border-radius: 50%; background: #f59e0b; box-shadow: 0 0 8px #f59e0b;"></span>
+                    </div>
+                    <div style="font-weight: 700; font-size: 12px; color: #fff;">Red Alert Ops</div>
+                    <span style="font-size: 9.5px; color: #ef4444; display: block;">Crimson &amp; Gold</span>
+                    <span class="theme-selected-badge"><i class="fa-solid fa-circle-check"></i> ACTIVE</span>
+                </div>
+
+                <!-- Theme 6: Custom Palette -->
+                <div class="theme-select-card {% if s.default_theme == 'custom' %}active{% endif %}" data-theme-val="custom">
+                    <input type="radio" name="default_theme" value="custom" {% if s.default_theme == 'custom' %}checked{% endif %} style="display: none;">
+                    <div style="display: flex; justify-content: center; gap: 6px; margin-bottom: 8px;">
+                        <span style="width: 16px; height: 16px; border-radius: 50%; background: {{ s.custom_primary_color if s.custom_primary_color else '#00f0ff' }}; box-shadow: 0 0 8px {{ s.custom_primary_color if s.custom_primary_color else '#00f0ff' }};"></span>
+                        <span style="width: 16px; height: 16px; border-radius: 50%; background: {{ s.custom_secondary_color if s.custom_secondary_color else '#a855f7' }}; box-shadow: 0 0 8px {{ s.custom_secondary_color if s.custom_secondary_color else '#a855f7' }};"></span>
+                    </div>
+                    <div style="font-weight: 700; font-size: 12px; color: #fff;">Custom</div>
+                    <span style="font-size: 9.5px; color: var(--neon-cyan); display: block;">Pick Your Colors</span>
+                    <span class="theme-selected-badge"><i class="fa-solid fa-circle-check"></i> ACTIVE</span>
+                </div>
+            </div>
+
+            <!-- Custom Color Pickers Accordion/Box -->
+            <div id="customColorPickerGroup" style="display: {% if s.default_theme == 'custom' %}block{% else %}none{% endif %}; margin-top: 16px; background: rgba(8,14,36,0.9); border: 1px dashed var(--border-cyan-glow); border-radius: 8px; padding: 14px;">
+                <div style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-eye-dropper" style="color: var(--neon-cyan);"></i> CUSTOMIZED COLOR PALETTE PICKER
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div style="display: flex; align-items: center; gap: 12px; background: rgba(15,23,42,0.8); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08);">
+                        <input type="color" id="customPrimaryPicker" name="custom_primary_color" value="{{ s.custom_primary_color if s.custom_primary_color else '#00f0ff' }}" style="width: 44px; height: 44px; border: none; border-radius: 6px; cursor: pointer; background: transparent;">
+                        <div>
+                            <label style="font-size: 11px; color: var(--text-muted); display: block; font-weight: 600;">PRIMARY NEON ACCENT</label>
+                            <span id="customPrimaryHex" style="font-family: var(--font-mono); font-size: 12px; color: var(--neon-cyan); font-weight: 700;">{{ s.custom_primary_color if s.custom_primary_color else '#00f0ff' }}</span>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 12px; background: rgba(15,23,42,0.8); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08);">
+                        <input type="color" id="customSecondaryPicker" name="custom_secondary_color" value="{{ s.custom_secondary_color if s.custom_secondary_color else '#a855f7' }}" style="width: 44px; height: 44px; border: none; border-radius: 6px; cursor: pointer; background: transparent;">
+                        <div>
+                            <label style="font-size: 11px; color: var(--text-muted); display: block; font-weight: 600;">SECONDARY GLOW ACCENT</label>
+                            <span id="customSecondaryHex" style="font-family: var(--font-mono); font-size: 12px; color: var(--neon-purple); font-weight: 700;">{{ s.custom_secondary_color if s.custom_secondary_color else '#a855f7' }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 8px;">
+                    <i class="fa-solid fa-circle-info"></i> Moving the color pickers above updates the preview of the command center live. Click <strong>Save Changes</strong> to save your customized palette!
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. HERO MISSION CONTROL & BIO -->
+        <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); padding: 18px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px;">
+                <i class="fa-solid fa-bullseye" style="color: var(--neon-cyan); font-size: 18px;"></i>
+                <h3 style="font-family: var(--font-display); font-size: 16px; color: #ffffff; letter-spacing: 1px;">
+                    3. HERO HEADLINES &amp; MISSION STATEMENT
+                </h3>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+                <div>
+                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">HERO PRETITLE</label>
+                    <input type="text" name="hero_pretitle" value="{{ s.hero_pretitle }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 8px 12px; color: #fff; font-size: 13px;">
+                </div>
+                <div>
+                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">HERO MAIN TITLE</label>
+                    <input type="text" name="hero_title" value="{{ s.hero_title }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 8px 12px; color: #fff; font-size: 13px;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 14px;">
+                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">ROLE BADGES / SUBTITLE TAGS</label>
+                <input type="text" name="hero_tags" value="{{ s.hero_tags }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 8px 12px; color: #fff; font-size: 13px;">
+            </div>
+
+            <div>
+                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">BIO / INTRODUCTORY PARAGRAPH</label>
+                <textarea name="hero_bio" rows="3" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 8px 12px; color: #fff; font-size: 13px;">{{ s.hero_bio }}</textarea>
+            </div>
+        </div>
+
+        <!-- 4. FIVE DASHBOARD METRICS CARDS -->
+        <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); padding: 18px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px;">
+                <i class="fa-solid fa-chart-simple" style="color: var(--neon-cyan); font-size: 18px;"></i>
+                <h3 style="font-family: var(--font-display); font-size: 16px; color: #ffffff; letter-spacing: 1px;">
+                    4. FIVE DASHBOARD METRIC CARDS
+                </h3>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
+                <!-- Metric 1 -->
+                <div style="background: rgba(8,14,36,0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 10px;">
+                    <label style="font-size: 10px; color: var(--neon-cyan);">CARD 1 (Years)</label>
+                    <input type="text" name="metric1_num" value="{{ s.metric1_num }}" placeholder="18+" style="width: 100%; background: #0b112c; border: 1px solid #1e293b; border-radius: 4px; padding: 4px 6px; color: #fff; font-weight: 700; margin: 4px 0;">
+                    <input type="text" name="metric1_title" value="{{ s.metric1_title }}" placeholder="Years Experience" style="width: 100%; background: #0b112c; border: 1px solid #1e293b; border-radius: 4px; padding: 4px 6px; color: #fff; font-size: 11px; margin-bottom: 4px;">
+                    <input type="text" name="metric1_desc" value="{{ s.metric1_desc }}" placeholder="IT Technical Support" style="width: 100%; background: #0b112c; border: 1px solid #1e293b; border-radius: 4px; padding: 4px 6px; color: #94a3b8; font-size: 10px;">
+                </div>
+
+                <!-- Metric 2 -->
+                <div style="background: rgba(8,14,36,0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 10px;">
+                    <label style="font-size: 10px; color: var(--neon-cyan);">CARD 2 (Branches)</label>
+                    <input type="text" name="metric2_num" value="{{ s.metric2_num }}" placeholder="100+" style="width: 100%; background: #0b112c; border: 1px solid #1e293b; border-radius: 4px; padding: 4px 6px; color: #fff; font-weight: 700; margin: 4px 0;">
+                    <input type="text" name="metric2_title" value="{{ s.metric2_title }}" placeholder="Branches Supported" style="width: 100%; background: #0b112c; border: 1px solid #1e293b; border-radius: 4px; padding: 4px 6px; color: #fff; font-size: 11px; margin-bottom: 4px;">
+                    <input type="text" name="metric2_desc" value="{{ s.metric2_desc }}" placeholder="Nationwide" style="width: 100%; background: #0b112c; border: 1px solid #1e293b; border-radius: 4px; padding: 4px 6px; color: #94a3b8; font-size: 10px;">
+                </div>
+
+                <!-- Metric 3 -->
+                <div style="background: rgba(8,14,36,0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 10px;">
+                    <label style="font-size: 10px; color: var(--neon-blue);">CARD 3 (Users)</label>
+                    <input type="text" name="metric3_num" value="{{ s.metric3_num }}" placeholder="1000+" style="width: 100%; background: #0b112c; border: 1px solid #1e293b; border-radius: 4px; padding: 4px 6px; color: #fff; font-weight: 700; margin: 4px 0;">
+                    <input type="text" name="metric3_title" value="{{ s.metric3_title }}" placeholder="Users Potential" style="width: 100%; background: #0b112c; border: 1px solid #1e293b; border-radius: 4px; padding: 4px 6px; color: #fff; font-size: 11px; margin-bottom: 4px;">
+                    <input type="text" name="metric3_desc" value="{{ s.metric3_desc }}" placeholder="System Ready" style="width: 100%; background: #0b112c; border: 1px solid #1e293b; border-radius: 4px; padding: 4px 6px; color: #94a3b8; font-size: 10px;">
+                </div>
+
+                <!-- Metric 4 -->
+                <div style="background: rgba(8,14,36,0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 10px;">
+                    <label style="font-size: 10px; color: var(--neon-purple);">CARD 4 (Support)</label>
+                    <input type="text" name="metric4_num" value="{{ s.metric4_num }}" placeholder="24/7" style="width: 100%; background: #0b112c; border: 1px solid #1e293b; border-radius: 4px; padding: 4px 6px; color: #fff; font-weight: 700; margin: 4px 0;">
+                    <input type="text" name="metric4_title" value="{{ s.metric4_title }}" placeholder="Problem Solving" style="width: 100%; background: #0b112c; border: 1px solid #1e293b; border-radius: 4px; padding: 4px 6px; color: #fff; font-size: 11px; margin-bottom: 4px;">
+                    <input type="text" name="metric4_desc" value="{{ s.metric4_desc }}" placeholder="IT Operations" style="width: 100%; background: #0b112c; border: 1px solid #1e293b; border-radius: 4px; padding: 4px 6px; color: #94a3b8; font-size: 10px;">
+                </div>
+
+                <!-- Metric 5 -->
+                <div style="background: rgba(8,14,36,0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 10px;">
+                    <label style="font-size: 10px; color: var(--neon-cyan);">CARD 5 (Learning)</label>
+                    <input type="text" name="metric5_num" value="{{ s.metric5_num }}" placeholder="Always Learning" style="width: 100%; background: #0b112c; border: 1px solid #1e293b; border-radius: 4px; padding: 4px 6px; color: #fff; font-weight: 700; margin: 4px 0;">
+                    <input type="text" name="metric5_title" value="{{ s.metric5_title }}" placeholder="" style="width: 100%; background: #0b112c; border: 1px solid #1e293b; border-radius: 4px; padding: 4px 6px; color: #fff; font-size: 11px; margin-bottom: 4px;">
+                    <input type="text" name="metric5_desc" value="{{ s.metric5_desc }}" placeholder="Growing with AI" style="width: 100%; background: #0b112c; border: 1px solid #1e293b; border-radius: 4px; padding: 4px 6px; color: #94a3b8; font-size: 10px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. INSPIRATION QUOTE & SOCIAL LINKS -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <!-- Inspiration -->
+            <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); padding: 18px;">
+                <h4 style="color: #fff; font-size: 13px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px;">
+                    INSPIRATION CARD &amp; NEON SIGNATURE
+                </h4>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div>
+                        <label style="font-size: 10.5px; color: var(--text-muted); display: block; margin-bottom: 2px;">QUOTE TEXT</label>
+                        <textarea name="quote_text" rows="2" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 10px; color: #fff; font-size: 12px;">{{ s.quote_text }}</textarea>
+                    </div>
+                    <div>
+                        <label style="font-size: 10.5px; color: var(--text-muted); display: block; margin-bottom: 2px;">SIGNATURE NAME</label>
+                        <input type="text" name="quote_signature" value="{{ s.quote_signature }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 10px; color: #fff; font-size: 12px;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Social Links -->
+            <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); padding: 18px;">
+                <h4 style="color: #fff; font-size: 13px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px;">
+                    SOCIAL LINKS &amp; DIRECT DISPATCH
+                </h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label style="font-size: 10px; color: var(--text-muted); display: block;">GITHUB URL</label>
+                        <input type="url" name="github_url" value="{{ s.github_url }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 8px; color: #fff; font-size: 11px;">
+                    </div>
+                    <div>
+                        <label style="font-size: 10px; color: var(--text-muted); display: block;">LINKEDIN URL</label>
+                        <input type="url" name="linkedin_url" value="{{ s.linkedin_url }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 8px; color: #fff; font-size: 11px;">
+                    </div>
+                    <div>
+                        <label style="font-size: 10px; color: var(--text-muted); display: block;">YOUTUBE URL</label>
+                        <input type="url" name="youtube_url" value="{{ s.youtube_url }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 8px; color: #fff; font-size: 11px;">
+                    </div>
+                    <div>
+                        <label style="font-size: 10px; color: var(--text-muted); display: block;">CONTACT EMAIL</label>
+                        <input type="email" name="contact_email" value="{{ s.contact_email }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 8px; color: #fff; font-size: 11px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. ACCOUNT SECURITY & TRANSFER TO ANOTHER PERSON -->
+        <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(239,68,68,0.25); border-radius: var(--radius-md); padding: 18px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <i class="fa-solid fa-key" style="color: #ef4444; font-size: 16px;"></i>
+                <h4 style="color: #ffffff; font-size: 14px; font-family: var(--font-display); letter-spacing: 0.8px;">
+                    ADMIN CLEARANCE &amp; ACCOUNT TRANSFER
+                </h4>
+            </div>
+            <p style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 12px;">
+                If you are customizing this portfolio for another person, you can update the administrative login credentials right here:
+            </p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div>
+                    <label style="font-size: 10.5px; color: var(--text-muted); display: block; margin-bottom: 2px;">LOGIN USERNAME</label>
+                    <input type="text" name="account_username" value="{{ current_user.username }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 7px 10px; color: #fff; font-size: 12px;">
+                </div>
+                <div>
+                    <label style="font-size: 10.5px; color: var(--text-muted); display: block; margin-bottom: 2px;">NEW PASSWORD (leave blank to keep current)</label>
+                    <input type="password" name="account_password" placeholder="••••••••" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 7px 10px; color: #fff; font-size: 12px;">
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
+            <button type="submit" class="btn-command-primary" style="padding: 12px 28px; font-size: 13px;">
+                <i class="fa-solid fa-floppy-disk"></i> Save &amp; Apply All Dashboard Changes
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
