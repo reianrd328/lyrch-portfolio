@@ -68,7 +68,7 @@ def daily_backup_cron():
 
     overall_msg = " | ".join(results) if results else "No backup destination configured."
     settings.backup_last_run = datetime.utcnow()
-    settings.backup_last_status = ("Partial/Error: " if has_error else "Success: ") + overall_msg
+    settings.backup_last_status = (("Partial/Error: " if has_error else "Success: ") + overall_msg)[:500]
 
     log = ActivityLog(
         title=f"Cron Daily Backup {'completed' if not has_error else 'reported notice'}",

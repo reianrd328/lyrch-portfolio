@@ -280,46 +280,54 @@ def backup_restore():
 
     return redirect(url_for("admin.settings"))
 
-@admin_bp.route("/backup/upload-gdrive", methods=["POST"])
+@admin_bp.route("/backup/upload-gdrive", methods=["GET", "POST"])
 @login_required
 def backup_upload_gdrive():
     """Manually triggers an immediate database backup upload to Google Drive."""
-    settings = SiteSetting.get_settings()
-    folder_override = request.form.get("folder_id_override", "").strip()
-    folder_id = clean_folder_id(folder_override) if folder_override else settings.gdrive_folder_id
-
-    # If a folder was supplied in the form, automatically persist it to settings
-    if folder_override and folder_id and folder_id != settings.gdrive_folder_id:
-        settings.gdrive_folder_id = folder_id
-        db.session.commit()
-
-    if not folder_id:
-        flash("Google Drive Folder link/ID is missing. Please paste your Google Drive Folder link or ID into 'GOOGLE DRIVE FOLDER ID / URL' first.", "warning")
+    if request.method == "GET":
         return redirect(url_for("admin.settings"))
 
-    backup_json_str = export_database_to_json_str()
-    filename = f"lyrch_backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+    try:
+        settings = SiteSetting.get_settings()
+        folder_override = request.form.get("folder_id_override", "").strip()
+        folder_id = clean_folder_id(folder_override) if folder_override else settings.gdrive_folder_id
 
-    success, msg, web_link = upload_backup_to_gdrive(backup_json_str, filename=filename, folder_id=folder_id)
+        # If a folder was supplied in the form, automatically persist it to settings
+        if folder_override and folder_id and folder_id != settings.gdrive_folder_id:
+            settings.gdrive_folder_id = folder_id
+            db.session.commit()
 
-    if success:
-        settings.gdrive_last_upload_url = web_link
-        settings.backup_last_run = datetime.utcnow()
-        settings.backup_last_status = f"Success (Google Drive): {filename}"
-        db.session.commit()
+        if not folder_id:
+            flash("Google Drive Folder link/ID is missing. Please paste your Google Drive Folder link or ID into 'GOOGLE DRIVE FOLDER ID / URL' first.", "warning")
+            return redirect(url_for("admin.settings"))
 
-        log = ActivityLog(
-            title=f"Uploaded backup {filename} to Google Drive",
-            activity_type="project",
-            time_label="Just now"
-        )
-        db.session.add(log)
-        db.session.commit()
-        flash(f"Database backup uploaded to Google Drive successfully! ({filename})", "success")
-    else:
-        settings.backup_last_status = f"Failed (Google Drive): {msg}"
-        db.session.commit()
-        flash(f"Google Drive upload notice: {msg}", "danger")
+        backup_json_str = export_database_to_json_str()
+        filename = f"lyrch_backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+
+        success, msg, web_link = upload_backup_to_gdrive(backup_json_str, filename=filename, folder_id=folder_id)
+
+        if success:
+            settings.gdrive_last_upload_url = web_link
+            settings.backup_last_run = datetime.utcnow()
+            settings.backup_last_status = f"Success (Google Drive): {filename}"[:500]
+            db.session.commit()
+
+            log = ActivityLog(
+                title=f"Uploaded backup {filename} to Google Drive",
+                activity_type="project",
+                time_label="Just now"
+            )
+            db.session.add(log)
+            db.session.commit()
+            flash(f"Database backup uploaded to Google Drive successfully! ({filename})", "success")
+        else:
+            settings.backup_last_status = f"Failed (Google Drive): {msg}"[:500]
+            db.session.commit()
+            flash(f"Google Drive upload notice: {msg}", "danger")
+
+    except Exception as err:
+        db.session.rollback()
+        flash(f"Google Drive process notice: {str(err)}", "danger")
 
     return redirect(url_for("admin.settings"))
 
