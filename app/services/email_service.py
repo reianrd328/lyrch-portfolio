@@ -39,14 +39,20 @@ def _send_via_resend(api_key: str, recipient_email: str, filename: str, backup_j
             data=json.dumps(payload).encode("utf-8"),
             headers={
                 "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             }
         )
         with urllib.request.urlopen(req, timeout=20) as resp:
             return True, f"Backup successfully emailed to {recipient_email} via Resend API!"
     except urllib.error.HTTPError as http_err:
         err_body = http_err.read().decode("utf-8", errors="ignore")
-        return False, f"Resend API error ({http_err.code}): {err_body}"
+        try:
+            parsed = json.loads(err_body)
+            msg = parsed.get("message") or parsed.get("error") or err_body
+            return False, f"Resend notice: {msg}"
+        except Exception:
+            return False, f"Resend API notice ({http_err.code}): {err_body}"
     except Exception as e:
         return False, f"Resend dispatch notice: {str(e)}"
 
