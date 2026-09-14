@@ -57,3 +57,4 @@ def daily_backup_cron():
         "message": msg,
         "timestamp": settings.backup_last_run.isoformat()
     })
+

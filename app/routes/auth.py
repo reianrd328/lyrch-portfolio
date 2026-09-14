@@ -34,7 +34,11 @@ def login():
 @auth_bp.route("/logout")
 @login_required
 def logout():
+    reason = request.args.get("reason")
     logout_user()
+    if reason == "timeout":
+        flash("Session locked due to 1 minute of inactivity for security. Please authenticate again.", "warning")
+        return redirect(url_for("auth.login"))
     flash("Session terminated. Command clearance revoked.", "info")
     return redirect(url_for("public.home"))
 

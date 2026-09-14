@@ -133,3 +133,4 @@ def restore_database_from_dict(backup_dict: dict) -> tuple[bool, str]:
     except Exception as e:
         db.session.rollback()
         return False, f"Restoration error: {str(e)}"
+

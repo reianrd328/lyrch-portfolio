@@ -100,3 +100,4 @@ def send_backup_email(recipient_email: str, backup_json_str: str, metadata: dict
         return False, "SMTP Authentication Failed: Check your SMTP_USER and App Password."
     except Exception as e:
         return False, f"Email sending failed: {str(e)}"
+

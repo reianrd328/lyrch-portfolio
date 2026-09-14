@@ -29,3 +29,4 @@ def check_and_apply_migrations(app):
                             app.logger.warning(f"Migration notice for {col_name}: {err}")
         except Exception as e:
             app.logger.warning(f"Migration checker notice: {e}")
+

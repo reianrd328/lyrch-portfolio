@@ -64,6 +64,26 @@ def create_app(config_name="default"):
     app.register_blueprint(blog_bp, url_prefix="/admin/blog")
     app.register_blueprint(cron_bp)
 
+    # 1-minute Admin inactivity auto-logout protection
+    @app.before_request
+    def enforce_admin_inactivity():
+        from flask import session, request, redirect, url_for, flash
+        from flask_login import current_user, logout_user
+        import time
+
+        if not app.config.get("TESTING") and current_user.is_authenticated and request.path.startswith("/admin"):
+            now = time.time()
+            last_activity = session.get("_admin_last_activity")
+            max_idle = app.config.get("ADMIN_INACTIVITY_TIMEOUT", 60) # 1 minute
+
+            if last_activity and (now - last_activity > max_idle):
+                session.pop("_admin_last_activity", None)
+                logout_user()
+                flash("Session locked due to 1 minute of inactivity for security. Please authenticate again.", "warning")
+                return redirect(url_for("auth.login"))
+
+            session["_admin_last_activity"] = now
+
     # Inject global site settings into all templates
     @app.context_processor
     def inject_settings():
