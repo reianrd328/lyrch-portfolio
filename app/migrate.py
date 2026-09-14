@@ -23,7 +23,8 @@ def check_and_apply_migrations(app):
                     ("gdrive_client_id", "VARCHAR(255) DEFAULT ''"),
                     ("gdrive_client_secret", "VARCHAR(255) DEFAULT ''"),
                     ("gdrive_refresh_token", "TEXT NULL"),
-                    ("gdrive_user_email", "VARCHAR(120) NULL")
+                    ("gdrive_user_email", "VARCHAR(120) NULL"),
+                    ("resend_api_key", "VARCHAR(255) DEFAULT ''")
                 ]
                 for col_name, col_def in new_cols:
                     if col_name not in existing_cols:

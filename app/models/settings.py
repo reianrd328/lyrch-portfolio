@@ -72,6 +72,7 @@ class SiteSetting(db.Model):
     backup_frequency = db.Column(db.String(20), default="daily")
     backup_last_run = db.Column(db.DateTime, nullable=True)
     backup_last_status = db.Column(db.Text, default="Never run")
+    resend_api_key = db.Column(db.String(255), default="")
 
     # 9. Google Drive Automated Backup Integration (OAuth 2.0 & Service Account)
     gdrive_backup_enabled = db.Column(db.Boolean, default=False)

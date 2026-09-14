@@ -354,7 +354,7 @@
 
                     {% if smtp_ready %}
                         <span style="font-size: 11px; color: var(--neon-green); background: rgba(0,255,102,0.1); border: 1px solid rgba(0,255,102,0.3); padding: 4px 10px; border-radius: 20px;">
-                            <i class="fa-solid fa-shield-check"></i> SMTP Email Ready
+                            <i class="fa-solid fa-envelope-circle-check"></i> Email Backup Ready
                         </span>
                     {% else %}
                         <span style="font-size: 11px; color: #94a3b8; background: rgba(148,163,184,0.1); border: 1px solid rgba(148,163,184,0.25); padding: 4px 10px; border-radius: 20px;">
@@ -488,6 +488,13 @@
                         <div>
                             <label style="font-size: 10.5px; color: var(--text-muted); display: block; margin-bottom: 4px;">BACKUP RECIPIENT EMAIL</label>
                             <input type="email" name="backup_email" value="{{ s.backup_email or current_user.email }}" placeholder="your.email@gmail.com" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 7px 10px; color: #fff; font-size: 12px;">
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <label style="font-size: 10px; color: var(--text-muted);">RESEND EMAIL API KEY (Free HTTPS Dispatch on Render)</label>
+                                <a href="https://resend.com" target="_blank" style="font-size: 10px; color: var(--neon-cyan); text-decoration: none;">Get free key at resend.com &rarr;</a>
+                            </div>
+                            <input type="password" name="resend_api_key" value="{{ s.resend_api_key or '' }}" placeholder="re_123456789..." style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 7px 10px; color: #fff; font-size: 11px; font-family: monospace;">
                         </div>
                         <div>
                             <label style="font-size: 10.5px; color: var(--text-muted); display: block; margin-bottom: 4px;">BACKUP FREQUENCY</label>

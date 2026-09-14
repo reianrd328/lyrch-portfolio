@@ -189,6 +189,10 @@ def settings():
         if csec:
             site_settings.gdrive_client_secret = csec
 
+        # Resend Email API Key
+        resend_key = request.form.get("resend_api_key", "").strip()
+        site_settings.resend_api_key = resend_key
+
         # Log Activity
         log = ActivityLog(
             title="Updated Command Center dashboard & backup settings",
@@ -204,7 +208,7 @@ def settings():
     return render_template(
         "admin/settings/index.html",
         s=site_settings,
-        smtp_ready=is_smtp_configured(),
+        smtp_ready=is_smtp_configured(site_settings),
         gdrive_ready=is_gdrive_configured(site_settings),
         oauth_ready=is_oauth_configured(site_settings),
         gdrive_email=get_connected_account_email(site_settings),
@@ -249,9 +253,9 @@ def backup_send_email():
     backup_dict = export_database_to_dict()
     backup_json_str = export_database_to_json_str()
 
-    success, msg = send_backup_email(target_email, backup_json_str, backup_dict["metadata"])
+    success, msg = send_backup_email(target_email, backup_json_str, backup_dict["metadata"], settings=settings)
     settings.backup_last_run = datetime.utcnow()
-    settings.backup_last_status = ("Success: " if success else "Error: ") + msg
+    settings.backup_last_status = (("Success: " if success else "Error: ") + msg)[:500]
 
     log = ActivityLog(
         title=f"Manual Database Backup {'sent to ' + target_email if success else 'failed'}",

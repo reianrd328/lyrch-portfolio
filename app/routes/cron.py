@@ -55,7 +55,8 @@ def daily_backup_cron():
         email_success, email_msg = send_backup_email(
             settings.backup_email,
             backup_json_str,
-            backup_dict["metadata"]
+            backup_dict["metadata"],
+            settings=settings
         )
         if email_success:
             results.append(f"Email: Sent to {settings.backup_email}")

@@ -9,8 +9,10 @@ from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 from datetime import datetime
 
-def is_smtp_configured() -> bool:
+def is_smtp_configured(settings=None) -> bool:
     """Checks if email dispatch is configured via Resend HTTPS API or SMTP."""
+    if settings and getattr(settings, "resend_api_key", None):
+        return True
     if os.getenv("RESEND_API_KEY"):
         return True
     return bool(os.getenv("SMTP_USER") and os.getenv("SMTP_PASSWORD"))
@@ -48,7 +50,7 @@ def _send_via_resend(api_key: str, recipient_email: str, filename: str, backup_j
     except Exception as e:
         return False, f"Resend dispatch notice: {str(e)}"
 
-def send_backup_email(recipient_email: str, backup_json_str: str, metadata: dict = None) -> tuple[bool, str]:
+def send_backup_email(recipient_email: str, backup_json_str: str, metadata: dict = None, settings=None) -> tuple[bool, str]:
     """
     Sends a database backup JSON file as an attachment to recipient_email.
     Supports Resend HTTPS API (recommended for Render) or traditional SMTP.
@@ -59,7 +61,7 @@ def send_backup_email(recipient_email: str, backup_json_str: str, metadata: dict
     now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
     filename = f"lyrch_backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
 
-    resend_key = os.getenv("RESEND_API_KEY", "").strip()
+    resend_key = (getattr(settings, "resend_api_key", "") or "").strip() or os.getenv("RESEND_API_KEY", "").strip()
 
     smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
     smtp_port = int(os.getenv("SMTP_PORT", 587))
@@ -69,7 +71,7 @@ def send_backup_email(recipient_email: str, backup_json_str: str, metadata: dict
     use_tls = os.getenv("SMTP_USE_TLS", "true").lower() in ("true", "1")
 
     if not resend_key and (not smtp_user or not smtp_password):
-        return False, "Email credentials not configured. Render blocks SMTP ports (587) on free plans. Use Google Drive Backup or set RESEND_API_KEY in Render."
+        return False, "Email credentials not configured. Please paste your Resend API Key in Settings or set RESEND_API_KEY in Render."
 
     # Compose Email
     msg = MIMEMultipart()
