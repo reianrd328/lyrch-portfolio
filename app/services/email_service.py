@@ -1,21 +1,65 @@
 import os
+import json
+import base64
 import smtplib
+import urllib.request
+import urllib.error
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 from datetime import datetime
 
 def is_smtp_configured() -> bool:
-    """Checks if email SMTP settings are present in the environment."""
+    """Checks if email dispatch is configured via Resend HTTPS API or SMTP."""
+    if os.getenv("RESEND_API_KEY"):
+        return True
     return bool(os.getenv("SMTP_USER") and os.getenv("SMTP_PASSWORD"))
+
+def _send_via_resend(api_key: str, recipient_email: str, filename: str, backup_json_str: str, body_html: str, now_str: str) -> tuple[bool, str]:
+    """Sends email via Resend HTTPS REST API over port 443 (bypasses Render SMTP port blocking)."""
+    try:
+        b64_content = base64.b64encode(backup_json_str.encode("utf-8")).decode("utf-8")
+        from_email = os.getenv("RESEND_FROM", "LYRCH Vault <onboarding@resend.dev>")
+        payload = {
+            "from": from_email,
+            "to": [recipient_email],
+            "subject": f"[LYRCH COMMAND CENTER] Database Backup Vault — {now_str}",
+            "html": body_html,
+            "attachments": [
+                {
+                    "filename": filename,
+                    "content": b64_content
+                }
+            ]
+        }
+        req = urllib.request.Request(
+            "https://api.resend.com/emails",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+        )
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            return True, f"Backup successfully emailed to {recipient_email} via Resend API!"
+    except urllib.error.HTTPError as http_err:
+        err_body = http_err.read().decode("utf-8", errors="ignore")
+        return False, f"Resend API error ({http_err.code}): {err_body}"
+    except Exception as e:
+        return False, f"Resend dispatch notice: {str(e)}"
 
 def send_backup_email(recipient_email: str, backup_json_str: str, metadata: dict = None) -> tuple[bool, str]:
     """
-    Sends a database backup JSON file as an attachment to recipient_email via SMTP.
-    Works with Gmail, Outlook, SendGrid, Brevo, or custom SMTP servers.
+    Sends a database backup JSON file as an attachment to recipient_email.
+    Supports Resend HTTPS API (recommended for Render) or traditional SMTP.
     """
     if not recipient_email or "@" not in recipient_email:
         return False, "Recipient email address is invalid."
+
+    now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+    filename = f"lyrch_backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+
+    resend_key = os.getenv("RESEND_API_KEY", "").strip()
 
     smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
     smtp_port = int(os.getenv("SMTP_PORT", 587))
@@ -24,11 +68,8 @@ def send_backup_email(recipient_email: str, backup_json_str: str, metadata: dict
     smtp_from = os.getenv("SMTP_FROM", f"LYRCH Command Center <{smtp_user}>" if smtp_user else "command@lyrch.dev")
     use_tls = os.getenv("SMTP_USE_TLS", "true").lower() in ("true", "1")
 
-    if not smtp_user or not smtp_password:
-        return False, "SMTP credentials not configured. Set SMTP_USER and SMTP_PASSWORD in Render Environment variables."
-
-    now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
-    filename = f"lyrch_backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+    if not resend_key and (not smtp_user or not smtp_password):
+        return False, "Email credentials not configured. Render blocks SMTP ports (587) on free plans. Use Google Drive Backup or set RESEND_API_KEY in Render."
 
     # Compose Email
     msg = MIMEMultipart()
@@ -82,6 +123,9 @@ def send_backup_email(recipient_email: str, backup_json_str: str, metadata: dict
     attachment.add_header("Content-Disposition", "attachment", filename=filename)
     msg.attach(attachment)
 
+    if resend_key:
+        return _send_via_resend(resend_key, recipient_email, filename, backup_json_str, body_html, now_str)
+
     try:
         if use_tls:
             server = smtplib.SMTP(smtp_host, smtp_port, timeout=20)
@@ -97,7 +141,10 @@ def send_backup_email(recipient_email: str, backup_json_str: str, metadata: dict
         server.quit()
         return True, f"Backup successfully emailed to {recipient_email}"
     except smtplib.SMTPAuthenticationError:
-        return False, "SMTP Authentication Failed: Check your SMTP_USER and App Password."
+        return False, "SMTP Authentication Failed: Check your SMTP_USER and Google App Password."
     except Exception as e:
-        return False, f"Email sending failed: {str(e)}"
+        err_str = str(e)
+        if "101" in err_str or "network is unreachable" in err_str.lower():
+            return False, "Render blocks outbound SMTP ports (587/465) on free instances. Please use your Google Drive Backup (which works over HTTPS) or set RESEND_API_KEY in Render."
+        return False, f"Email sending failed: {err_str}"
 
