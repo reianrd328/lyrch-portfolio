@@ -204,9 +204,40 @@ function initSettingsCustomizer() {
                 }, 350);
             }
             if (avatarStatus) {
-                const sizeKb = Math.round(file.size / 1024);
-                avatarStatus.innerHTML = `<span style="color: #00ff66;"><i class="fa-solid fa-check"></i> ${file.name}</span> (${sizeKb} KB) <br><small style="color: var(--neon-cyan);">Ready to save</small>`;
+                avatarStatus.innerHTML = `<span style="color: var(--neon-cyan);"><i class="fa-solid fa-spinner fa-spin"></i> Uploading &amp; saving photo...</span>`;
             }
+
+            // Immediately persist to backend via AJAX
+            const formData = new FormData();
+            formData.append("avatar", file);
+
+            fetch("/admin/upload-avatar", {
+                method: "POST",
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (avatarStatus) {
+                        const sizeKb = Math.round(file.size / 1024);
+                        avatarStatus.innerHTML = `<span style="color: #00ff66; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Photo Saved &amp; Applied!</span><br><small style="color: #94a3b8;">(${file.name} • ${sizeKb} KB)</small>`;
+                    }
+                    if (avatarUrlInput) {
+                        avatarUrlInput.value = data.avatar_url;
+                    }
+                } else {
+                    if (avatarStatus) {
+                        avatarStatus.innerHTML = `<span style="color: #f87171;"><i class="fa-solid fa-triangle-exclamation"></i> ${data.error || "Save failed"}</span>`;
+                    }
+                }
+            })
+            .catch(err => {
+                console.warn("Instant avatar upload notice:", err);
+                if (avatarStatus) {
+                    const sizeKb = Math.round(file.size / 1024);
+                    avatarStatus.innerHTML = `<span style="color: #00ff66;"><i class="fa-solid fa-check"></i> ${file.name}</span> (${sizeKb} KB) <br><small style="color: var(--neon-cyan);">Click "Save Changes" below</small>`;
+                }
+            });
         };
         reader.readAsDataURL(file);
     }

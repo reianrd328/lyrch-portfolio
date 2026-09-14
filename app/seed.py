@@ -131,3 +131,4 @@ def seed_initial_data():
     SiteSetting.get_settings()
 
     db.session.commit()
+

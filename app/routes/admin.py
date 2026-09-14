@@ -1,9 +1,43 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from flask_login import login_required, current_user
 from app.models import db, Project, Video, GalleryItem, Document, Skill, Experience, BlogPost, ActivityLog, SiteSetting
 from app.services.upload_service import save_upload_file, delete_file
 
 admin_bp = Blueprint("admin", __name__)
+
+@admin_bp.route("/upload-avatar", methods=["POST"])
+@login_required
+def upload_avatar():
+    """Instant AJAX avatar uploader that immediately saves to DB and disk."""
+    avatar_file = request.files.get("avatar")
+    if not avatar_file or not avatar_file.filename:
+        return jsonify({"success": False, "error": "No image file provided."}), 400
+
+    success, res = save_upload_file(avatar_file, subfolder="profile", allowed_types="image")
+    if not success:
+        return jsonify({"success": False, "error": res}), 400
+
+    site_settings = SiteSetting.get_settings()
+    if site_settings.avatar_url and site_settings.avatar_url.startswith("/uploads/"):
+        delete_file(site_settings.avatar_url)
+
+    site_settings.avatar_url = res
+    if hasattr(current_user, "avatar_url"):
+        current_user.avatar_url = res
+
+    log = ActivityLog(
+        title="Updated profile avatar photo",
+        activity_type="project",
+        time_label="Just now"
+    )
+    db.session.add(log)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "avatar_url": res,
+        "message": "Profile photo saved and updated live!"
+    })
 
 @admin_bp.route("/")
 @login_required
