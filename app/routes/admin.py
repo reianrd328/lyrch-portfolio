@@ -288,6 +288,15 @@ def backup_upload_gdrive():
     folder_override = request.form.get("folder_id_override", "").strip()
     folder_id = clean_folder_id(folder_override) if folder_override else settings.gdrive_folder_id
 
+    # If a folder was supplied in the form, automatically persist it to settings
+    if folder_override and folder_id and folder_id != settings.gdrive_folder_id:
+        settings.gdrive_folder_id = folder_id
+        db.session.commit()
+
+    if not folder_id:
+        flash("Google Drive Folder link/ID is missing. Please paste your Google Drive Folder link or ID into 'GOOGLE DRIVE FOLDER ID / URL' first.", "warning")
+        return redirect(url_for("admin.settings"))
+
     backup_json_str = export_database_to_json_str()
     filename = f"lyrch_backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
 
@@ -310,7 +319,7 @@ def backup_upload_gdrive():
     else:
         settings.backup_last_status = f"Failed (Google Drive): {msg}"
         db.session.commit()
-        flash(f"Google Drive upload failed: {msg}", "danger")
+        flash(f"Google Drive upload notice: {msg}", "danger")
 
     return redirect(url_for("admin.settings"))
 

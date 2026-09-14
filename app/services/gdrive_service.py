@@ -1,5 +1,6 @@
 import os
 import io
+import re
 import json
 import base64
 import logging
@@ -82,15 +83,26 @@ def get_drive_service():
 
 def clean_folder_id(raw_input: str) -> str:
     """
-    Extracts the clean folder ID if the user pasted a full Google Drive URL.
-    e.g. 'https://drive.google.com/drive/folders/1abcXYZ?usp=sharing' -> '1abcXYZ'
+    Extracts the clean folder ID from a raw ID or any Google Drive URL format.
+    Handles:
+    - https://drive.google.com/drive/folders/1BxiMVs0XRA5nFMdKvBHKGo24xpVTk9-F?usp=sharing
+    - https://drive.google.com/drive/u/0/folders/1BxiMVs0XRA5nFMdKvBHKGo24xpVTk9-F
+    - https://drive.google.com/open?id=1BxiMVs0XRA5nFMdKvBHKGo24xpVTk9-F
+    - 1BxiMVs0XRA5nFMdKvBHKGo24xpVTk9-F
     """
     if not raw_input:
         return ""
     val = raw_input.strip()
-    if "/folders/" in val:
-        val = val.split("/folders/")[1].split("?")[0].split("/")[0]
-    return val.strip()
+    m = re.search(r"/folders/([a-zA-Z0-9_-]+)", val)
+    if m:
+        return m.group(1)
+    m = re.search(r"[?&]id=([a-zA-Z0-9_-]+)", val)
+    if m:
+        return m.group(1)
+    # Direct folder ID fallback
+    if "/" not in val and "?" not in val:
+        return val
+    return val
 
 def upload_backup_to_gdrive(backup_json_str: str, filename: str = None, folder_id: str = None) -> tuple[bool, str, str | None]:
     """
@@ -101,21 +113,21 @@ def upload_backup_to_gdrive(backup_json_str: str, filename: str = None, folder_i
         if not is_gdrive_configured():
             return False, "Google Drive service account credentials are not configured. Please add GDRIVE_SERVICE_ACCOUNT_JSON in environment variables.", None
 
+        target_folder = clean_folder_id(folder_id)
+        if not target_folder:
+            return False, "Google Drive Folder ID is missing. Please paste your Google Drive folder URL or ID in 'GOOGLE DRIVE FOLDER ID' and save.", None
+
         service = get_drive_service()
 
         if not filename:
             filename = f"lyrch_backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
 
-        target_folder = clean_folder_id(folder_id)
-
         file_metadata = {
             "name": filename,
             "mimeType": "application/json",
-            "description": f"LYRCH Portfolio Database Backup archive generated on {datetime.utcnow().isoformat()} UTC"
+            "description": f"LYRCH Portfolio Database Backup archive generated on {datetime.utcnow().isoformat()} UTC",
+            "parents": [target_folder]
         }
-
-        if target_folder:
-            file_metadata["parents"] = [target_folder]
 
         media = MediaIoBaseUpload(
             io.BytesIO(backup_json_str.encode("utf-8")),
@@ -135,13 +147,27 @@ def upload_backup_to_gdrive(backup_json_str: str, filename: str = None, folder_i
         return True, f"Successfully uploaded {filename} to Google Drive (ID: {file_id})", web_link
 
     except HttpError as http_err:
-        err_msg = str(http_err)
-        if http_err.resp.status == 404:
-            err_msg = "Google Drive Folder not found (404). Please verify your Google Drive Folder ID."
+        raw_reason = ""
+        try:
+            err_json = json.loads(http_err.content.decode("utf-8"))
+            raw_reason = err_json.get("error", {}).get("message", "")
+        except Exception:
+            raw_reason = str(http_err)
+
+        if "has not been used in project" in raw_reason or "is disabled" in raw_reason:
+            err_msg = f"Google Drive API is disabled in your project. Please open Google Cloud Console, search 'Google Drive API', and click ENABLE. ({raw_reason})"
+        elif "storage quota" in raw_reason.lower():
+            err_msg = "Google Drive storage quota error: Service accounts cannot store root files. Make sure the folder is shared with your bot as Editor and the Folder ID is correct."
+        elif http_err.resp.status == 404:
+            err_msg = f"Google Drive Folder not found (404). Please verify your Google Drive Folder ID / URL. ({raw_reason})"
         elif http_err.resp.status == 403:
-            err_msg = "Google Drive Permission Denied (403). Make sure your Google Drive folder is shared with your Service Account email as Editor."
+            sa_email = get_service_account_email() or "your service account email"
+            err_msg = f"Google Drive Permission Denied (403): {raw_reason}. Make sure the folder is shared with {sa_email} as Editor."
+        else:
+            err_msg = f"Google Drive API error ({http_err.resp.status}): {raw_reason}"
         logger.error(f"Google Drive API HttpError: {err_msg}")
         return False, err_msg, None
     except Exception as e:
         logger.error(f"Google Drive upload exception: {e}")
         return False, f"Google Drive error: {str(e)}", None
+

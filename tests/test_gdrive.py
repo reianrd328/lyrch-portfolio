@@ -60,7 +60,12 @@ class GDriveTestCase(unittest.TestCase):
     def test_manual_upload_unconfigured_error_handling(self):
         """Test POST /admin/backup/upload-gdrive handles unconfigured credentials safely."""
         self.login()
+        # 1. Missing folder ID
         res = self.client.post("/admin/backup/upload-gdrive", follow_redirects=True)
+        self.assertEqual(res.status_code, 200)
+
+        # 2. Folder provided but credentials unconfigured
+        res = self.client.post("/admin/backup/upload-gdrive", data={"folder_id_override": "test_folder"}, follow_redirects=True)
         self.assertEqual(res.status_code, 200)
 
         settings = SiteSetting.get_settings()
@@ -123,3 +128,4 @@ class GDriveTestCase(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

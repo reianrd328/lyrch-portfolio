@@ -415,7 +415,7 @@
                         </div>
 
                         <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
-                            <button type="submit" form="sendBackupGdriveForm" class="btn-command-primary" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 11.5px; padding: 8px 12px; box-shadow: 0 0 10px rgba(0,240,255,0.2);">
+                            <button type="button" onclick="submitGdriveBackup()" class="btn-command-primary" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 11.5px; padding: 8px 12px; box-shadow: 0 0 10px rgba(0,240,255,0.2);">
                                 <i class="fa-brands fa-google-drive"></i> Upload to Drive Now
                             </button>
                             {% if s.gdrive_last_upload_url %}
@@ -528,8 +528,20 @@
     </form>
 
     <!-- Standalone forms for backup actions -->
-    <form id="sendBackupGdriveForm" method="POST" action="{{ url_for('admin.backup_upload_gdrive') }}" style="display: none;"></form>
+    <form id="sendBackupGdriveForm" method="POST" action="{{ url_for('admin.backup_upload_gdrive') }}" style="display: none;">
+        <input type="hidden" name="folder_id_override" id="gdriveFolderOverride">
+    </form>
     <form id="sendBackupEmailForm" method="POST" action="{{ url_for('admin.backup_send_email') }}" style="display: none;"></form>
     <form id="restoreBackupForm" method="POST" action="{{ url_for('admin.backup_restore') }}" enctype="multipart/form-data" style="display: none;"></form>
+
+    <script>
+    function submitGdriveBackup() {
+        const input = document.querySelector('input[name="gdrive_folder_id"]');
+        if (input) {
+            document.getElementById('gdriveFolderOverride').value = input.value.trim();
+        }
+        document.getElementById('sendBackupGdriveForm').submit();
+    }
+    </script>
 </div>
 {% endblock %}
