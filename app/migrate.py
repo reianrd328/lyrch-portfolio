@@ -56,3 +56,13 @@ def check_and_apply_migrations(app):
         except Exception as e:
             app.logger.warning(f"Migration checker notice: {e}")
 
+        # Check and initialize portfolio_profiles table
+        try:
+            from app.models.profile import PortfolioProfile
+            from app.services.profile_service import bootstrap_default_profile_if_needed
+
+            PortfolioProfile.__table__.create(db.engine, checkfirst=True)
+            bootstrap_default_profile_if_needed()
+        except Exception as e:
+            app.logger.warning(f"Portfolio profiles migration notice: {e}")
+

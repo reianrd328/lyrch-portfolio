@@ -5,10 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}LYRCH / DEV — Digital Command Center{% endblock %}</title>
     <script>
-        const savedTheme = localStorage.getItem('lyrch_theme');
-        if (savedTheme) {
-            document.documentElement.setAttribute('data-theme', savedTheme);
-        }
+        {% if preview_profile and settings and settings.default_theme %}
+            document.documentElement.setAttribute('data-theme', '{{ settings.default_theme }}');
+        {% else %}
+            const savedTheme = localStorage.getItem('lyrch_theme');
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            }
+        {% endif %}
     </script>
     <style id="customThemeStyles">
         :root {
@@ -30,6 +34,44 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body class="command-center-body">
+    <!-- Dedicated Client Profile Preview Ribbon -->
+    {% if preview_profile %}
+    <div class="client-preview-ribbon" style="background: linear-gradient(90deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%); border-bottom: 2px solid var(--neon-cyan); padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; z-index: 10000; position: sticky; top: 0; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <span style="background: var(--neon-cyan); color: #020617; font-family: var(--font-mono); font-weight: 800; font-size: 10.5px; padding: 3px 9px; border-radius: 4px; letter-spacing: 0.8px;">
+                <i class="fa-solid fa-eye"></i> DEDICATED CLIENT PREVIEW
+            </span>
+            <span style="color: #f8fafc; font-size: 13px; font-weight: 600;">
+                {{ preview_profile.name }}
+            </span>
+            {% if preview_profile.client_name %}
+            <span style="color: #cbd5e1; font-size: 12px;">
+                Client: <strong>{{ preview_profile.client_name }}</strong>
+            </span>
+            {% endif %}
+            <span style="color: #94a3b8; font-size: 11px; font-family: var(--font-mono);">
+                Link: <code>/p/{{ preview_profile.slug }}</code>
+            </span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('admin_profiles.index') }}" class="btn-command-secondary" style="font-size: 11px; padding: 5px 12px;">
+                <i class="fa-solid fa-arrow-left"></i> Profiles Hub
+            </a>
+            <form action="{{ url_for('admin_profiles.activate', profile_id=preview_profile.id) }}" method="POST" style="margin: 0;">
+                <button type="submit" class="btn-command-primary" style="font-size: 11px; padding: 5px 14px;">
+                    <i class="fa-solid fa-bolt"></i> 1-Click Activate as Main Site
+                </button>
+            </form>
+            {% else %}
+            <span style="font-size: 11px; color: #a5b4fc; font-family: var(--font-mono);">
+                <i class="fa-solid fa-circle-check" style="color: #4ade80;"></i> Dedicated Portfolio Active
+            </span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Flash Notifications Container -->
     <div class="command-flash-container" id="flashContainer">
         {% with messages = get_flashed_messages(with_categories=true) %}

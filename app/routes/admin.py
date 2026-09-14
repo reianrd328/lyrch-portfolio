@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, Response
 from flask_login import login_required, current_user
-from app.models import db, Project, Video, GalleryItem, Document, Skill, Experience, BlogPost, ActivityLog, SiteSetting
+from app.models import db, Project, Video, GalleryItem, Document, Skill, Experience, BlogPost, ActivityLog, SiteSetting, PortfolioProfile
 from app.services.upload_service import save_upload_file, delete_file
 from app.services.backup_service import export_database_to_dict, export_database_to_json_str, restore_database_from_dict
 from app.services.email_service import send_backup_email, is_smtp_configured
@@ -64,6 +64,7 @@ def dashboard():
     recent_projects = Project.query.order_by(Project.id.desc()).limit(5).all()
     recent_videos = Video.query.order_by(Video.id.desc()).limit(5).all()
     recent_activities = ActivityLog.query.order_by(ActivityLog.id.desc()).limit(8).all()
+    active_profile = PortfolioProfile.query.filter_by(is_active=True).first()
 
     return render_template(
         "admin/dashboard.html",
@@ -71,6 +72,7 @@ def dashboard():
         recent_projects=recent_projects,
         recent_videos=recent_videos,
         recent_activities=recent_activities,
+        active_profile=active_profile,
         user=current_user
     )
 

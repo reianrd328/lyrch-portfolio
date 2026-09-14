@@ -1,0 +1,352 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Portfolio Profiles — Multi-Client Switcher{% endblock %}
+
+{% block admin_content %}
+<div class="telemetry-card">
+    <div class="card-header-bar">
+        <div class="header-label">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>PORTFOLIO PROFILES // MULTI-CLIENT ENGINE</span>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="button" class="btn-command-secondary" style="font-size: 12px; padding: 7px 14px;" onclick="openModal('importModal')">
+                <i class="fa-solid fa-file-import"></i> IMPORT JSON
+            </button>
+            <button type="button" class="btn-command-primary" style="font-size: 12px; padding: 7px 16px;" onclick="openModal('createModal')">
+                <i class="fa-solid fa-plus"></i> CREATE NEW PROFILE
+            </button>
+        </div>
+    </div>
+
+    <!-- Active Profile Highlight Banner -->
+    {% if active_profile %}
+    <div style="background: linear-gradient(135deg, rgba(0, 240, 255, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%); border: 1px solid rgba(0, 240, 255, 0.35); border-radius: 12px; padding: 20px; margin: 20px 0 28px; position: relative; overflow: hidden;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <span style="background: var(--neon-cyan); color: #020617; font-family: var(--font-mono); font-weight: 800; font-size: 11px; padding: 3px 10px; border-radius: 4px; letter-spacing: 0.8px;">
+                        <i class="fa-solid fa-circle-check"></i> CURRENTLY LIVE ON MAIN WEBSITE
+                    </span>
+                    <span style="color: var(--neon-purple); font-family: var(--font-mono); font-size: 11px;">
+                        THEME: {{ active_profile.theme_preset|upper }}
+                    </span>
+                </div>
+                <h2 style="font-family: var(--font-display); font-size: 24px; color: #fff; margin: 4px 0 6px;">
+                    {{ active_profile.name }}
+                </h2>
+                <div style="color: var(--text-muted); font-size: 13px; margin-bottom: 10px;">
+                    {% if active_profile.client_name %}Client / Entity: <strong style="color: #e2e8f0;">{{ active_profile.client_name }}</strong> &bull; {% endif %}
+                    Main URL: <code style="color: var(--neon-cyan); font-weight: 600;">/ (Public Homepage)</code> &bull;
+                    Dedicated URL: <a href="{{ url_for('public.profile_preview', slug=active_profile.slug) }}" target="_blank" style="color: #cbd5e1; text-decoration: underline;">/p/{{ active_profile.slug }}</a>
+                </div>
+                <p style="color: #94a3b8; font-size: 12.5px; max-width: 650px; line-height: 1.5; margin: 0;">
+                    {{ active_profile.description or 'Primary master portfolio slot.' }}
+                </p>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
+                <div style="display: flex; gap: 8px;">
+                    <a href="{{ url_for('public.home') }}" target="_blank" class="btn-command-secondary" style="font-size: 11.5px; padding: 6px 12px;">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Visit Live Site
+                    </a>
+                    <a href="{{ url_for('admin_profiles.export', profile_id=active_profile.id) }}" class="btn-command-secondary" style="font-size: 11.5px; padding: 6px 12px;">
+                        <i class="fa-solid fa-download"></i> Export JSON
+                    </a>
+                </div>
+                <form action="{{ url_for('admin_profiles.save_current', profile_id=active_profile.id) }}" method="POST">
+                    <button type="submit" class="btn-command-primary" style="font-size: 11.5px; padding: 6px 14px; background: rgba(0, 240, 255, 0.15); border-color: var(--neon-cyan);">
+                        <i class="fa-solid fa-floppy-disk"></i> Force Sync Live State to Slot
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Info Explanation Box -->
+    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 14px 18px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+        <div style="font-size: 12px; color: #94a3b8; line-height: 1.5;">
+            <i class="fa-solid fa-circle-info" style="color: var(--neon-cyan); margin-right: 6px;"></i>
+            <strong>Multi-Portfolio Concept:</strong> Each profile stores its own branding, projects, skills, and theme. You can share each client's <strong>Dedicated Preview Link (<code>/p/&lt;slug&gt;</code>)</strong> directly with them at any time, or click <strong>1-Click Activate</strong> to swap which portfolio powers the main domain.
+        </div>
+    </div>
+
+    <!-- Profiles Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px;">
+        {% for profile in profiles %}
+        <div class="metric-glass-card" style="display: flex; flex-direction: column; justify-content: space-between; border-color: {% if profile.is_active %}rgba(0, 240, 255, 0.5){% else %}rgba(255, 255, 255, 0.1){% endif %}; background: {% if profile.is_active %}rgba(0, 240, 255, 0.03){% else %}rgba(15, 23, 42, 0.4){% endif %}; padding: 20px; border-radius: 12px;">
+            <div>
+                <!-- Top Badge & Theme -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    {% if profile.is_active %}
+                    <span style="background: var(--neon-cyan); color: #020617; font-family: var(--font-mono); font-weight: 800; font-size: 10px; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.6px;">
+                        <i class="fa-solid fa-check"></i> LIVE SITE
+                    </span>
+                    {% else %}
+                    <span style="background: rgba(255, 255, 255, 0.08); color: #94a3b8; font-family: var(--font-mono); font-weight: 600; font-size: 10px; padding: 2px 8px; border-radius: 4px;">
+                        STANDALONE SLOT
+                    </span>
+                    {% endif %}
+
+                    <span style="font-family: var(--font-mono); font-size: 11px; color: var(--neon-purple); text-transform: uppercase;">
+                        <i class="fa-solid fa-palette"></i> {{ profile.theme_preset }}
+                    </span>
+                </div>
+
+                <!-- Profile Title & Client -->
+                <h3 style="font-family: var(--font-display); font-size: 18px; color: #f8fafc; margin: 0 0 4px;">
+                    {{ profile.name }}
+                </h3>
+                {% if profile.client_name %}
+                <div style="font-size: 12px; color: var(--neon-cyan); margin-bottom: 8px;">
+                    Client: <strong>{{ profile.client_name }}</strong>
+                </div>
+                {% endif %}
+
+                <!-- Description -->
+                <p style="font-size: 12px; color: #94a3b8; line-height: 1.4; margin: 0 0 14px; min-height: 34px;">
+                    {{ profile.description or 'No description provided.' }}
+                </p>
+
+                <!-- Dedicated Link Box -->
+                <div style="background: rgba(2, 6, 23, 0.7); border: 1px dashed rgba(0, 240, 255, 0.3); border-radius: 6px; padding: 8px 12px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; font-family: var(--font-mono); color: #cbd5e1;">
+                        <i class="fa-solid fa-link" style="color: var(--neon-cyan); margin-right: 4px;"></i>
+                        /p/{{ profile.slug }}
+                    </div>
+                    <div style="display: flex; gap: 6px;">
+                        <a href="{{ url_for('public.profile_preview', slug=profile.slug) }}" target="_blank" class="telemetry-btn" title="Open Dedicated Link" style="width: 26px; height: 26px; font-size: 11px;">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Snapshot Stats -->
+                <div style="display: flex; gap: 14px; font-family: var(--font-mono); font-size: 11px; color: #64748b; margin-bottom: 16px;">
+                    <span><i class="fa-solid fa-code" style="color: var(--neon-cyan);"></i> {{ profile.project_count }} Projects</span>
+                    <span><i class="fa-solid fa-microchip" style="color: var(--neon-purple);"></i> {{ profile.skill_count }} Skills</span>
+                </div>
+            </div>
+
+            <!-- Card Actions -->
+            <div style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; gap: 8px;">
+                    {% if not profile.is_active %}
+                    <form action="{{ url_for('admin_profiles.activate', profile_id=profile.id) }}" method="POST" style="flex: 1; margin: 0;" onsubmit="return confirm('Activate {{ profile.name }} as the main website? Your current live site will be safely auto-saved.')">
+                        <button type="submit" class="btn-command-primary" style="width: 100%; font-size: 11.5px; padding: 7px 10px;">
+                            <i class="fa-solid fa-bolt"></i> 1-Click Activate
+                        </button>
+                    </form>
+                    {% else %}
+                    <button class="btn-command-secondary" style="flex: 1; font-size: 11.5px; padding: 7px 10px; color: var(--neon-cyan); border-color: var(--neon-cyan); cursor: default;" disabled>
+                        <i class="fa-solid fa-circle-dot"></i> Live Active
+                    </button>
+                    {% endif %}
+
+                    <a href="{{ url_for('public.profile_preview', slug=profile.slug) }}" target="_blank" class="btn-command-secondary" style="font-size: 11.5px; padding: 7px 12px;" title="Preview Dedicated Site">
+                        <i class="fa-solid fa-eye"></i> Preview
+                    </a>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 2px;">
+                    <div style="display: flex; gap: 6px;">
+                        <button type="button" class="telemetry-btn" title="Edit Metadata" onclick="openEditModal({{ profile.id }}, '{{ profile.name|replace("'", "\\'") }}', '{{ profile.client_name|replace("'", "\\'") }}', '{{ profile.slug }}', '{{ profile.theme_preset }}', '{{ profile.description|replace("'", "\\'") }}')">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <a href="{{ url_for('admin_profiles.export', profile_id=profile.id) }}" class="telemetry-btn" title="Export JSON">
+                            <i class="fa-solid fa-download"></i>
+                        </a>
+                        {% if profile.is_active %}
+                        <form action="{{ url_for('admin_profiles.save_current', profile_id=profile.id) }}" method="POST" style="margin: 0;">
+                            <button type="submit" class="telemetry-btn" title="Sync live site to this slot">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+
+                    {% if not profile.is_active %}
+                    <form action="{{ url_for('admin_profiles.delete', profile_id=profile.id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Delete portfolio profile \'{{ profile.name }}\'?')">
+                        <button type="submit" class="telemetry-btn" title="Delete Profile" style="color: #f87171;">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- CREATE PROFILE MODAL -->
+<div class="command-modal-overlay" id="createModal" style="display: none; position: fixed; inset: 0; background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(6px); z-index: 99999; align-items: center; justify-content: center;">
+    <div style="background: #0b1120; border: 1px solid rgba(0, 240, 255, 0.4); border-radius: 12px; width: 100%; max-width: 540px; padding: 26px; box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+            <h3 style="font-family: var(--font-display); font-size: 18px; color: #fff; margin: 0;">
+                <i class="fa-solid fa-plus" style="color: var(--neon-cyan);"></i> CREATE NEW PORTFOLIO PROFILE
+            </h3>
+            <button type="button" class="alert-close" onclick="closeModal('createModal')">&times;</button>
+        </div>
+
+        <form action="{{ url_for('admin_profiles.create') }}" method="POST">
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px;">Profile / Portfolio Name *</label>
+                <input type="text" name="name" required placeholder="e.g. Apex Construction Portfolio or Dr. John Smith" class="command-input" style="width: 100%;" oninput="autoGenerateSlug(this.value, 'createSlugInput')">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px;">Client / Company Name</label>
+                    <input type="text" name="client_name" placeholder="e.g. Apex Corp" class="command-input" style="width: 100%;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px;">URL Slug (/p/slug)</label>
+                    <input type="text" name="slug" id="createSlugInput" placeholder="apex-corp" class="command-input" style="width: 100%;">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px;">Theme Preset</label>
+                    <select name="theme_preset" class="command-input" style="width: 100%;">
+                        <option value="cyber">Cyber Neon (Cyan &amp; Purple)</option>
+                        <option value="matrix">Matrix Green</option>
+                        <option value="synthwave">Synthwave Sunset</option>
+                        <option value="cobalt">Cobalt Blue</option>
+                        <option value="crimson">Crimson Red</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px;">Template Source</label>
+                    <select name="template_type" class="command-input" style="width: 100%;">
+                        <option value="starter">Clean Starter Template</option>
+                        <option value="clone">Clone Current Active Site</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px;">Description / Notes</label>
+                <textarea name="description" rows="2" placeholder="Notes about this client or target market..." class="command-input" style="width: 100%;"></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn-command-secondary" onclick="closeModal('createModal')">Cancel</button>
+                <button type="submit" class="btn-command-primary">Create Profile</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- EDIT PROFILE MODAL -->
+<div class="command-modal-overlay" id="editModal" style="display: none; position: fixed; inset: 0; background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(6px); z-index: 99999; align-items: center; justify-content: center;">
+    <div style="background: #0b1120; border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 12px; width: 100%; max-width: 520px; padding: 26px; box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+            <h3 style="font-family: var(--font-display); font-size: 18px; color: #fff; margin: 0;">
+                <i class="fa-solid fa-pen-to-square" style="color: var(--neon-purple);"></i> EDIT PROFILE METADATA
+            </h3>
+            <button type="button" class="alert-close" onclick="closeModal('editModal')">&times;</button>
+        </div>
+
+        <form id="editForm" method="POST">
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px;">Profile Name *</label>
+                <input type="text" name="name" id="editNameInput" required class="command-input" style="width: 100%;">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px;">Client Name</label>
+                    <input type="text" name="client_name" id="editClientInput" class="command-input" style="width: 100%;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px;">URL Slug (/p/slug)</label>
+                    <input type="text" name="slug" id="editSlugInput" class="command-input" style="width: 100%;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px;">Theme Preset</label>
+                <select name="theme_preset" id="editThemeSelect" class="command-input" style="width: 100%;">
+                    <option value="cyber">Cyber Neon (Cyan &amp; Purple)</option>
+                    <option value="matrix">Matrix Green</option>
+                    <option value="synthwave">Synthwave Sunset</option>
+                    <option value="cobalt">Cobalt Blue</option>
+                    <option value="crimson">Crimson Red</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px;">Description / Notes</label>
+                <textarea name="description" id="editDescInput" rows="2" class="command-input" style="width: 100%;"></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn-command-secondary" onclick="closeModal('editModal')">Cancel</button>
+                <button type="submit" class="btn-command-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- IMPORT JSON MODAL -->
+<div class="command-modal-overlay" id="importModal" style="display: none; position: fixed; inset: 0; background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(6px); z-index: 99999; align-items: center; justify-content: center;">
+    <div style="background: #0b1120; border: 1px solid rgba(0, 240, 255, 0.4); border-radius: 12px; width: 100%; max-width: 480px; padding: 26px; box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+            <h3 style="font-family: var(--font-display); font-size: 18px; color: #fff; margin: 0;">
+                <i class="fa-solid fa-file-import" style="color: var(--neon-cyan);"></i> IMPORT PORTFOLIO JSON
+            </h3>
+            <button type="button" class="alert-close" onclick="closeModal('importModal')">&times;</button>
+        </div>
+
+        <form action="{{ url_for('admin_profiles.import_profile') }}" method="POST" enctype="multipart/form-data">
+            <p style="font-size: 12px; color: #94a3b8; line-height: 1.5; margin-bottom: 16px;">
+                Upload a exported portfolio JSON file. This will create a new standalone profile slot ready to preview or activate without affecting your existing active website.
+            </p>
+
+            <div style="margin-bottom: 20px;">
+                <input type="file" name="profile_file" accept=".json" required class="command-input" style="width: 100%;">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn-command-secondary" onclick="closeModal('importModal')">Cancel</button>
+                <button type="submit" class="btn-command-primary">Upload &amp; Import</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.style.display = 'none';
+}
+
+function autoGenerateSlug(text, targetId) {
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    const clean = text.toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    target.value = clean;
+}
+
+function openEditModal(id, name, client, slug, theme, desc) {
+    document.getElementById('editForm').action = "/admin/profiles/" + id + "/edit";
+    document.getElementById('editNameInput').value = name;
+    document.getElementById('editClientInput').value = client || '';
+    document.getElementById('editSlugInput').value = slug;
+    document.getElementById('editThemeSelect').value = theme || 'cyber';
+    document.getElementById('editDescInput').value = desc || '';
+    openModal('editModal');
+}
+</script>
+{% endblock %}

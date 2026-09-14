@@ -1,7 +1,36 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
-from app.models import Project, Video, GalleryItem, Document, Skill, Experience, BlogPost, ActivityLog
+from app.models import Project, Video, GalleryItem, Document, Skill, Experience, BlogPost, ActivityLog, PortfolioProfile
 
 public_bp = Blueprint("public", __name__)
+
+class ProfileProxy:
+    """Helper wrapper that allows dictionary data to be accessed via attributes in Jinja templates."""
+    def __init__(self, d):
+        self._d = d or {}
+        for k, v in self._d.items():
+            if isinstance(v, dict):
+                setattr(self, k, ProfileProxy(v))
+            elif isinstance(v, list):
+                setattr(self, k, [ProfileProxy(item) if isinstance(item, dict) else item for item in v])
+            else:
+                setattr(self, k, v)
+
+    @property
+    def tech_list(self):
+        val = getattr(self, "technologies", "") or ""
+        return [t.strip() for t in val.split(",") if t.strip()]
+
+    @property
+    def features_list(self):
+        val = getattr(self, "key_features", "") or ""
+        import json
+        try:
+            return json.loads(val)
+        except Exception:
+            return [f.strip() for f in val.split("\n") if f.strip()]
+
+    def __getattr__(self, name):
+        return None
 
 @public_bp.route("/")
 def home():
@@ -97,4 +126,75 @@ def contact():
         flash("Signal received! Your transmission has reached the Command Center.", "success")
         return redirect(url_for("public.contact"))
     return render_template("public/contact.html")
+
+# --- STANDALONE CLIENT PROFILE PREVIEW ROUTES (/p/<slug>) ---
+
+@public_bp.route("/p/<slug>")
+def profile_preview(slug):
+    profile = PortfolioProfile.query.filter_by(slug=slug).first_or_404()
+    if profile.is_active:
+        return home()
+
+    data = profile.get_data()
+    preview_settings = ProfileProxy(data.get("settings", {}))
+    
+    projects_data = data.get("projects", [])
+    featured = [ProfileProxy(p) for p in projects_data if p.get("featured") and p.get("visibility") == "published"][:4]
+    if not featured:
+        featured = [ProfileProxy(p) for p in projects_data if p.get("visibility") != "draft"][:4]
+
+    videos_data = data.get("videos", [])
+    featured_video = ProfileProxy(videos_data[0]) if videos_data else None
+
+    metrics = {
+        "branches": getattr(preview_settings, "metric2_num", "100+"),
+        "users": getattr(preview_settings, "metric3_num", "1000+"),
+        "experience": getattr(preview_settings, "metric1_num", "5+"),
+        "support": getattr(preview_settings, "metric4_num", "24/7"),
+        "growth": getattr(preview_settings, "metric5_num", "Always Learning")
+    }
+
+    return render_template(
+        "public/home.html",
+        featured_projects=featured,
+        featured_video=featured_video,
+        recent_activities=[],
+        metrics=metrics,
+        preview_profile=profile,
+        settings=preview_settings
+    )
+
+@public_bp.route("/p/<slug>/about")
+def profile_about(slug):
+    profile = PortfolioProfile.query.filter_by(slug=slug).first_or_404()
+    if profile.is_active:
+        return about()
+    data = profile.get_data()
+    preview_settings = ProfileProxy(data.get("settings", {}))
+    skills = [ProfileProxy(s) for s in data.get("skills", [])]
+    return render_template("public/about.html", skills=skills, preview_profile=profile, settings=preview_settings)
+
+@public_bp.route("/p/<slug>/experience")
+def profile_experience(slug):
+    profile = PortfolioProfile.query.filter_by(slug=slug).first_or_404()
+    if profile.is_active:
+        return experience()
+    data = profile.get_data()
+    preview_settings = ProfileProxy(data.get("settings", {}))
+    experiences = [ProfileProxy(e) for e in data.get("experiences", [])]
+    return render_template("public/experience.html", experiences=experiences, preview_profile=profile, settings=preview_settings)
+
+@public_bp.route("/p/<slug>/projects")
+def profile_projects(slug):
+    profile = PortfolioProfile.query.filter_by(slug=slug).first_or_404()
+    if profile.is_active:
+        return projects()
+    data = profile.get_data()
+    preview_settings = ProfileProxy(data.get("settings", {}))
+    category = request.args.get("category", "")
+    projects_list = [ProfileProxy(p) for p in data.get("projects", []) if p.get("visibility") == "published"]
+    if category:
+        projects_list = [p for p in projects_list if getattr(p, "category", "") == category]
+    return render_template("public/projects.html", projects=projects_list, selected_category=category, preview_profile=profile, settings=preview_settings)
+
 

@@ -85,6 +85,12 @@
                                 <span>Dashboard</span>
                             </a>
                         </li>
+                        <li class="sidebar-item {% if 'profile' in request.endpoint %}active{% endif %}">
+                            <a href="{{ url_for('admin_profiles.index') }}" class="sidebar-link">
+                                <i class="fa-solid fa-layer-group"></i>
+                                <span>Portfolio Profiles</span>
+                            </a>
+                        </li>
                         <li class="sidebar-item {% if 'project' in request.endpoint %}active{% endif %}">
                             <a href="{{ url_for('admin_projects.index') }}" class="sidebar-link">
                                 <i class="fa-solid fa-code"></i>

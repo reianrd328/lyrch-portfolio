@@ -9,7 +9,12 @@
             <i class="fa-solid fa-layer-group"></i>
             <span>MY WORK // CMS OPERATIONS DESK</span>
         </div>
-        <div>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            {% if active_profile %}
+            <a href="{{ url_for('admin_profiles.index') }}" class="btn-command-secondary" style="font-size: 11px; padding: 6px 12px; border-color: rgba(0,240,255,0.4); background: rgba(0,240,255,0.06);" title="Switch or manage portfolio profiles">
+                <i class="fa-solid fa-layer-group" style="color: var(--neon-cyan);"></i> Active: <strong style="color: #fff; margin-left: 4px;">{{ active_profile.name }}</strong>
+            </a>
+            {% endif %}
             <a href="{{ url_for('admin_projects.create') }}" class="btn-command-primary" style="font-size: 12px; padding: 7px 16px;">
                 <i class="fa-solid fa-plus"></i> ADD NEW WORK
             </a>

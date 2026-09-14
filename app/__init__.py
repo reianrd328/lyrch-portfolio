@@ -55,6 +55,7 @@ def create_app(config_name="default"):
     from app.routes.experience import experience_bp
     from app.routes.blog import blog_bp
     from app.routes.cron import cron_bp
+    from app.routes.profiles import profiles_bp
 
     app.register_blueprint(public_bp)
     app.register_blueprint(auth_bp, url_prefix="/auth")
@@ -67,6 +68,7 @@ def create_app(config_name="default"):
     app.register_blueprint(experience_bp, url_prefix="/admin/experience")
     app.register_blueprint(blog_bp, url_prefix="/admin/blog")
     app.register_blueprint(cron_bp)
+    app.register_blueprint(profiles_bp, url_prefix="/admin/profiles")
 
     # Enforce Single Active Device Session on all Admin routes
     @app.before_request

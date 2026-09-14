@@ -13,6 +13,7 @@ from .category import Category
 from .blog import BlogPost
 from .activity import ActivityLog
 from .settings import SiteSetting
+from .profile import PortfolioProfile
 
 __all__ = [
     "db",
@@ -28,5 +29,6 @@ __all__ = [
     "BlogPost",
     "ActivityLog",
     "SiteSetting",
+    "PortfolioProfile",
 ]
 
