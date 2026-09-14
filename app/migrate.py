@@ -19,7 +19,11 @@ def check_and_apply_migrations(app):
                     ("backup_last_status", "TEXT NULL"),
                     ("gdrive_backup_enabled", "BOOLEAN DEFAULT 0"),
                     ("gdrive_folder_id", "VARCHAR(120) DEFAULT ''"),
-                    ("gdrive_last_upload_url", "VARCHAR(255) NULL")
+                    ("gdrive_last_upload_url", "VARCHAR(255) NULL"),
+                    ("gdrive_client_id", "VARCHAR(255) DEFAULT ''"),
+                    ("gdrive_client_secret", "VARCHAR(255) DEFAULT ''"),
+                    ("gdrive_refresh_token", "TEXT NULL"),
+                    ("gdrive_user_email", "VARCHAR(120) NULL")
                 ]
                 for col_name, col_def in new_cols:
                     if col_name not in existing_cols:

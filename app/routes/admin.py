@@ -1,3 +1,4 @@
+import os
 import json
 from datetime import datetime
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, Response
@@ -7,7 +8,9 @@ from app.services.upload_service import save_upload_file, delete_file
 from app.services.backup_service import export_database_to_dict, export_database_to_json_str, restore_database_from_dict
 from app.services.email_service import send_backup_email, is_smtp_configured
 from app.services.gdrive_service import (
-    upload_backup_to_gdrive, is_gdrive_configured, get_service_account_email, clean_folder_id
+    upload_backup_to_gdrive, is_gdrive_configured, is_oauth_configured,
+    get_connected_account_email, get_service_account_email, clean_folder_id,
+    build_google_oauth_url, exchange_code_for_tokens
 )
 
 admin_bp = Blueprint("admin", __name__)
@@ -178,6 +181,14 @@ def settings():
         raw_folder_id = request.form.get("gdrive_folder_id", "").strip()
         site_settings.gdrive_folder_id = clean_folder_id(raw_folder_id)
 
+        # Google Drive OAuth 2.0 Credentials
+        cid = request.form.get("gdrive_client_id", "").strip()
+        csec = request.form.get("gdrive_client_secret", "").strip()
+        if cid:
+            site_settings.gdrive_client_id = cid
+        if csec:
+            site_settings.gdrive_client_secret = csec
+
         # Log Activity
         log = ActivityLog(
             title="Updated Command Center dashboard & backup settings",
@@ -194,8 +205,10 @@ def settings():
         "admin/settings/index.html",
         s=site_settings,
         smtp_ready=is_smtp_configured(),
-        gdrive_ready=is_gdrive_configured(),
-        gdrive_email=get_service_account_email()
+        gdrive_ready=is_gdrive_configured(site_settings),
+        oauth_ready=is_oauth_configured(site_settings),
+        gdrive_email=get_connected_account_email(site_settings),
+        redirect_uri=_get_oauth_redirect_uri()
     )
 
 @admin_bp.route("/backup/download", methods=["GET"])
@@ -304,7 +317,7 @@ def backup_upload_gdrive():
         backup_json_str = export_database_to_json_str()
         filename = f"lyrch_backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
 
-        success, msg, web_link = upload_backup_to_gdrive(backup_json_str, filename=filename, folder_id=folder_id)
+        success, msg, web_link = upload_backup_to_gdrive(backup_json_str, filename=filename, folder_id=folder_id, settings=settings)
 
         if success:
             settings.gdrive_last_upload_url = web_link
@@ -329,5 +342,113 @@ def backup_upload_gdrive():
         db.session.rollback()
         flash(f"Google Drive process notice: {str(err)}", "danger")
 
+    return redirect(url_for("admin.settings"))
+
+def _get_oauth_redirect_uri() -> str:
+    """Returns the absolute callback URL for Google OAuth 2.0 with HTTPS assurance."""
+    override = os.getenv("GDRIVE_REDIRECT_URI", "").strip()
+    if override:
+        return override
+    uri = url_for("admin.gdrive_oauth_callback", _external=True)
+    proto = request.headers.get("X-Forwarded-Proto", "").lower()
+    if proto == "https" and uri.startswith("http://"):
+        uri = "https://" + uri[len("http://"):]
+    elif "onrender.com" in uri and uri.startswith("http://"):
+        uri = "https://" + uri[len("http://"):]
+    return uri
+
+@admin_bp.route("/backup/gdrive-auth", methods=["POST"])
+@login_required
+def backup_gdrive_auth():
+    """Initiates Google OAuth 2.0 authorization for personal Google Drive."""
+    settings = SiteSetting.get_settings()
+    client_id = (
+        request.form.get("client_id", "").strip()
+        or request.form.get("gdrive_client_id", "").strip()
+        or settings.gdrive_client_id
+        or os.getenv("GDRIVE_CLIENT_ID", "").strip()
+    )
+    client_secret = (
+        request.form.get("client_secret", "").strip()
+        or request.form.get("gdrive_client_secret", "").strip()
+        or settings.gdrive_client_secret
+        or os.getenv("GDRIVE_CLIENT_SECRET", "").strip()
+    )
+
+    raw_folder = request.form.get("folder_id", "").strip() or request.form.get("gdrive_folder_id", "").strip()
+    if raw_folder:
+        settings.gdrive_folder_id = clean_folder_id(raw_folder)
+
+    if not client_id or not client_secret:
+        flash("Please provide your Google OAuth Client ID and Client Secret first.", "warning")
+        return redirect(url_for("admin.settings"))
+
+    settings.gdrive_client_id = client_id
+    settings.gdrive_client_secret = client_secret
+    db.session.commit()
+
+    redirect_uri = _get_oauth_redirect_uri()
+    auth_url = build_google_oauth_url(client_id, redirect_uri)
+    return redirect(auth_url)
+
+@admin_bp.route("/oauth2callback", methods=["GET"])
+@login_required
+def gdrive_oauth_callback():
+    """Handles the OAuth2 code callback from Google."""
+    code = request.args.get("code")
+    error = request.args.get("error")
+    if error or not code:
+        flash(f"Google authorization cancelled or failed: {error or 'No authorization code received'}", "warning")
+        return redirect(url_for("admin.settings"))
+
+    settings = SiteSetting.get_settings()
+    redirect_uri = _get_oauth_redirect_uri()
+
+    rtoken, atoken, uemail = exchange_code_for_tokens(
+        code,
+        settings.gdrive_client_id,
+        settings.gdrive_client_secret,
+        redirect_uri
+    )
+
+    if not rtoken and atoken and settings.gdrive_refresh_token:
+        rtoken = settings.gdrive_refresh_token
+
+    if rtoken:
+        settings.gdrive_refresh_token = rtoken
+        settings.gdrive_user_email = uemail or settings.gdrive_user_email or "Personal Account"
+        settings.gdrive_backup_enabled = True
+        db.session.commit()
+
+        log = ActivityLog(
+            title=f"Connected Google Drive account ({uemail or settings.gdrive_user_email})",
+            activity_type="project",
+            time_label="Just now"
+        )
+        db.session.add(log)
+        db.session.commit()
+        flash(f"Successfully connected Google Drive as {uemail or settings.gdrive_user_email}! Backups will now upload to your personal Google Drive with 15 GB storage.", "success")
+    else:
+        flash("Could not obtain refresh token. Please verify credentials and try again.", "danger")
+
+    return redirect(url_for("admin.settings"))
+
+@admin_bp.route("/backup/gdrive-disconnect", methods=["POST"])
+@login_required
+def backup_gdrive_disconnect():
+    """Disconnects the Google OAuth 2.0 personal account."""
+    settings = SiteSetting.get_settings()
+    settings.gdrive_refresh_token = None
+    settings.gdrive_user_email = None
+    db.session.commit()
+
+    log = ActivityLog(
+        title="Disconnected Google Drive personal account",
+        activity_type="project",
+        time_label="Just now"
+    )
+    db.session.add(log)
+    db.session.commit()
+    flash("Google Drive personal account disconnected.", "info")
     return redirect(url_for("admin.settings"))
 

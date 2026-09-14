@@ -17,6 +17,10 @@ def create_app(config_name="default"):
     app = Flask(__name__)
     app.config.from_object(config_by_name[config_name])
 
+    # Support reverse proxy headers (e.g. Render HTTPS forwarding)
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
     # Ensure upload directories exist
     upload_root = app.config["UPLOAD_FOLDER"]
     for sub in ["projects", "videos", "gallery", "documents", "profile"]:

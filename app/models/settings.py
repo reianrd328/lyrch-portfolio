@@ -73,10 +73,14 @@ class SiteSetting(db.Model):
     backup_last_run = db.Column(db.DateTime, nullable=True)
     backup_last_status = db.Column(db.Text, default="Never run")
 
-    # 9. Google Drive Automated Backup Integration
+    # 9. Google Drive Automated Backup Integration (OAuth 2.0 & Service Account)
     gdrive_backup_enabled = db.Column(db.Boolean, default=False)
     gdrive_folder_id = db.Column(db.String(120), default="")
     gdrive_last_upload_url = db.Column(db.String(255), nullable=True)
+    gdrive_client_id = db.Column(db.String(255), default="")
+    gdrive_client_secret = db.Column(db.String(255), default="")
+    gdrive_refresh_token = db.Column(db.Text, nullable=True)
+    gdrive_user_email = db.Column(db.String(120), nullable=True)
 
     @classmethod
     def get_settings(cls):

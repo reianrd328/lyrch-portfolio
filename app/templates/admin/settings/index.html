@@ -338,13 +338,17 @@
                     </h3>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    {% if gdrive_ready %}
+                    {% if oauth_ready %}
                         <span style="font-size: 11px; color: var(--neon-green); background: rgba(0,255,102,0.1); border: 1px solid rgba(0,255,102,0.3); padding: 4px 10px; border-radius: 20px;">
-                            <i class="fa-brands fa-google-drive"></i> Google Drive Ready
+                            <i class="fa-brands fa-google"></i> Google Drive: Connected ({{ s.gdrive_user_email or 'Personal Account' }})
+                        </span>
+                    {% elif gdrive_ready %}
+                        <span style="font-size: 11px; color: var(--neon-cyan); background: rgba(0,240,255,0.1); border: 1px solid rgba(0,240,255,0.3); padding: 4px 10px; border-radius: 20px;">
+                            <i class="fa-brands fa-google-drive"></i> Service Account Active
                         </span>
                     {% else %}
-                        <span style="font-size: 11px; color: var(--neon-yellow); background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.3); padding: 4px 10px; border-radius: 20px;" title="Set GDRIVE_SERVICE_ACCOUNT_JSON in environment variables">
-                            <i class="fa-brands fa-google-drive"></i> Google Drive Setup Needed
+                        <span style="font-size: 11px; color: var(--neon-yellow); background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.3); padding: 4px 10px; border-radius: 20px;">
+                            <i class="fa-brands fa-google-drive"></i> Connect Personal Google Drive
                         </span>
                     {% endif %}
 
@@ -361,7 +365,7 @@
             </div>
 
             <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.5;">
-                Protect your portfolio data across SQLite, MySQL, and TiDB Cloud. Automated archives can upload straight to your personal Google Drive folder or be dispatched via email.
+                Protect your portfolio data across SQLite, MySQL, and TiDB Cloud. Automated archives can upload straight to your personal Google Drive folder (with 15 GB quota) or be dispatched via email.
             </p>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start;">
@@ -372,7 +376,7 @@
                             <i class="fa-brands fa-google-drive" style="color: #34d399; font-size: 20px;"></i>
                             <div>
                                 <div style="font-size: 13px; font-weight: 700; color: #ffffff; letter-spacing: 0.5px;">GOOGLE DRIVE BACKUP</div>
-                                <div style="font-size: 10.5px; color: var(--text-muted);">Saves backups directly into your Google Drive folder</div>
+                                <div style="font-size: 10.5px; color: var(--text-muted);">Uploads directly to your Google Drive with personal 15 GB quota</div>
                             </div>
                         </div>
                         <label style="position: relative; display: inline-block; width: 50px; height: 26px; margin: 0; cursor: pointer;">
@@ -381,37 +385,74 @@
                         </label>
                     </div>
 
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                <label style="font-size: 10.5px; color: var(--text-muted);">GOOGLE DRIVE FOLDER ID / URL</label>
-                                <a href="javascript:void(0);" onclick="var g=document.getElementById('gdriveHelpBox'); g.style.display = g.style.display === 'none' ? 'block' : 'none';" style="color: var(--neon-cyan); font-size: 10.5px; text-decoration: none;">
-                                    <i class="fa-solid fa-circle-question"></i> How to set up?
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <!-- Connection Status -->
+                        {% if s.gdrive_refresh_token %}
+                        <div style="background: rgba(0,255,102,0.08); border: 1px solid rgba(0,255,102,0.3); border-radius: 6px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <div style="font-size: 10.5px; color: var(--neon-green); font-weight: 700;">
+                                    <i class="fa-solid fa-circle-check"></i> CONNECTED (PERSONAL GOOGLE ACCOUNT)
+                                </div>
+                                <div style="font-size: 12px; color: #ffffff; margin-top: 2px;">
+                                    {{ s.gdrive_user_email or 'Personal Account' }} (15 GB Storage)
+                                </div>
+                            </div>
+                            <button type="submit" form="disconnectGdriveForm" class="btn-command-secondary" style="font-size: 10.5px; padding: 4px 10px; border-color: #ef4444; color: #f87171;" onclick="return confirm('Disconnect your personal Google Drive account?');">
+                                Disconnect
+                            </button>
+                        </div>
+                        {% else %}
+                        <!-- OAuth 2.0 Connect Box -->
+                        <div style="background: rgba(15,23,42,0.9); border: 1px solid rgba(0,240,255,0.25); border-radius: 6px; padding: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-size: 11px; font-weight: 700; color: var(--neon-cyan);">
+                                    <i class="fa-brands fa-google"></i> CONNECT PERSONAL GOOGLE ACCOUNT
+                                </span>
+                                <a href="javascript:void(0);" onclick="var g=document.getElementById('oauthHelpBox'); g.style.display = g.style.display === 'none' ? 'block' : 'none';" style="color: var(--neon-cyan); font-size: 10.5px; text-decoration: none;">
+                                    <i class="fa-solid fa-circle-question"></i> Setup Guide
                                 </a>
                             </div>
-                            <input type="text" name="gdrive_folder_id" value="{{ s.gdrive_folder_id }}" placeholder="e.g. 1BxiMVs0XRA5nFMdKvBHKGo24xpVTk9-F or folder URL" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 7px 10px; color: #fff; font-size: 12px; font-family: monospace;">
-                        </div>
 
-                        {% if gdrive_email %}
-                        <div style="background: rgba(0,240,255,0.06); border: 1px solid rgba(0,240,255,0.2); border-radius: 4px; padding: 8px 10px; font-size: 11px;">
-                            <div style="color: var(--text-muted); margin-bottom: 4px;">Share your Google Drive folder with this Service Account as <strong>Editor</strong>:</div>
-                            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 4px;">
-                                <code style="color: var(--neon-cyan); font-size: 10.5px; word-break: break-all;">{{ gdrive_email }}</code>
-                                <button type="button" onclick="navigator.clipboard.writeText('{{ gdrive_email }}'); this.innerText='Copied!';" style="background: transparent; border: none; color: #94a3b8; font-size: 10px; cursor: pointer; padding: 2px 6px;">Copy</button>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div>
+                                    <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">GOOGLE CLIENT ID</label>
+                                    <input type="text" name="gdrive_client_id" value="{{ s.gdrive_client_id }}" placeholder="e.g. 123456789-xxx.apps.googleusercontent.com" style="width: 100%; background: rgba(2,6,23,0.8); border: 1px solid rgba(255,255,255,0.12); border-radius: 4px; padding: 6px 8px; color: #fff; font-size: 11px; font-family: monospace;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">GOOGLE CLIENT SECRET</label>
+                                    <input type="password" name="gdrive_client_secret" value="{{ s.gdrive_client_secret }}" placeholder="GOCSPX-••••••••••••" style="width: 100%; background: rgba(2,6,23,0.8); border: 1px solid rgba(255,255,255,0.12); border-radius: 4px; padding: 6px 8px; color: #fff; font-size: 11px; font-family: monospace;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">AUTHORIZED REDIRECT URI (Copy &amp; Paste into Google Cloud)</label>
+                                    <div style="display: flex; gap: 6px;">
+                                        <input type="text" readonly value="{{ redirect_uri }}" id="redirectUriInput" style="width: 100%; background: rgba(0,0,0,0.5); border: 1px solid rgba(0,240,255,0.2); border-radius: 4px; padding: 5px 8px; color: var(--neon-cyan); font-size: 10px; font-family: monospace;">
+                                        <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('redirectUriInput').value); this.innerText='Copied!';" class="btn-command-secondary" style="font-size: 10px; padding: 4px 8px; white-space: nowrap;">Copy</button>
+                                    </div>
+                                </div>
+
+                                <button type="button" onclick="submitGdriveAuth()" class="btn-command-primary" style="margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 11.5px; padding: 8px;">
+                                    <i class="fa-brands fa-google"></i> Authorize &amp; Connect Personal Google Drive
+                                </button>
+                            </div>
+
+                            <!-- Setup Instructions -->
+                            <div id="oauthHelpBox" style="display: none; margin-top: 10px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 10px; font-size: 11px; color: #cbd5e1; line-height: 1.5;">
+                                <strong>Quick 3-step OAuth Client Setup:</strong>
+                                <ol style="margin: 4px 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 3px;">
+                                    <li>In <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: var(--neon-cyan);">Google Cloud Credentials</a>, click <strong>+ Create Credentials</strong> &rarr; <strong>OAuth client ID</strong>.</li>
+                                    <li>Select Application type: <strong>Web application</strong>.</li>
+                                    <li>Under <em>Authorized redirect URIs</em>, click <strong>+ ADD URI</strong> and paste the link above!</li>
+                                    <li>Click <strong>Create</strong>, copy the Client ID &amp; Client Secret, paste them here, and click <strong>Authorize</strong>!</li>
+                                </ol>
                             </div>
                         </div>
                         {% endif %}
 
-                        <!-- Helpful Step-by-Step Instructions Collapsible Box -->
-                        <div id="gdriveHelpBox" style="display: none; background: rgba(15,23,42,0.95); border: 1px solid rgba(0,240,255,0.3); border-radius: 6px; padding: 12px; font-size: 11.5px; line-height: 1.5; color: #cbd5e1;">
-                            <div style="font-weight: 700; color: var(--neon-cyan); margin-bottom: 6px;">
-                                <i class="fa-solid fa-cloud-arrow-up"></i> Easy 3-Step Google Drive Setup:
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <label style="font-size: 10.5px; color: var(--text-muted);">TARGET GOOGLE DRIVE FOLDER ID / URL</label>
                             </div>
-                            <ol style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px;">
-                                <li>Create a folder in <a href="https://drive.google.com" target="_blank" style="color: var(--neon-cyan);">Google Drive</a> (e.g. <code>Portfolio-Backups</code>).</li>
-                                <li>Open the folder and copy the ID from the URL bar (e.g. <code>https://drive.google.com/drive/folders/<strong>1ABC123_XYZ</strong></code>).</li>
-                                <li>Paste the Folder ID into the box above, and share the folder with your Service Account email as <strong>Editor</strong>.</li>
-                            </ol>
+                            <input type="text" name="gdrive_folder_id" value="{{ s.gdrive_folder_id }}" placeholder="e.g. 1BxiMVs0XRA5nFMdKvBHKGo24xpVTk9-F or folder URL" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 7px 10px; color: #fff; font-size: 12px; font-family: monospace;">
                         </div>
 
                         <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
@@ -533,6 +574,12 @@
     </form>
     <form id="sendBackupEmailForm" method="POST" action="{{ url_for('admin.backup_send_email') }}" style="display: none;"></form>
     <form id="restoreBackupForm" method="POST" action="{{ url_for('admin.backup_restore') }}" enctype="multipart/form-data" style="display: none;"></form>
+    <form id="disconnectGdriveForm" method="POST" action="{{ url_for('admin.backup_gdrive_disconnect') }}" style="display: none;"></form>
+    <form id="gdriveAuthForm" method="POST" action="{{ url_for('admin.backup_gdrive_auth') }}" style="display: none;">
+        <input type="hidden" name="client_id" id="authClientId">
+        <input type="hidden" name="client_secret" id="authClientSecret">
+        <input type="hidden" name="folder_id" id="authFolderId">
+    </form>
 
     <script>
     function submitGdriveBackup() {
@@ -541,6 +588,29 @@
             document.getElementById('gdriveFolderOverride').value = input.value.trim();
         }
         document.getElementById('sendBackupGdriveForm').submit();
+    }
+
+    function submitGdriveAuth() {
+        const idInput = document.querySelector('input[name="gdrive_client_id"]');
+        const secInput = document.querySelector('input[name="gdrive_client_secret"]');
+        const folderInput = document.querySelector('input[name="gdrive_folder_id"]');
+
+        const cid = idInput ? idInput.value.trim() : '';
+        const csec = secInput ? secInput.value.trim() : '';
+
+        if (!cid || !csec) {
+            alert("Please enter both your Google Client ID and Google Client Secret before authorizing.");
+            if (idInput && !cid) idInput.focus();
+            else if (secInput && !csec) secInput.focus();
+            return;
+        }
+
+        document.getElementById('authClientId').value = cid;
+        document.getElementById('authClientSecret').value = csec;
+        if (folderInput) {
+            document.getElementById('authFolderId').value = folderInput.value.trim();
+        }
+        document.getElementById('gdriveAuthForm').submit();
     }
     </script>
 </div>
