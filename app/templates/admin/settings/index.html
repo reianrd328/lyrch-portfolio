@@ -328,7 +328,99 @@
             </div>
         </div>
 
-        <!-- 6. ACCOUNT SECURITY & TRANSFER TO ANOTHER PERSON -->
+        <!-- 6. DATABASE BACKUP & AUTOMATED RECOVERY VAULT -->
+        <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(0,240,255,0.25); border-radius: var(--radius-md); padding: 20px; box-shadow: 0 0 16px rgba(0,240,255,0.05);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-vault" style="color: var(--neon-cyan); font-size: 18px;"></i>
+                    <h3 style="font-family: var(--font-display); font-size: 16px; color: #ffffff; letter-spacing: 1px;">
+                        DATABASE BACKUP &amp; DISASTER RECOVERY VAULT
+                    </h3>
+                </div>
+                <div>
+                    {% if smtp_ready %}
+                        <span style="font-size: 11px; color: var(--neon-green); background: rgba(0,255,102,0.1); border: 1px solid rgba(0,255,102,0.3); padding: 4px 10px; border-radius: 20px;">
+                            <i class="fa-solid fa-shield-check"></i> SMTP Email Ready
+                        </span>
+                    {% else %}
+                        <span style="font-size: 11px; color: var(--neon-yellow); background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.3); padding: 4px 10px; border-radius: 20px;" title="Set SMTP_USER and SMTP_PASSWORD in Render Environment variables to enable live email delivery">
+                            <i class="fa-solid fa-circle-info"></i> Direct JSON Download Active (Configure SMTP for Email)
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.5;">
+                Protect your portfolio data across SQLite, MySQL, and TiDB Cloud. Serializes all projects, videos, skills, and settings into portable encrypted JSON archives.
+            </p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start;">
+                <!-- Automated Daily Email Controls -->
+                <div style="background: rgba(2,6,23,0.6); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 16px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                        <div>
+                            <div style="font-size: 13px; font-weight: 700; color: #ffffff; letter-spacing: 0.5px;">DAILY AUTOMATED EMAIL BACKUP</div>
+                            <div style="font-size: 10.5px; color: var(--text-muted);">Dispatches complete system state to your inbox</div>
+                        </div>
+                        <label style="position: relative; display: inline-block; width: 50px; height: 26px; margin: 0; cursor: pointer;">
+                            <input type="checkbox" name="backup_auto_enabled" {% if s.backup_auto_enabled %}checked{% endif %} style="opacity: 0; width: 0; height: 0;">
+                            <span class="cyber-switch-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #1e293b; transition: .3s; border-radius: 26px; border: 1px solid rgba(255,255,255,0.2);"></span>
+                        </label>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div>
+                            <label style="font-size: 10.5px; color: var(--text-muted); display: block; margin-bottom: 4px;">BACKUP RECIPIENT EMAIL</label>
+                            <input type="email" name="backup_email" value="{{ s.backup_email or current_user.email }}" placeholder="your.email@gmail.com" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 7px 10px; color: #fff; font-size: 12px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 10.5px; color: var(--text-muted); display: block; margin-bottom: 4px;">BACKUP FREQUENCY</label>
+                            <select name="backup_frequency" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 7px 10px; color: #fff; font-size: 12px;">
+                                <option value="daily" {% if s.backup_frequency == 'daily' %}selected{% endif %}>Daily (Every 24 Hours)</option>
+                                <option value="weekly" {% if s.backup_frequency == 'weekly' %}selected{% endif %}>Weekly (Every Sunday)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 11px; color: #94a3b8;">
+                        <div><strong>Last Run:</strong> {{ s.backup_last_run.strftime('%Y-%m-%d %H:%M UTC') if s.backup_last_run else 'Never' }}</div>
+                        <div style="margin-top: 3px;"><strong>Status:</strong> <span style="color: {% if 'Success' in s.backup_last_status %}var(--neon-green){% elif 'Error' in s.backup_last_status or 'Failed' in s.backup_last_status %}#f87171{% else %}#94a3b8{% endif %};">{{ s.backup_last_status or 'Standby' }}</span></div>
+                    </div>
+                </div>
+
+                <!-- Instant Actions & Disaster Recovery -->
+                <div style="background: rgba(2,6,23,0.6); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 14px;">
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #ffffff; letter-spacing: 0.5px;">INSTANT ACTIONS &amp; RESTORATION</div>
+                        <div style="font-size: 10.5px; color: var(--text-muted);">Manual triggers, direct file downloads &amp; archive restore</div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <a href="{{ url_for('admin.backup_download') }}" class="btn-command-primary" style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 11.5px; padding: 10px; text-decoration: none; text-align: center;">
+                            <i class="fa-solid fa-download"></i> Download Backup
+                        </a>
+                        <button type="submit" form="sendBackupEmailForm" class="btn-command-secondary" style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 11.5px; padding: 10px;">
+                            <i class="fa-solid fa-paper-plane"></i> Email Backup Now
+                        </button>
+                    </div>
+
+                    <!-- Restore Box -->
+                    <div style="background: rgba(15,23,42,0.85); border: 1px dashed rgba(255,255,255,0.15); border-radius: 6px; padding: 12px;">
+                        <label style="font-size: 11px; color: #ffffff; font-weight: 600; display: block; margin-bottom: 4px;">
+                            <i class="fa-solid fa-rotate-left" style="color: var(--neon-purple);"></i> RESTORE FROM BACKUP ARCHIVE
+                        </label>
+                        <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px;">
+                            <input type="file" id="restoreFileInput" form="restoreBackupForm" name="backup_file" accept=".json" required style="font-size: 11px; color: #94a3b8; width: 100%;">
+                            <button type="submit" form="restoreBackupForm" class="btn-command-secondary" style="font-size: 11px; padding: 6px 14px; white-space: nowrap; border-color: var(--neon-purple);" onclick="return confirm('Restore all database tables from this backup archive?');">
+                                Restore
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. ACCOUNT SECURITY & TRANSFER TO ANOTHER PERSON -->
         <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(239,68,68,0.25); border-radius: var(--radius-md); padding: 18px;">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
                 <i class="fa-solid fa-key" style="color: #ef4444; font-size: 16px;"></i>
@@ -358,5 +450,9 @@
             </button>
         </div>
     </form>
+
+    <!-- Standalone forms for backup actions -->
+    <form id="sendBackupEmailForm" method="POST" action="{{ url_for('admin.backup_send_email') }}" style="display: none;"></form>
+    <form id="restoreBackupForm" method="POST" action="{{ url_for('admin.backup_restore') }}" enctype="multipart/form-data" style="display: none;"></form>
 </div>
 {% endblock %}

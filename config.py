@@ -91,6 +91,7 @@ class TestingConfig(Config):
     """Testing Configuration"""
     TESTING = True
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{BASE_DIR}/instance/test_portfolio.db"
+    SQLALCHEMY_ENGINE_OPTIONS = {}
 
 
 config_by_name = {

@@ -33,6 +33,9 @@ def create_app(config_name="default"):
             if not app.config.get("TESTING") and User.query.count() == 0:
                 from app.seed import seed_initial_data
                 seed_initial_data()
+            if not app.config.get("TESTING"):
+                from app.migrate import check_and_apply_migrations
+                check_and_apply_migrations(app)
         except Exception as e:
             app.logger.warning(f"Database auto-setup notice: {e}")
 
@@ -47,6 +50,7 @@ def create_app(config_name="default"):
     from app.routes.skills import skills_bp
     from app.routes.experience import experience_bp
     from app.routes.blog import blog_bp
+    from app.routes.cron import cron_bp
 
     app.register_blueprint(public_bp)
     app.register_blueprint(auth_bp, url_prefix="/auth")
@@ -58,6 +62,7 @@ def create_app(config_name="default"):
     app.register_blueprint(skills_bp, url_prefix="/admin/skills")
     app.register_blueprint(experience_bp, url_prefix="/admin/experience")
     app.register_blueprint(blog_bp, url_prefix="/admin/blog")
+    app.register_blueprint(cron_bp)
 
     # Inject global site settings into all templates
     @app.context_processor

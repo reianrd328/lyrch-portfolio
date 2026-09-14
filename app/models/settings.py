@@ -66,6 +66,13 @@ class SiteSetting(db.Model):
     custom_primary_color = db.Column(db.String(20), default="#00f0ff")
     custom_secondary_color = db.Column(db.String(20), default="#a855f7")
 
+    # 8. Automated Database Backup & Email Dispatch
+    backup_auto_enabled = db.Column(db.Boolean, default=False)
+    backup_email = db.Column(db.String(120), default="")
+    backup_frequency = db.Column(db.String(20), default="daily")
+    backup_last_run = db.Column(db.DateTime, nullable=True)
+    backup_last_status = db.Column(db.String(150), default="Never run")
+
     @classmethod
     def get_settings(cls):
         """Retrieves or creates the primary site settings record."""

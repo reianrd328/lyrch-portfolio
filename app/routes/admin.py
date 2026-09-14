@@ -1,7 +1,11 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
+import json
+from datetime import datetime
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, Response
 from flask_login import login_required, current_user
 from app.models import db, Project, Video, GalleryItem, Document, Skill, Experience, BlogPost, ActivityLog, SiteSetting
 from app.services.upload_service import save_upload_file, delete_file
+from app.services.backup_service import export_database_to_dict, export_database_to_json_str, restore_database_from_dict
+from app.services.email_service import send_backup_email, is_smtp_configured
 
 admin_bp = Blueprint("admin", __name__)
 
@@ -161,9 +165,14 @@ def settings():
             current_user.set_password(new_password)
         current_user.display_name = site_settings.display_name
 
+        # 9. Automated Database Backup Settings
+        site_settings.backup_auto_enabled = (request.form.get("backup_auto_enabled") in ("on", "1", "true"))
+        site_settings.backup_email = request.form.get("backup_email", "").strip()
+        site_settings.backup_frequency = request.form.get("backup_frequency", "daily").strip()
+
         # Log Activity
         log = ActivityLog(
-            title="Updated Command Center dashboard settings",
+            title="Updated Command Center dashboard & backup settings",
             activity_type="project",
             time_label="Just now"
         )
@@ -173,5 +182,87 @@ def settings():
         flash("Command Center Dashboard & System Settings Updated!", "success")
         return redirect(url_for("admin.settings"))
 
-    return render_template("admin/settings/index.html", s=site_settings)
+    return render_template("admin/settings/index.html", s=site_settings, smtp_ready=is_smtp_configured())
+
+@admin_bp.route("/backup/download", methods=["GET"])
+@login_required
+def backup_download():
+    """Generates and streams a direct JSON database backup download."""
+    json_str = export_database_to_json_str()
+    filename = f"lyrch_backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+
+    log = ActivityLog(
+        title="Downloaded manual database backup archive (JSON)",
+        activity_type="project",
+        time_label="Just now"
+    )
+    db.session.add(log)
+    db.session.commit()
+
+    return Response(
+        json_str,
+        mimetype="application/json",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+@admin_bp.route("/backup/send-email", methods=["POST"])
+@login_required
+def backup_send_email():
+    """Manually triggers an immediate database backup and emails it to the specified address."""
+    target_email = request.form.get("email_override", "").strip()
+    settings = SiteSetting.get_settings()
+
+    if not target_email:
+        target_email = settings.backup_email or current_user.email
+
+    if not target_email or "@" not in target_email:
+        flash("Invalid recipient email. Please provide a valid email address.", "danger")
+        return redirect(url_for("admin.settings"))
+
+    backup_dict = export_database_to_dict()
+    backup_json_str = export_database_to_json_str()
+
+    success, msg = send_backup_email(target_email, backup_json_str, backup_dict["metadata"])
+    settings.backup_last_run = datetime.utcnow()
+    settings.backup_last_status = ("Success: " if success else "Error: ") + msg
+
+    log = ActivityLog(
+        title=f"Manual Database Backup {'sent to ' + target_email if success else 'failed'}",
+        activity_type="project",
+        time_label="Just now"
+    )
+    db.session.add(log)
+    db.session.commit()
+
+    flash(msg, "success" if success else "danger")
+    return redirect(url_for("admin.settings"))
+
+@admin_bp.route("/backup/restore", methods=["POST"])
+@login_required
+def backup_restore():
+    """Restores database tables from an uploaded JSON backup file."""
+    backup_file = request.files.get("backup_file")
+    if not backup_file or not backup_file.filename:
+        flash("No backup file selected for restoration.", "warning")
+        return redirect(url_for("admin.settings"))
+
+    try:
+        content = backup_file.read().decode("utf-8")
+        data = json.loads(content)
+        success, msg = restore_database_from_dict(data)
+        if success:
+            log = ActivityLog(
+                title=f"Restored database from backup file {backup_file.filename}",
+                activity_type="project",
+                time_label="Just now"
+            )
+            db.session.add(log)
+            db.session.commit()
+            flash("Database successfully restored from backup!", "success")
+        else:
+            flash(f"Restoration failed: {msg}", "danger")
+    except Exception as e:
+        flash(f"Error parsing backup JSON file: {str(e)}", "danger")
+
+    return redirect(url_for("admin.settings"))
 
