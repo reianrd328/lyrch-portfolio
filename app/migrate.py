@@ -34,6 +34,24 @@ def check_and_apply_migrations(app):
                         except Exception as err:
                             db.session.rollback()
                             app.logger.warning(f"Migration notice for {col_name}: {err}")
+
+            if "users" in inspector.get_table_names():
+                existing_user_cols = {c["name"] for c in inspector.get_columns("users")}
+                new_user_cols = [
+                    ("active_session_token", "VARCHAR(64) NULL"),
+                    ("active_session_device", "VARCHAR(255) NULL"),
+                    ("active_session_heartbeat", "DATETIME NULL"),
+                    ("active_session_ip", "VARCHAR(64) NULL")
+                ]
+                for col_name, col_def in new_user_cols:
+                    if col_name not in existing_user_cols:
+                        try:
+                            db.session.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_def}"))
+                            db.session.commit()
+                            app.logger.info(f"Added column {col_name} to users.")
+                        except Exception as err:
+                            db.session.rollback()
+                            app.logger.warning(f"Migration notice for users.{col_name}: {err}")
         except Exception as e:
             app.logger.warning(f"Migration checker notice: {e}")
 

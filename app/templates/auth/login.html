@@ -17,12 +17,25 @@
             </p>
         </div>
 
+        {% if active_conflict %}
+        <div style="background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4); border-radius: 6px; padding: 12px; margin-bottom: 14px; font-size: 11.5px; color: #fca5a5; line-height: 1.5;">
+            <div style="font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 4px; color: #f87171;">
+                <i class="fa-solid fa-triangle-exclamation"></i> ACTIVE SESSION DETECTED
+            </div>
+            <div>Admin is currently open on: <strong style="color: #ffffff;">{{ conflicting_device }}</strong></div>
+            <label style="display: flex; align-items: center; gap: 6px; margin-top: 8px; color: #ffffff; cursor: pointer; font-weight: 600; font-size: 11px; background: rgba(0,0,0,0.3); padding: 6px 8px; border-radius: 4px;">
+                <input type="checkbox" name="force_takeover" value="1" checked>
+                <span>Force disconnect other device and log in here</span>
+            </label>
+        </div>
+        {% endif %}
+
         <form method="POST" action="{{ url_for('auth.login') }}" style="display: flex; flex-direction: column; gap: 14px;">
             <div>
                 <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">CALLSIGN / USERNAME</label>
                 <div style="position: relative;">
                     <i class="fa-solid fa-user-shield" style="position: absolute; left: 12px; top: 12px; color: var(--text-muted); font-size: 13px;"></i>
-                    <input type="text" name="username" required autofocus placeholder="admin" value="admin" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 10px 12px 10px 36px; color: #fff; font-size: 13px;">
+                    <input type="text" name="username" required autofocus placeholder="admin" value="{{ prefill_username or 'admin' }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 10px 12px 10px 36px; color: #fff; font-size: 13px;">
                 </div>
             </div>
 
@@ -34,11 +47,11 @@
                 </div>
             </div>
 
-            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted);">
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                    <input type="checkbox" name="remember" checked> Remember clearance
-                </label>
-                <span>Default: admin / admin123</span>
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 10.5px; color: var(--text-muted);">
+                <span style="display: flex; align-items: center; gap: 5px; color: var(--neon-cyan);">
+                    <i class="fa-solid fa-shield-check"></i> Single-Device Lock
+                </span>
+                <span>Auto-logout on window close</span>
             </div>
 
             <button type="submit" class="btn-command-primary" style="padding: 11px; font-size: 13px; margin-top: 8px;">

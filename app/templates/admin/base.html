@@ -56,9 +56,9 @@
             </div>
 
             <div class="header-telemetry">
-                <div class="auto-lock-indicator" title="Admin auto-lock: logs out after 1 minute of inactivity for security" style="font-size: 11px; color: #94a3b8; display: flex; align-items: center; gap: 6px; background: rgba(15,23,42,0.75); border: 1px solid rgba(0,240,255,0.2); padding: 5px 11px; border-radius: 4px;">
-                    <i class="fa-solid fa-lock" style="color: var(--neon-cyan); font-size: 11px;"></i>
-                    <span>AUTO-LOCK: <span id="idleTimerDisplay" style="color: var(--neon-cyan); font-family: var(--font-mono); font-weight: 700;">60s</span></span>
+                <div class="session-device-badge" title="Single-Device Security: System auto-logs out when window closes and blocks concurrent device logins" style="font-size: 11px; color: #94a3b8; display: flex; align-items: center; gap: 6px; background: rgba(15,23,42,0.75); border: 1px solid rgba(0,240,255,0.25); padding: 5px 11px; border-radius: 4px;">
+                    <i class="fa-solid fa-shield-halved" style="color: var(--neon-cyan); font-size: 12px;"></i>
+                    <span style="font-family: var(--font-mono); font-weight: 700; color: var(--neon-cyan); font-size: 10.5px; letter-spacing: 0.5px;">SINGLE-DEVICE SECURED</span>
                 </div>
                 <a href="{{ url_for('public.home') }}" target="_blank" class="btn-command-secondary" style="font-size: 11.5px; padding: 6px 14px;">
                     <i class="fa-solid fa-arrow-up-right-from-square"></i> Public Website
@@ -159,38 +159,52 @@
     <!-- Scripts -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script>
-        // 1-minute Admin Inactivity Auto-Logout Detector
+        // Single-Device Session Heartbeat & Window-Close Auto-Logout
         (function() {
-            const TIMEOUT_SECONDS = 60; // 1 minute
-            let remaining = TIMEOUT_SECONDS;
-            const display = document.getElementById('idleTimerDisplay');
+            let isInternalNavigation = false;
 
-            function resetTimer() {
-                remaining = TIMEOUT_SECONDS;
-                if (display) {
-                    display.textContent = `${remaining}s`;
-                    display.style.color = 'var(--neon-cyan)';
+            // Track internal user navigation so normal link clicks / forms don't fire close beacon
+            document.addEventListener('click', function(e) {
+                const link = e.target.closest('a') || e.target.closest('button') || e.target.closest('input[type="submit"]');
+                if (link) {
+                    isInternalNavigation = true;
+                    setTimeout(function() { isInternalNavigation = false; }, 3000);
+                }
+            }, true);
+
+            window.addEventListener('submit', function() {
+                isInternalNavigation = true;
+                setTimeout(function() { isInternalNavigation = false; }, 3000);
+            }, true);
+
+            // Send close session beacon when the browser tab or entire window is closed
+            function handleWindowClose() {
+                if (!isInternalNavigation && navigator.sendBeacon) {
+                    navigator.sendBeacon("{{ url_for('auth.close_session') }}");
                 }
             }
 
-            // User interactions that prove activity
-            ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'].forEach(function(evt) {
-                window.addEventListener(evt, resetTimer, { passive: true });
-            });
+            window.addEventListener('beforeunload', handleWindowClose);
+            window.addEventListener('pagehide', handleWindowClose);
 
-            // Countdown timer
+            // Periodic heartbeat every 15 seconds to verify session validity and keep device lock alive
             setInterval(function() {
-                remaining--;
-                if (display) {
-                    display.textContent = `${remaining}s`;
-                    if (remaining <= 15) {
-                        display.style.color = '#ef4444'; // Red alert warning for last 15 seconds
+                fetch("{{ url_for('auth.heartbeat') }}", {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
                     }
-                }
-                if (remaining <= 0) {
-                    window.location.href = "{{ url_for('auth.logout') }}?reason=timeout";
-                }
-            }, 1000);
+                })
+                .then(function(res) {
+                    if (res.status === 401 || !res.ok) {
+                        // Session revoked or opened on another device
+                        window.location.href = "{{ url_for('auth.login') }}?reason=conflict";
+                    }
+                })
+                .catch(function(err) {
+                    console.warn("Session check notice:", err);
+                });
+            }, 15000);
         })();
     </script>
     {% block extra_js %}{% endblock %}

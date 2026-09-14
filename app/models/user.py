@@ -16,6 +16,12 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime, nullable=True)
 
+    # Single-device active session tracking
+    active_session_token = db.Column(db.String(64), nullable=True)
+    active_session_device = db.Column(db.String(255), nullable=True)
+    active_session_heartbeat = db.Column(db.DateTime, nullable=True)
+    active_session_ip = db.Column(db.String(64), nullable=True)
+
     def set_password(self, password: str):
         self.password_hash = generate_password_hash(password)
 

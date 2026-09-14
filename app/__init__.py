@@ -68,25 +68,30 @@ def create_app(config_name="default"):
     app.register_blueprint(blog_bp, url_prefix="/admin/blog")
     app.register_blueprint(cron_bp)
 
-    # 1-minute Admin inactivity auto-logout protection
+    # Enforce Single Active Device Session on all Admin routes
     @app.before_request
-    def enforce_admin_inactivity():
+    def enforce_single_admin_session():
         from flask import session, request, redirect, url_for, flash
         from flask_login import current_user, logout_user
-        import time
+        from datetime import datetime
 
         if not app.config.get("TESTING") and current_user.is_authenticated and request.path.startswith("/admin"):
-            now = time.time()
-            last_activity = session.get("_admin_last_activity")
-            max_idle = app.config.get("ADMIN_INACTIVITY_TIMEOUT", 60) # 1 minute
+            sess_token = session.get("admin_session_token")
 
-            if last_activity and (now - last_activity > max_idle):
-                session.pop("_admin_last_activity", None)
+            # If user has an active session token in DB and it doesn't match this browser's session
+            if current_user.active_session_token and sess_token != current_user.active_session_token:
+                session.pop("admin_session_token", None)
                 logout_user()
-                flash("Session locked due to 1 minute of inactivity for security. Please authenticate again.", "warning")
+                flash("Admin session closed: Your session was terminated or opened on another device.", "warning")
                 return redirect(url_for("auth.login"))
 
-            session["_admin_last_activity"] = now
+            # Refresh heartbeat on user interaction
+            if sess_token and current_user.active_session_token == sess_token:
+                current_user.active_session_heartbeat = datetime.utcnow()
+                try:
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
 
     # Inject global site settings into all templates
     @app.context_processor
