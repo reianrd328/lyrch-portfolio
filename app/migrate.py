@@ -16,7 +16,10 @@ def check_and_apply_migrations(app):
                     ("backup_email", "VARCHAR(120) DEFAULT ''"),
                     ("backup_frequency", "VARCHAR(20) DEFAULT 'daily'"),
                     ("backup_last_run", "DATETIME NULL"),
-                    ("backup_last_status", "VARCHAR(150) DEFAULT 'Never run'")
+                    ("backup_last_status", "VARCHAR(150) DEFAULT 'Never run'"),
+                    ("gdrive_backup_enabled", "BOOLEAN DEFAULT 0"),
+                    ("gdrive_folder_id", "VARCHAR(120) DEFAULT ''"),
+                    ("gdrive_last_upload_url", "VARCHAR(255) NULL")
                 ]
                 for col_name, col_def in new_cols:
                     if col_name not in existing_cols:

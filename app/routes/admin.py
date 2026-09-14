@@ -6,6 +6,9 @@ from app.models import db, Project, Video, GalleryItem, Document, Skill, Experie
 from app.services.upload_service import save_upload_file, delete_file
 from app.services.backup_service import export_database_to_dict, export_database_to_json_str, restore_database_from_dict
 from app.services.email_service import send_backup_email, is_smtp_configured
+from app.services.gdrive_service import (
+    upload_backup_to_gdrive, is_gdrive_configured, get_service_account_email, clean_folder_id
+)
 
 admin_bp = Blueprint("admin", __name__)
 
@@ -165,10 +168,15 @@ def settings():
             current_user.set_password(new_password)
         current_user.display_name = site_settings.display_name
 
-        # 9. Automated Database Backup Settings
+        # 9. Automated Database Backup Settings (Email & Google Drive)
         site_settings.backup_auto_enabled = (request.form.get("backup_auto_enabled") in ("on", "1", "true"))
         site_settings.backup_email = request.form.get("backup_email", "").strip()
         site_settings.backup_frequency = request.form.get("backup_frequency", "daily").strip()
+
+        # Google Drive Backup Settings
+        site_settings.gdrive_backup_enabled = (request.form.get("gdrive_backup_enabled") in ("on", "1", "true"))
+        raw_folder_id = request.form.get("gdrive_folder_id", "").strip()
+        site_settings.gdrive_folder_id = clean_folder_id(raw_folder_id)
 
         # Log Activity
         log = ActivityLog(
@@ -182,7 +190,13 @@ def settings():
         flash("Command Center Dashboard & System Settings Updated!", "success")
         return redirect(url_for("admin.settings"))
 
-    return render_template("admin/settings/index.html", s=site_settings, smtp_ready=is_smtp_configured())
+    return render_template(
+        "admin/settings/index.html",
+        s=site_settings,
+        smtp_ready=is_smtp_configured(),
+        gdrive_ready=is_gdrive_configured(),
+        gdrive_email=get_service_account_email()
+    )
 
 @admin_bp.route("/backup/download", methods=["GET"])
 @login_required
@@ -263,6 +277,40 @@ def backup_restore():
             flash(f"Restoration failed: {msg}", "danger")
     except Exception as e:
         flash(f"Error parsing backup JSON file: {str(e)}", "danger")
+
+    return redirect(url_for("admin.settings"))
+
+@admin_bp.route("/backup/upload-gdrive", methods=["POST"])
+@login_required
+def backup_upload_gdrive():
+    """Manually triggers an immediate database backup upload to Google Drive."""
+    settings = SiteSetting.get_settings()
+    folder_override = request.form.get("folder_id_override", "").strip()
+    folder_id = clean_folder_id(folder_override) if folder_override else settings.gdrive_folder_id
+
+    backup_json_str = export_database_to_json_str()
+    filename = f"lyrch_backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+
+    success, msg, web_link = upload_backup_to_gdrive(backup_json_str, filename=filename, folder_id=folder_id)
+
+    if success:
+        settings.gdrive_last_upload_url = web_link
+        settings.backup_last_run = datetime.utcnow()
+        settings.backup_last_status = f"Success (Google Drive): {filename}"
+        db.session.commit()
+
+        log = ActivityLog(
+            title=f"Uploaded backup {filename} to Google Drive",
+            activity_type="project",
+            time_label="Just now"
+        )
+        db.session.add(log)
+        db.session.commit()
+        flash(f"Database backup uploaded to Google Drive successfully! ({filename})", "success")
+    else:
+        settings.backup_last_status = f"Failed (Google Drive): {msg}"
+        db.session.commit()
+        flash(f"Google Drive upload failed: {msg}", "danger")
 
     return redirect(url_for("admin.settings"))
 

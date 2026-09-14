@@ -73,6 +73,11 @@ class SiteSetting(db.Model):
     backup_last_run = db.Column(db.DateTime, nullable=True)
     backup_last_status = db.Column(db.String(150), default="Never run")
 
+    # 9. Google Drive Automated Backup Integration
+    gdrive_backup_enabled = db.Column(db.Boolean, default=False)
+    gdrive_folder_id = db.Column(db.String(120), default="")
+    gdrive_last_upload_url = db.Column(db.String(255), nullable=True)
+
     @classmethod
     def get_settings(cls):
         """Retrieves or creates the primary site settings record."""

@@ -337,30 +337,105 @@
                         DATABASE BACKUP &amp; DISASTER RECOVERY VAULT
                     </h3>
                 </div>
-                <div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    {% if gdrive_ready %}
+                        <span style="font-size: 11px; color: var(--neon-green); background: rgba(0,255,102,0.1); border: 1px solid rgba(0,255,102,0.3); padding: 4px 10px; border-radius: 20px;">
+                            <i class="fa-brands fa-google-drive"></i> Google Drive Ready
+                        </span>
+                    {% else %}
+                        <span style="font-size: 11px; color: var(--neon-yellow); background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.3); padding: 4px 10px; border-radius: 20px;" title="Set GDRIVE_SERVICE_ACCOUNT_JSON in environment variables">
+                            <i class="fa-brands fa-google-drive"></i> Google Drive Setup Needed
+                        </span>
+                    {% endif %}
+
                     {% if smtp_ready %}
                         <span style="font-size: 11px; color: var(--neon-green); background: rgba(0,255,102,0.1); border: 1px solid rgba(0,255,102,0.3); padding: 4px 10px; border-radius: 20px;">
                             <i class="fa-solid fa-shield-check"></i> SMTP Email Ready
                         </span>
                     {% else %}
-                        <span style="font-size: 11px; color: var(--neon-yellow); background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.3); padding: 4px 10px; border-radius: 20px;" title="Set SMTP_USER and SMTP_PASSWORD in Render Environment variables to enable live email delivery">
-                            <i class="fa-solid fa-circle-info"></i> Direct JSON Download Active (Configure SMTP for Email)
+                        <span style="font-size: 11px; color: #94a3b8; background: rgba(148,163,184,0.1); border: 1px solid rgba(148,163,184,0.25); padding: 4px 10px; border-radius: 20px;">
+                            <i class="fa-solid fa-circle-info"></i> Direct JSON Active
                         </span>
                     {% endif %}
                 </div>
             </div>
 
             <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.5;">
-                Protect your portfolio data across SQLite, MySQL, and TiDB Cloud. Serializes all projects, videos, skills, and settings into portable encrypted JSON archives.
+                Protect your portfolio data across SQLite, MySQL, and TiDB Cloud. Automated archives can upload straight to your personal Google Drive folder or be dispatched via email.
             </p>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start;">
-                <!-- Automated Daily Email Controls -->
+                <!-- 1. GOOGLE DRIVE BACKUP CARD -->
+                <div style="background: rgba(2,6,23,0.6); border: 1px solid rgba(0,240,255,0.2); border-radius: 8px; padding: 16px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-brands fa-google-drive" style="color: #34d399; font-size: 20px;"></i>
+                            <div>
+                                <div style="font-size: 13px; font-weight: 700; color: #ffffff; letter-spacing: 0.5px;">GOOGLE DRIVE BACKUP</div>
+                                <div style="font-size: 10.5px; color: var(--text-muted);">Saves backups directly into your Google Drive folder</div>
+                            </div>
+                        </div>
+                        <label style="position: relative; display: inline-block; width: 50px; height: 26px; margin: 0; cursor: pointer;">
+                            <input type="checkbox" name="gdrive_backup_enabled" {% if s.gdrive_backup_enabled %}checked{% endif %} style="opacity: 0; width: 0; height: 0;">
+                            <span class="cyber-switch-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #1e293b; transition: .3s; border-radius: 26px; border: 1px solid rgba(255,255,255,0.2);"></span>
+                        </label>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <label style="font-size: 10.5px; color: var(--text-muted);">GOOGLE DRIVE FOLDER ID / URL</label>
+                                <a href="javascript:void(0);" onclick="var g=document.getElementById('gdriveHelpBox'); g.style.display = g.style.display === 'none' ? 'block' : 'none';" style="color: var(--neon-cyan); font-size: 10.5px; text-decoration: none;">
+                                    <i class="fa-solid fa-circle-question"></i> How to set up?
+                                </a>
+                            </div>
+                            <input type="text" name="gdrive_folder_id" value="{{ s.gdrive_folder_id }}" placeholder="e.g. 1BxiMVs0XRA5nFMdKvBHKGo24xpVTk9-F or folder URL" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 7px 10px; color: #fff; font-size: 12px; font-family: monospace;">
+                        </div>
+
+                        {% if gdrive_email %}
+                        <div style="background: rgba(0,240,255,0.06); border: 1px solid rgba(0,240,255,0.2); border-radius: 4px; padding: 8px 10px; font-size: 11px;">
+                            <div style="color: var(--text-muted); margin-bottom: 4px;">Share your Google Drive folder with this Service Account as <strong>Editor</strong>:</div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 4px;">
+                                <code style="color: var(--neon-cyan); font-size: 10.5px; word-break: break-all;">{{ gdrive_email }}</code>
+                                <button type="button" onclick="navigator.clipboard.writeText('{{ gdrive_email }}'); this.innerText='Copied!';" style="background: transparent; border: none; color: #94a3b8; font-size: 10px; cursor: pointer; padding: 2px 6px;">Copy</button>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Helpful Step-by-Step Instructions Collapsible Box -->
+                        <div id="gdriveHelpBox" style="display: none; background: rgba(15,23,42,0.95); border: 1px solid rgba(0,240,255,0.3); border-radius: 6px; padding: 12px; font-size: 11.5px; line-height: 1.5; color: #cbd5e1;">
+                            <div style="font-weight: 700; color: var(--neon-cyan); margin-bottom: 6px;">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> Easy 3-Step Google Drive Setup:
+                            </div>
+                            <ol style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px;">
+                                <li>Create a folder in <a href="https://drive.google.com" target="_blank" style="color: var(--neon-cyan);">Google Drive</a> (e.g. <code>Portfolio-Backups</code>).</li>
+                                <li>Open the folder and copy the ID from the URL bar (e.g. <code>https://drive.google.com/drive/folders/<strong>1ABC123_XYZ</strong></code>).</li>
+                                <li>Paste the Folder ID into the box above, and share the folder with your Service Account email as <strong>Editor</strong>.</li>
+                            </ol>
+                        </div>
+
+                        <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
+                            <button type="submit" form="sendBackupGdriveForm" class="btn-command-primary" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 11.5px; padding: 8px 12px; box-shadow: 0 0 10px rgba(0,240,255,0.2);">
+                                <i class="fa-brands fa-google-drive"></i> Upload to Drive Now
+                            </button>
+                            {% if s.gdrive_last_upload_url %}
+                            <a href="{{ s.gdrive_last_upload_url }}" target="_blank" class="btn-command-secondary" style="display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 11px; padding: 8px 12px; text-decoration: none;" title="Open last uploaded backup file">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in Drive
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. DAILY AUTOMATED EMAIL BACKUP -->
                 <div style="background: rgba(2,6,23,0.6); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 16px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
-                        <div>
-                            <div style="font-size: 13px; font-weight: 700; color: #ffffff; letter-spacing: 0.5px;">DAILY AUTOMATED EMAIL BACKUP</div>
-                            <div style="font-size: 10.5px; color: var(--text-muted);">Dispatches complete system state to your inbox</div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-envelope-open-text" style="color: var(--neon-cyan); font-size: 18px;"></i>
+                            <div>
+                                <div style="font-size: 13px; font-weight: 700; color: #ffffff; letter-spacing: 0.5px;">DAILY EMAIL BACKUP</div>
+                                <div style="font-size: 10.5px; color: var(--text-muted);">Dispatches complete system state to your inbox</div>
+                            </div>
                         </div>
                         <label style="position: relative; display: inline-block; width: 50px; height: 26px; margin: 0; cursor: pointer;">
                             <input type="checkbox" name="backup_auto_enabled" {% if s.backup_auto_enabled %}checked{% endif %} style="opacity: 0; width: 0; height: 0;">
@@ -380,28 +455,29 @@
                                 <option value="weekly" {% if s.backup_frequency == 'weekly' %}selected{% endif %}>Weekly (Every Sunday)</option>
                             </select>
                         </div>
-                    </div>
-
-                    <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 11px; color: #94a3b8;">
-                        <div><strong>Last Run:</strong> {{ s.backup_last_run.strftime('%Y-%m-%d %H:%M UTC') if s.backup_last_run else 'Never' }}</div>
-                        <div style="margin-top: 3px;"><strong>Status:</strong> <span style="color: {% if 'Success' in s.backup_last_status %}var(--neon-green){% elif 'Error' in s.backup_last_status or 'Failed' in s.backup_last_status %}#f87171{% else %}#94a3b8{% endif %};">{{ s.backup_last_status or 'Standby' }}</span></div>
+                        <div style="margin-top: 4px;">
+                            <button type="submit" form="sendBackupEmailForm" class="btn-command-secondary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 11.5px; padding: 8px 12px;">
+                                <i class="fa-solid fa-paper-plane"></i> Email Backup Now
+                            </button>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Instant Actions & Disaster Recovery -->
-                <div style="background: rgba(2,6,23,0.6); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 14px;">
+            <!-- 3. INSTANT ACTIONS, TELEMETRY & RESTORATION (FULL WIDTH) -->
+            <div style="margin-top: 20px; background: rgba(2,6,23,0.6); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 16px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: center;">
                     <div>
-                        <div style="font-size: 13px; font-weight: 700; color: #ffffff; letter-spacing: 0.5px;">INSTANT ACTIONS &amp; RESTORATION</div>
-                        <div style="font-size: 10.5px; color: var(--text-muted);">Manual triggers, direct file downloads &amp; archive restore</div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <a href="{{ url_for('admin.backup_download') }}" class="btn-command-primary" style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 11.5px; padding: 10px; text-decoration: none; text-align: center;">
-                            <i class="fa-solid fa-download"></i> Download Backup
+                        <div style="font-size: 13px; font-weight: 700; color: #ffffff; letter-spacing: 0.5px; margin-bottom: 4px;">
+                            <i class="fa-solid fa-clock-rotate-left" style="color: var(--neon-cyan);"></i> BACKUP TELEMETRY &amp; INSTANT ARCHIVE
+                        </div>
+                        <div style="font-size: 11px; color: #94a3b8; margin-bottom: 12px;">
+                            <div><strong>Last Execution:</strong> {{ s.backup_last_run.strftime('%Y-%m-%d %H:%M UTC') if s.backup_last_run else 'Never' }}</div>
+                            <div style="margin-top: 3px;"><strong>Status:</strong> <span style="color: {% if 'Success' in s.backup_last_status %}var(--neon-green){% elif 'Error' in s.backup_last_status or 'Failed' in s.backup_last_status %}#f87171{% else %}#94a3b8{% endif %};">{{ s.backup_last_status or 'Standby' }}</span></div>
+                        </div>
+                        <a href="{{ url_for('admin.backup_download') }}" class="btn-command-primary" style="display: inline-flex; align-items: center; gap: 8px; font-size: 11.5px; padding: 8px 16px; text-decoration: none;">
+                            <i class="fa-solid fa-download"></i> Direct Download JSON Backup
                         </a>
-                        <button type="submit" form="sendBackupEmailForm" class="btn-command-secondary" style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 11.5px; padding: 10px;">
-                            <i class="fa-solid fa-paper-plane"></i> Email Backup Now
-                        </button>
                     </div>
 
                     <!-- Restore Box -->
@@ -452,6 +528,7 @@
     </form>
 
     <!-- Standalone forms for backup actions -->
+    <form id="sendBackupGdriveForm" method="POST" action="{{ url_for('admin.backup_upload_gdrive') }}" style="display: none;"></form>
     <form id="sendBackupEmailForm" method="POST" action="{{ url_for('admin.backup_send_email') }}" style="display: none;"></form>
     <form id="restoreBackupForm" method="POST" action="{{ url_for('admin.backup_restore') }}" enctype="multipart/form-data" style="display: none;"></form>
 </div>
