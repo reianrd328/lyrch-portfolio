@@ -65,6 +65,25 @@ def check_and_apply_migrations(app):
                     except Exception as err:
                         db.session.rollback()
                         app.logger.warning(f"Migration notice for videos.album: {err}")
+
+            # Check and migrate gallery table for project_id, visibility, tags, file_size_bytes
+            if "gallery" in inspector.get_table_names():
+                gallery_cols = {c["name"] for c in inspector.get_columns("gallery")}
+                new_gallery_cols = [
+                    ("project_id", "INTEGER NULL"),
+                    ("visibility", "VARCHAR(20) DEFAULT 'published'"),
+                    ("tags", "VARCHAR(255) NULL"),
+                    ("file_size_bytes", "INTEGER DEFAULT 0")
+                ]
+                for col_name, col_def in new_gallery_cols:
+                    if col_name not in gallery_cols:
+                        try:
+                            db.session.execute(text(f"ALTER TABLE gallery ADD COLUMN {col_name} {col_def}"))
+                            db.session.commit()
+                            app.logger.info(f"Added column {col_name} to gallery table.")
+                        except Exception as err:
+                            db.session.rollback()
+                            app.logger.warning(f"Migration notice for gallery.{col_name}: {err}")
         except Exception as e:
             app.logger.warning(f"Migration checker notice: {e}")
 

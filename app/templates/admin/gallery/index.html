@@ -1,39 +1,1532 @@
 {% extends "admin/base.html" %}
 
-{% block title %}Gallery — MY WORK CMS{% endblock %}
+{% block title %}Creative Asset Library — LYRCH CMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Creative Asset Library Styling */
+.asset-library-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Header & Telemetry */
+.asset-header-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 20px 24px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    backdrop-filter: blur(12px);
+}
+
+.asset-header-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+}
+
+.asset-header-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.asset-brand-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.asset-brand-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px solid rgba(0, 240, 255, 0.4);
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.35);
+}
+
+.asset-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-family: var(--font-heading);
+}
+
+.asset-subtitle {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+/* Telemetry Counter Strip */
+.asset-telemetry-strip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    flex-wrap: wrap;
+}
+
+.telemetry-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 12px;
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.telemetry-pill:hover {
+    border-color: rgba(0, 240, 255, 0.3);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.telemetry-pill .count {
+    font-weight: 700;
+    color: #fff;
+}
+
+.telemetry-pill.active {
+    border-color: var(--neon-cyan);
+    background: rgba(0, 240, 255, 0.1);
+    color: var(--neon-cyan);
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+
+/* Search & Filter Toolbar */
+.asset-filter-bar {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.filter-row-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.search-input-wrapper {
+    flex: 1;
+    min-width: 260px;
+    position: relative;
+}
+
+.search-input-wrapper i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.search-input-field {
+    width: 100%;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 8px 14px 8px 36px;
+    color: #fff;
+    font-size: 12.5px;
+    font-family: var(--font-sans);
+    transition: border-color 0.2s;
+}
+
+.search-input-field:focus {
+    outline: none;
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+}
+
+.filter-select {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #cbd5e1;
+    font-size: 12px;
+    font-family: var(--font-sans);
+    cursor: pointer;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--neon-cyan);
+}
+
+.filter-row-pills {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 10px;
+}
+
+.category-pills-list {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.cat-pill {
+    padding: 4px 10px;
+    font-size: 11px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.cat-pill:hover {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.cat-pill.active {
+    background: rgba(0, 240, 255, 0.12);
+    border-color: var(--neon-cyan);
+    color: var(--neon-cyan);
+    font-weight: 600;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+
+.status-pills-list {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-pill-link {
+    font-size: 11px;
+    padding: 4px 9px;
+    border-radius: 12px;
+    text-decoration: none;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    transition: all 0.2s;
+}
+
+.status-pill-link.active {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+/* Bulk Selection Toolbar */
+.bulk-toolbar {
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid var(--neon-cyan);
+    box-shadow: 0 4px 20px rgba(0, 240, 255, 0.2);
+    border-radius: var(--radius-sm);
+    padding: 10px 18px;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    animation: fadeIn 0.2s ease;
+}
+
+.bulk-toolbar.visible {
+    display: flex;
+}
+
+.bulk-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: #fff;
+    font-family: var(--font-mono);
+}
+
+.bulk-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Grid of Cards */
+.asset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 18px;
+}
+
+.asset-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.asset-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(0, 240, 255, 0.35);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.asset-card.selected {
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.3);
+}
+
+/* 16:9 Thumbnail Area */
+.asset-thumb-wrap {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* 16:9 ratio */
+    background: #090d16;
+    overflow: hidden;
+}
+
+.asset-thumb-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.asset-card:hover .asset-thumb-img {
+    transform: scale(1.04);
+}
+
+.asset-badge-category {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--neon-cyan);
+    font-family: var(--font-mono);
+    backdrop-filter: blur(6px);
+    z-index: 2;
+}
+
+.asset-checkbox-wrap {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+    background: rgba(15, 23, 42, 0.8);
+    border-radius: 4px;
+    padding: 3px 5px;
+}
+
+.asset-checkbox {
+    cursor: pointer;
+    accent-color: var(--neon-cyan);
+    width: 15px;
+    height: 15px;
+}
+
+/* Hover Overlay */
+.asset-hover-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(9, 13, 22, 0.7);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    z-index: 1;
+}
+
+.asset-card:hover .asset-hover-overlay {
+    opacity: 1;
+}
+
+.btn-view-full {
+    background: rgba(0, 240, 255, 0.2);
+    border: 1px solid var(--neon-cyan);
+    color: #fff;
+    padding: 7px 16px;
+    border-radius: 4px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font-mono);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-view-full:hover {
+    background: var(--neon-cyan);
+    color: #000;
+    box-shadow: 0 0 14px var(--neon-cyan);
+}
+
+/* Card Body */
+.asset-card-body {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.asset-card-title {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.asset-meta-row {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.asset-meta-project {
+    color: var(--neon-purple);
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.asset-tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.tag-pill {
+    font-size: 9.5px;
+    font-family: var(--font-mono);
+    background: rgba(255, 255, 255, 0.05);
+    color: #94a3b8;
+    padding: 1px 6px;
+    border-radius: 3px;
+}
+
+/* Status & File Size */
+.asset-footer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 10.5px;
+    font-family: var(--font-mono);
+}
+
+.badge-vis-published {
+    color: #34d399;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 600;
+}
+
+.badge-vis-draft {
+    color: #fbbf24;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 600;
+}
+
+.badge-vis-private {
+    color: #a855f7;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 600;
+}
+
+.asset-size-badge {
+    color: var(--text-muted);
+}
+
+/* Quick Card Actions */
+.asset-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    padding: 0 16px 14px;
+}
+
+.btn-card-action {
+    padding: 5px 8px;
+    font-size: 11px;
+    text-align: center;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    color: #cbd5e1;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+    font-family: var(--font-mono);
+}
+
+.btn-card-action:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-card-action.danger:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* Empty State */
+.asset-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: var(--bg-card);
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+}
+
+/* Modal Windows */
+.cyber-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(5, 7, 13, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.cyber-modal.active {
+    display: flex;
+}
+
+.cyber-modal-content {
+    background: #0f172a;
+    border: 1px solid rgba(0, 240, 255, 0.35);
+    border-radius: var(--radius-md);
+    box-shadow: 0 0 35px rgba(0, 240, 255, 0.25);
+    width: 100%;
+    max-width: 960px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    animation: modalIn 0.25s ease-out;
+}
+
+@keyframes modalIn {
+    from { transform: scale(0.96); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.modal-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(15, 23, 42, 0.95);
+}
+
+.modal-header-bar h3 {
+    margin: 0;
+    font-size: 15px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-heading);
+}
+
+.modal-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 18px;
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+.modal-close-btn:hover {
+    color: #fff;
+}
+
+/* Inspector Layout */
+.inspector-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    min-height: 480px;
+}
+
+@media (max-width: 860px) {
+    .inspector-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.inspector-preview-panel {
+    background: #060911;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    position: relative;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.inspector-img {
+    max-width: 100%;
+    max-height: 65vh;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+}
+
+.inspector-details-panel {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+}
+
+.inspector-meta-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.inspector-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+    letter-spacing: 0.5px;
+}
+
+.inspector-value {
+    font-size: 13px;
+    color: #fff;
+    word-break: break-all;
+}
+
+/* Drag & Drop Upload Zone */
+.dropzone-box {
+    border: 2px dashed rgba(0, 240, 255, 0.35);
+    background: rgba(0, 240, 255, 0.02);
+    border-radius: 8px;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.dropzone-box:hover, .dropzone-box.dragover {
+    border-color: var(--neon-cyan);
+    background: rgba(0, 240, 255, 0.06);
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.15);
+}
+
+.dropzone-icon {
+    font-size: 32px;
+    color: var(--neon-cyan);
+    margin-bottom: 8px;
+}
+
+.dropzone-preview-thumb {
+    max-height: 140px;
+    border-radius: 4px;
+    margin-top: 10px;
+    border: 1px solid rgba(0, 240, 255, 0.4);
+    display: none;
+}
+</style>
+{% endblock %}
 
 {% block admin_content %}
-<div class="telemetry-card">
-    <div class="card-header-bar">
-        <div class="header-label">
-            <i class="fa-regular fa-image"></i>
-            <span>GALLERY &amp; UI DESIGN ASSETS</span>
+<div class="asset-library-container">
+
+    <!-- 1. Top Section: Header & Live Stats -->
+    <div class="asset-header-card">
+        <div class="asset-header-main">
+            <div class="asset-brand-wrapper">
+                <img src="{{ url_for('static', filename='images/branding/gallery_hub_icon.jpg') }}" alt="Creative Assets" class="asset-brand-icon">
+                <div>
+                    <h1 class="asset-title">
+                        <span>CREATIVE ASSET LIBRARY</span>
+                    </h1>
+                    <div class="asset-subtitle">
+                        Manage screenshots, UI designs, graphics, and portfolio visuals.
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button type="button" class="btn-command-primary" onclick="openUploadModal()">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> + UPLOAD ASSET
+                </button>
+            </div>
         </div>
-        <a href="{{ url_for('admin_gallery.create') }}" class="btn-command-primary" style="font-size: 12px; padding: 6px 14px;">
-            <i class="fa-solid fa-plus"></i> Upload Image
-        </a>
+
+        <!-- Telemetry Counters -->
+        <div class="asset-telemetry-strip">
+            <a href="{{ url_for('admin_gallery.index') }}" class="telemetry-pill {% if not selected_cat or selected_cat == 'All' %}active{% endif %}">
+                <i class="fa-solid fa-photo-film" style="color: var(--neon-cyan);"></i>
+                <span class="count">{{ total_assets }}</span> Total Assets
+            </a>
+            <a href="{{ url_for('admin_gallery.index', cat='UI / UX') }}" class="telemetry-pill {% if selected_cat == 'UI / UX' %}active{% endif %}">
+                <i class="fa-solid fa-palette" style="color: #38bdf8;"></i>
+                <span class="count">{{ ui_projects_count }}</span> UI / UX
+            </a>
+            <a href="{{ url_for('admin_gallery.index', cat='Screenshots') }}" class="telemetry-pill {% if selected_cat == 'Screenshots' %}active{% endif %}">
+                <i class="fa-solid fa-desktop" style="color: #a855f7;"></i>
+                <span class="count">{{ screenshots_count }}</span> Screenshots
+            </a>
+            <a href="{{ url_for('admin_gallery.index', cat='Graphics') }}" class="telemetry-pill {% if selected_cat == 'Graphics' %}active{% endif %}">
+                <i class="fa-solid fa-wand-magic-sparkles" style="color: #ec4899;"></i>
+                <span class="count">{{ graphics_count }}</span> Graphics
+            </a>
+            <a href="{{ url_for('admin_gallery.index', status='draft') }}" class="telemetry-pill {% if selected_status == 'draft' %}active{% endif %}">
+                <i class="fa-solid fa-clock" style="color: #fbbf24;"></i>
+                <span class="count">{{ drafts_count }}</span> Drafts
+            </a>
+        </div>
     </div>
 
-    <div style="margin-top: 18px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
-        {% for item in items %}
-            <div style="background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-sm); overflow: hidden;">
-                <img src="{{ item.image_url }}" alt="{{ item.title }}" style="width: 100%; height: 130px; object-fit: cover;">
-                <div style="padding: 10px;">
-                    <h4 style="font-size: 12px; color: #fff;">{{ item.title }}</h4>
-                    <span style="font-size: 10px; color: var(--neon-cyan);">{{ item.category }}</span>
-                    <form method="POST" action="{{ url_for('admin_gallery.delete', id=item.id) }}" onsubmit="return confirm('Delete image?');" style="margin-top: 8px;">
-                        <button type="submit" class="btn-command-secondary" style="width: 100%; padding: 4px; font-size: 11px; color: #f87171;">
-                            <i class="fa-regular fa-trash-can"></i> Delete
+    <!-- 2. Search & Filter Bar -->
+    <div class="asset-filter-bar">
+        <form id="filterForm" method="GET" action="{{ url_for('admin_gallery.index') }}">
+            <div class="filter-row-top">
+                <div class="search-input-wrapper">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" name="q" value="{{ query_text }}" placeholder="Search by title, tags, or description..." class="search-input-field">
+                </div>
+
+                <!-- Project Dropdown -->
+                <select name="project_id" class="filter-select" onchange="document.getElementById('filterForm').submit();">
+                    <option value="">📁 All Projects</option>
+                    {% for p in projects %}
+                        <option value="{{ p.id }}" {% if selected_project == p.id|string %}selected{% endif %}>{{ p.title }}</option>
+                    {% endfor %}
+                </select>
+
+                <!-- Sort Dropdown -->
+                <select name="sort" class="filter-select" onchange="document.getElementById('filterForm').submit();">
+                    <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>🕒 Newest First</option>
+                    <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>⏳ Oldest First</option>
+                    <option value="title_asc" {% if sort_by == 'title_asc' %}selected{% endif %}>🔤 Title A-Z</option>
+                    <option value="title_desc" {% if sort_by == 'title_desc' %}selected{% endif %}>🔡 Title Z-A</option>
+                </select>
+
+                <!-- Status Filter -->
+                <select name="status" class="filter-select" onchange="document.getElementById('filterForm').submit();">
+                    <option value="all" {% if selected_status == 'all' %}selected{% endif %}>⚡ All Status</option>
+                    <option value="published" {% if selected_status == 'published' %}selected{% endif %}>🟢 Published</option>
+                    <option value="draft" {% if selected_status == 'draft' %}selected{% endif %}>🟡 Draft</option>
+                    <option value="private" {% if selected_status == 'private' %}selected{% endif %}>🔒 Private</option>
+                </select>
+
+                <input type="hidden" name="cat" id="hiddenCatInput" value="{{ selected_cat }}">
+                <button type="submit" class="btn-command-secondary" style="padding: 7px 14px; font-size: 12px;">Filter</button>
+                {% if query_text or (selected_cat and selected_cat != 'All') or selected_project or (selected_status and selected_status != 'all') %}
+                    <a href="{{ url_for('admin_gallery.index') }}" class="btn-command-secondary" style="padding: 7px 12px; font-size: 12px; color: #f87171;" title="Reset Filters">
+                        <i class="fa-solid fa-xmark"></i> Clear
+                    </a>
+                {% endif %}
+            </div>
+
+            <!-- Category Pills Row -->
+            <div class="filter-row-pills">
+                <div class="category-pills-list">
+                    <span style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); margin-right: 4px;">CATEGORY:</span>
+                    {% set categories = ['All', 'UI / UX', 'Projects', 'AI', 'Branding', 'Screenshots', 'Graphics', 'Other'] %}
+                    {% for cat in categories %}
+                        <a href="javascript:void(0);" onclick="setCategoryFilter('{{ cat }}')" class="cat-pill {% if selected_cat == cat %}active{% endif %}">
+                            {{ cat }}
+                        </a>
+                    {% endfor %}
+                </div>
+
+                <div class="status-pills-list">
+                    <span style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); margin-right: 4px;">SHOWING:</span>
+                    <span style="font-size: 11px; color: #fff; font-family: var(--font-mono); font-weight: 600;">
+                        {{ items|length }} of {{ total_assets }} assets
+                    </span>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- 3. Bulk Action Toolbar (appears when 1 or more items checked) -->
+    <div id="bulkToolbar" class="bulk-toolbar">
+        <div class="bulk-left">
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" style="accent-color: var(--neon-cyan);">
+                <span>Select All</span>
+            </label>
+            <span>•</span>
+            <span><strong id="selectedCount" style="color: var(--neon-cyan);">0</strong> items selected</span>
+        </div>
+
+        <div class="bulk-actions-group">
+            <!-- Change Category -->
+            <select id="bulkCategorySelect" class="filter-select" style="padding: 5px 10px; font-size: 11px;">
+                <option value="">🏷 Set Category...</option>
+                <option value="UI / UX">UI / UX</option>
+                <option value="Projects">Projects</option>
+                <option value="AI">AI</option>
+                <option value="Branding">Branding</option>
+                <option value="Screenshots">Screenshots</option>
+                <option value="Graphics">Graphics</option>
+                <option value="Other">Other</option>
+            </select>
+            <button type="button" class="btn-command-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="executeBulkAction('change_category')">Apply</button>
+
+            <!-- Change Visibility -->
+            <select id="bulkVisibilitySelect" class="filter-select" style="padding: 5px 10px; font-size: 11px;">
+                <option value="">👁 Set Status...</option>
+                <option value="published">🟢 Published</option>
+                <option value="draft">🟡 Draft</option>
+                <option value="private">🔒 Private</option>
+            </select>
+            <button type="button" class="btn-command-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="executeBulkAction('change_visibility')">Apply</button>
+
+            <!-- Move to Project -->
+            <select id="bulkProjectSelect" class="filter-select" style="padding: 5px 10px; font-size: 11px;">
+                <option value="">📁 Move to Project...</option>
+                <option value="">(None / Standalone)</option>
+                {% for p in projects %}
+                    <option value="{{ p.id }}">{{ p.title }}</option>
+                {% endfor %}
+            </select>
+            <button type="button" class="btn-command-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="executeBulkAction('move_to_project')">Move</button>
+
+            <!-- Delete Selected -->
+            <button type="button" class="btn-command-secondary" style="padding: 5px 12px; font-size: 11px; color: #f87171; border-color: rgba(239, 68, 68, 0.4);" onclick="executeBulkAction('delete')">
+                <i class="fa-regular fa-trash-can"></i> Delete
+            </button>
+
+            <button type="button" class="btn-command-secondary" style="padding: 5px 8px; font-size: 11px;" onclick="clearSelection()" title="Clear Selection">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Hidden Bulk Form for POST Submission -->
+    <form id="bulkActionForm" method="POST" action="{{ url_for('admin_gallery.bulk_action') }}" style="display: none;">
+        <input type="hidden" name="action" id="bulkFormAction">
+        <input type="hidden" name="ids" id="bulkFormIds">
+        <input type="hidden" name="new_category" id="bulkFormNewCat">
+        <input type="hidden" name="new_visibility" id="bulkFormNewVis">
+        <input type="hidden" name="new_project_id" id="bulkFormNewProj">
+    </form>
+
+    <!-- 4. Asset Cards Grid -->
+    {% if items %}
+        <div class="asset-grid">
+            {% for item in items %}
+                <div class="asset-card" id="asset-card-{{ item.id }}"
+                     data-id="{{ item.id }}"
+                     data-title="{{ item.title }}"
+                     data-category="{{ item.category }}"
+                     data-project="{{ item.project.title if item.project else '' }}"
+                     data-project-id="{{ item.project_id or '' }}"
+                     data-description="{{ item.description or '' }}"
+                     data-tags="{{ item.tags or '' }}"
+                     data-visibility="{{ item.visibility }}"
+                     data-size="{{ item.file_size_formatted }}"
+                     data-url="{{ item.image_url }}"
+                     data-created="{{ item.created_at.strftime('%b %d, %Y') if item.created_at else '' }}"
+                     data-featured="{{ '1' if item.featured else '0' }}">
+
+                    <!-- Thumbnail with 16:9 ratio -->
+                    <div class="asset-thumb-wrap">
+                        <img src="{{ item.image_url }}" alt="{{ item.title }}" class="asset-thumb-img" loading="lazy">
+                        
+                        <!-- Category Badge -->
+                        <span class="asset-badge-category">{{ item.category }}</span>
+
+                        <!-- Checkbox -->
+                        <div class="asset-checkbox-wrap">
+                            <input type="checkbox" class="asset-checkbox item-select-check" value="{{ item.id }}" onchange="onItemCheckboxChange()">
+                        </div>
+
+                        <!-- Hover Overlay -->
+                        <div class="asset-hover-overlay">
+                            <button type="button" class="btn-view-full" onclick="openInspectorModal({{ item.id }})">
+                                <i class="fa-solid fa-eye"></i> VIEW FULL
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="asset-card-body">
+                        <h4 class="asset-card-title" title="{{ item.title }}">{{ item.title }}</h4>
+
+                        <div class="asset-meta-row">
+                            <span>{{ item.category }}</span>
+                            {% if item.project %}
+                                <span>•</span>
+                                <span class="asset-meta-project" title="Linked Project: {{ item.project.title }}">
+                                    <i class="fa-solid fa-diagram-project" style="font-size: 9.5px;"></i>
+                                    {{ item.project.title }}
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        {% if item.tags_list %}
+                            <div class="asset-tags-container">
+                                {% for tag in item.tags_list[:3] %}
+                                    <span class="tag-pill">#{{ tag }}</span>
+                                {% endfor %}
+                                {% if item.tags_list|length > 3 %}
+                                    <span class="tag-pill">+{{ item.tags_list|length - 3 }}</span>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        <!-- Footer: Status & Size -->
+                        <div class="asset-footer-row">
+                            <div>
+                                {% if item.visibility == 'published' %}
+                                    <span class="badge-vis-published"><i class="fa-solid fa-circle" style="font-size: 7px;"></i> PUBLISHED</span>
+                                {% elif item.visibility == 'draft' %}
+                                    <span class="badge-vis-draft"><i class="fa-solid fa-circle" style="font-size: 7px;"></i> DRAFT</span>
+                                {% else %}
+                                    <span class="badge-vis-private"><i class="fa-solid fa-lock" style="font-size: 8px;"></i> PRIVATE</span>
+                                {% endif %}
+                            </div>
+                            <div class="asset-size-badge">{{ item.file_size_formatted }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions Row -->
+                    <div class="asset-card-actions">
+                        <button type="button" class="btn-card-action" onclick="openInspectorModal({{ item.id }})" title="View Details">
+                            <i class="fa-regular fa-eye"></i> View
+                        </button>
+                        <button type="button" class="btn-card-action" onclick="openEditModal({{ item.id }})" title="Edit Metadata">
+                            <i class="fa-regular fa-pen-to-square"></i> Edit
+                        </button>
+                        <form method="POST" action="{{ url_for('admin_gallery.delete', id=item.id) }}" onsubmit="return confirm('Delete this asset from library?');" style="margin: 0;">
+                            <button type="submit" class="btn-card-action danger" style="width: 100%;" title="Delete Asset">
+                                <i class="fa-regular fa-trash-can"></i> Del
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="asset-empty-state">
+            <i class="fa-regular fa-images" style="font-size: 42px; color: var(--neon-cyan); margin-bottom: 12px; opacity: 0.8;"></i>
+            <h3 style="color: #fff; font-size: 16px; margin-bottom: 6px;">No Creative Assets Found</h3>
+            <p style="font-size: 12.5px; max-width: 420px; margin: 0 auto 18px;">
+                No visual assets match your active filter criteria. Try clearing search filters or upload a new asset.
+            </p>
+            <button type="button" class="btn-command-primary" onclick="openUploadModal()">
+                <i class="fa-solid fa-plus"></i> Upload First Asset
+            </button>
+        </div>
+    {% endif %}
+
+</div>
+
+<!-- 5. INSPECTION MODAL (View Full with Zoom & Inspector) -->
+<div id="inspectorModal" class="cyber-modal" onclick="if(event.target === this) closeInspectorModal();">
+    <div class="cyber-modal-content">
+        <div class="modal-header-bar">
+            <h3>
+                <i class="fa-regular fa-image" style="color: var(--neon-cyan);"></i>
+                <span id="inspectModalTitle">Asset Inspector</span>
+            </h3>
+            <button type="button" class="modal-close-btn" onclick="closeInspectorModal()">&times;</button>
+        </div>
+
+        <div class="inspector-layout">
+            <!-- Left: Full Image Viewer -->
+            <div class="inspector-preview-panel">
+                <img id="inspectModalImg" src="" alt="Full Preview" class="inspector-img">
+            </div>
+
+            <!-- Right: Metadata Inspector -->
+            <div class="inspector-details-panel">
+                <div class="inspector-meta-row">
+                    <span class="inspector-label">Asset Title</span>
+                    <div id="inspectTitleVal" class="inspector-value" style="font-size: 14px; font-weight: 600; color: #fff;"></div>
+                </div>
+
+                <div class="inspector-meta-row">
+                    <span class="inspector-label">Category &amp; Project</span>
+                    <div class="inspector-value" style="display: flex; align-items: center; gap: 8px;">
+                        <span id="inspectCatVal" class="badge-vis-published" style="color: var(--neon-cyan); font-size: 11px;"></span>
+                        <span id="inspectProjVal" style="color: var(--neon-purple); font-size: 11.5px;"></span>
+                    </div>
+                </div>
+
+                <div class="inspector-meta-row">
+                    <span class="inspector-label">Visibility Status</span>
+                    <div id="inspectStatusVal" class="inspector-value"></div>
+                </div>
+
+                <div class="inspector-meta-row">
+                    <span class="inspector-label">Description</span>
+                    <div id="inspectDescVal" class="inspector-value" style="color: #cbd5e1; font-size: 12px; line-height: 1.4;"></div>
+                </div>
+
+                <div class="inspector-meta-row">
+                    <span class="inspector-label">Tags</span>
+                    <div id="inspectTagsVal" style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px;"></div>
+                </div>
+
+                <div class="inspector-meta-row">
+                    <span class="inspector-label">File Details</span>
+                    <div class="inspector-value" style="font-size: 11.5px; font-family: var(--font-mono); color: var(--text-muted);">
+                        Size: <span id="inspectSizeVal" style="color: #fff;"></span> • Uploaded: <span id="inspectCreatedVal" style="color: #fff;"></span>
+                    </div>
+                </div>
+
+                <div class="inspector-meta-row">
+                    <span class="inspector-label">Asset URL</span>
+                    <div style="display: flex; gap: 6px;">
+                        <input type="text" id="inspectUrlInput" readonly style="flex: 1; background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 5px 8px; color: var(--neon-cyan); font-size: 10.5px; font-family: var(--font-mono);">
+                        <button type="button" class="btn-command-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="copyInspectUrl()" title="Copy URL">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Inspector Action Buttons -->
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: auto; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08);">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <button type="button" class="btn-command-primary" id="inspectEditBtn" style="font-size: 11.5px; padding: 7px;">
+                            <i class="fa-regular fa-pen-to-square"></i> Edit Asset
+                        </button>
+                        <a id="inspectDownloadBtn" href="" download class="btn-command-secondary" style="font-size: 11.5px; padding: 7px; text-align: center; text-decoration: none;">
+                            <i class="fa-solid fa-download"></i> Download
+                        </a>
+                    </div>
+                    <form id="inspectDeleteForm" method="POST" action="" onsubmit="return confirm('Delete this asset permanently?');" style="margin: 0;">
+                        <button type="submit" class="btn-command-secondary" style="width: 100%; font-size: 11px; color: #f87171; border-color: rgba(239, 68, 68, 0.3);">
+                            <i class="fa-regular fa-trash-can"></i> Delete from Library
                         </button>
                     </form>
                 </div>
             </div>
-        {% else %}
-            <div style="grid-column: 1/-1; color: var(--text-muted); text-align: center; padding: 30px;">
-                No gallery images uploaded yet.
+        </div>
+    </div>
+</div>
+
+<!-- 6. UPLOAD WORKFLOW MODAL -->
+<div id="uploadModal" class="cyber-modal" onclick="if(event.target === this) closeUploadModal();">
+    <div class="cyber-modal-content" style="max-width: 640px;">
+        <div class="modal-header-bar">
+            <h3>
+                <i class="fa-solid fa-cloud-arrow-up" style="color: var(--neon-cyan);"></i>
+                <span>Upload Creative Asset</span>
+            </h3>
+            <button type="button" class="modal-close-btn" onclick="closeUploadModal()">&times;</button>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin_gallery.create') }}" enctype="multipart/form-data" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+            <!-- Drag & Drop Zone -->
+            <div>
+                <label class="inspector-label" style="display: block; margin-bottom: 6px;">ASSET FILE (PNG • JPG • WEBP • SVG • GIF)</label>
+                <div class="dropzone-box" id="uploadDropzone" onclick="document.getElementById('uploadFileInput').click();">
+                    <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
+                    <div style="font-size: 13px; font-weight: 600; color: #fff;">Drop your image here or click to browse</div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Supports PNG, JPG, WebP, SVG, GIF up to 16MB</div>
+                    <img id="uploadThumbPreview" class="dropzone-preview-thumb" alt="Preview">
+                </div>
+                <input type="file" name="image" id="uploadFileInput" required accept="image/*" style="display: none;" onchange="previewUploadFile(this)">
             </div>
-        {% endfor %}
+
+            <!-- Title & Category Row -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                    <label class="inspector-label" style="display: block; margin-bottom: 4px;">TITLE *</label>
+                    <input type="text" name="title" required placeholder="Dashboard Cyberpunk UI" class="search-input-field" style="padding-left: 12px;">
+                </div>
+                <div>
+                    <label class="inspector-label" style="display: block; margin-bottom: 4px;">CATEGORY</label>
+                    <select name="category" class="filter-select" style="width: 100%;">
+                        <option value="UI / UX">UI / UX</option>
+                        <option value="Projects">Projects</option>
+                        <option value="AI">AI</option>
+                        <option value="Branding">Branding</option>
+                        <option value="Screenshots">Screenshots</option>
+                        <option value="Graphics">Graphics</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Project Relationship & Visibility -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                    <label class="inspector-label" style="display: block; margin-bottom: 4px;">BELONGS TO PROJECT</label>
+                    <select name="project_id" class="filter-select" style="width: 100%;">
+                        <option value="">None / Standalone Asset</option>
+                        {% for p in projects %}
+                            <option value="{{ p.id }}">{{ p.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="inspector-label" style="display: block; margin-bottom: 4px;">VISIBILITY STATUS</label>
+                    <select name="visibility" class="filter-select" style="width: 100%;">
+                        <option value="published">🟢 Published (Live on site)</option>
+                        <option value="draft">🟡 Draft (Hidden from public)</option>
+                        <option value="private">🔒 Private (Admin only)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label class="inspector-label" style="display: block; margin-bottom: 4px;">DESCRIPTION</label>
+                <textarea name="description" rows="2" placeholder="Describe the visual concept, color palette, or UX intent..." class="search-input-field" style="padding-left: 12px; resize: vertical;"></textarea>
+            </div>
+
+            <!-- Tags & Featured -->
+            <div style="display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center;">
+                <div>
+                    <label class="inspector-label" style="display: block; margin-bottom: 4px;">TAGS (COMMA SEPARATED)</label>
+                    <input type="text" name="tags" placeholder="cyberpunk, figma, darkmode, analytics" class="search-input-field" style="padding-left: 12px;">
+                </div>
+                <div style="padding-top: 14px;">
+                    <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #fff; cursor: pointer;">
+                        <input type="checkbox" name="featured" value="1" style="accent-color: var(--neon-cyan);">
+                        <span>Featured Asset</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08);">
+                <button type="button" class="btn-command-secondary" onclick="closeUploadModal()">Cancel</button>
+                <button type="submit" class="btn-command-primary">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Upload &amp; Register Asset
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 7. EDIT METADATA MODAL -->
+<div id="editModal" class="cyber-modal" onclick="if(event.target === this) closeEditModal();">
+    <div class="cyber-modal-content" style="max-width: 640px;">
+        <div class="modal-header-bar">
+            <h3>
+                <i class="fa-regular fa-pen-to-square" style="color: var(--neon-cyan);"></i>
+                <span>Edit Asset Metadata</span>
+            </h3>
+            <button type="button" class="modal-close-btn" onclick="closeEditModal()">&times;</button>
+        </div>
+
+        <form id="editAssetForm" method="POST" action="" enctype="multipart/form-data" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+            <!-- Current Thumbnail Preview -->
+            <div style="display: flex; align-items: center; gap: 16px; background: rgba(15,23,42,0.6); padding: 10px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
+                <img id="editThumbPreview" src="" alt="Thumbnail" style="width: 80px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid rgba(0,240,255,0.3);">
+                <div style="flex: 1;">
+                    <label class="inspector-label">Replace Image (Optional)</label>
+                    <input type="file" name="image" accept="image/*" style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                </div>
+            </div>
+
+            <!-- Title & Category Row -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                    <label class="inspector-label" style="display: block; margin-bottom: 4px;">TITLE *</label>
+                    <input type="text" name="title" id="editTitleInput" required class="search-input-field" style="padding-left: 12px;">
+                </div>
+                <div>
+                    <label class="inspector-label" style="display: block; margin-bottom: 4px;">CATEGORY</label>
+                    <select name="category" id="editCategorySelect" class="filter-select" style="width: 100%;">
+                        <option value="UI / UX">UI / UX</option>
+                        <option value="Projects">Projects</option>
+                        <option value="AI">AI</option>
+                        <option value="Branding">Branding</option>
+                        <option value="Screenshots">Screenshots</option>
+                        <option value="Graphics">Graphics</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Project Relationship & Visibility -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                    <label class="inspector-label" style="display: block; margin-bottom: 4px;">BELONGS TO PROJECT</label>
+                    <select name="project_id" id="editProjectSelect" class="filter-select" style="width: 100%;">
+                        <option value="">None / Standalone Asset</option>
+                        {% for p in projects %}
+                            <option value="{{ p.id }}">{{ p.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="inspector-label" style="display: block; margin-bottom: 4px;">VISIBILITY STATUS</label>
+                    <select name="visibility" id="editVisibilitySelect" class="filter-select" style="width: 100%;">
+                        <option value="published">🟢 Published (Live on site)</option>
+                        <option value="draft">🟡 Draft (Hidden from public)</option>
+                        <option value="private">🔒 Private (Admin only)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label class="inspector-label" style="display: block; margin-bottom: 4px;">DESCRIPTION</label>
+                <textarea name="description" id="editDescriptionInput" rows="2" class="search-input-field" style="padding-left: 12px; resize: vertical;"></textarea>
+            </div>
+
+            <!-- Tags & Featured -->
+            <div style="display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center;">
+                <div>
+                    <label class="inspector-label" style="display: block; margin-bottom: 4px;">TAGS (COMMA SEPARATED)</label>
+                    <input type="text" name="tags" id="editTagsInput" class="search-input-field" style="padding-left: 12px;">
+                </div>
+                <div style="padding-top: 14px;">
+                    <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #fff; cursor: pointer;">
+                        <input type="checkbox" name="featured" id="editFeaturedCheck" value="1" style="accent-color: var(--neon-cyan);">
+                        <span>Featured Asset</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08);">
+                <button type="button" class="btn-command-secondary" onclick="closeEditModal()">Cancel</button>
+                <button type="submit" class="btn-command-primary">
+                    <i class="fa-regular fa-floppy-disk"></i> Save Changes
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
 
+{% block extra_js %}
+<script>
+// Category Filter click handler
+function setCategoryFilter(cat) {
+    document.getElementById('hiddenCatInput').value = cat;
+    document.getElementById('filterForm').submit();
+}
+
+// Checkbox and Bulk Selection Logic
+function getSelectedAssetIds() {
+    const checked = document.querySelectorAll('.item-select-check:checked');
+    return Array.from(checked).map(cb => cb.value);
+}
+
+function onItemCheckboxChange() {
+    const selectedIds = getSelectedAssetIds();
+    const count = selectedIds.length;
+    const toolbar = document.getElementById('bulkToolbar');
+    const countDisplay = document.getElementById('selectedCount');
+
+    // Toggle card visual selection
+    document.querySelectorAll('.item-select-check').forEach(cb => {
+        const card = document.getElementById('asset-card-' + cb.value);
+        if (card) {
+            if (cb.checked) {
+                card.classList.add('selected');
+            } else {
+                card.classList.remove('selected');
+            }
+        }
+    });
+
+    if (count > 0) {
+        toolbar.classList.add('visible');
+        countDisplay.textContent = count;
+    } else {
+        toolbar.classList.remove('visible');
+        countDisplay.textContent = '0';
+        document.getElementById('selectAllCheckbox').checked = false;
+    }
+}
+
+function toggleSelectAll(masterCb) {
+    const checkboxes = document.querySelectorAll('.item-select-check');
+    checkboxes.forEach(cb => {
+        cb.checked = masterCb.checked;
+    });
+    onItemCheckboxChange();
+}
+
+function clearSelection() {
+    document.querySelectorAll('.item-select-check').forEach(cb => cb.checked = false);
+    document.getElementById('selectAllCheckbox').checked = false;
+    onItemCheckboxChange();
+}
+
+function executeBulkAction(actionName) {
+    const ids = getSelectedAssetIds();
+    if (ids.length === 0) {
+        alert('Please select at least one asset.');
+        return;
+    }
+
+    if (actionName === 'delete') {
+        if (!confirm(`Are you sure you want to permanently delete ${ids.length} selected asset(s)?`)) {
+            return;
+        }
+    } else if (actionName === 'change_category') {
+        const cat = document.getElementById('bulkCategorySelect').value;
+        if (!cat) {
+            alert('Please select a category to assign.');
+            return;
+        }
+        document.getElementById('bulkFormNewCat').value = cat;
+    } else if (actionName === 'change_visibility') {
+        const vis = document.getElementById('bulkVisibilitySelect').value;
+        if (!vis) {
+            alert('Please select a status to assign.');
+            return;
+        }
+        document.getElementById('bulkFormNewVis').value = vis;
+    } else if (actionName === 'move_to_project') {
+        const proj = document.getElementById('bulkProjectSelect').value;
+        document.getElementById('bulkFormNewProj').value = proj;
+    }
+
+    document.getElementById('bulkFormAction').value = actionName;
+    document.getElementById('bulkFormIds').value = ids.join(',');
+    document.getElementById('bulkActionForm').submit();
+}
+
+// Inspector Modal (View Full)
+function openInspectorModal(id) {
+    const card = document.getElementById('asset-card-' + id);
+    if (!card) return;
+
+    const title = card.dataset.title || 'Creative Asset';
+    const cat = card.dataset.category || 'Asset';
+    const proj = card.dataset.project || '';
+    const desc = card.dataset.description || 'No description provided.';
+    const tags = card.dataset.tags || '';
+    const vis = card.dataset.visibility || 'published';
+    const size = card.dataset.size || 'Unknown';
+    const url = card.dataset.url || '';
+    const created = card.dataset.created || '';
+
+    document.getElementById('inspectModalTitle').textContent = title;
+    document.getElementById('inspectTitleVal').textContent = title;
+    document.getElementById('inspectModalImg').src = url;
+    document.getElementById('inspectCatVal').textContent = cat;
+    document.getElementById('inspectProjVal').textContent = proj ? ('• ' + proj) : '';
+    document.getElementById('inspectDescVal').textContent = desc;
+    document.getElementById('inspectSizeVal').textContent = size;
+    document.getElementById('inspectCreatedVal').textContent = created;
+    document.getElementById('inspectUrlInput').value = window.location.origin + url;
+    document.getElementById('inspectDownloadBtn').href = url;
+
+    // Status Pill
+    const statusValEl = document.getElementById('inspectStatusVal');
+    if (vis === 'published') {
+        statusValEl.innerHTML = '<span class="badge-vis-published"><i class="fa-solid fa-circle" style="font-size: 7px;"></i> PUBLISHED (Public)</span>';
+    } else if (vis === 'draft') {
+        statusValEl.innerHTML = '<span class="badge-vis-draft"><i class="fa-solid fa-circle" style="font-size: 7px;"></i> DRAFT (Hidden)</span>';
+    } else {
+        statusValEl.innerHTML = '<span class="badge-vis-private"><i class="fa-solid fa-lock" style="font-size: 8px;"></i> PRIVATE (Admin Only)</span>';
+    }
+
+    // Tags
+    const tagsContainer = document.getElementById('inspectTagsVal');
+    tagsContainer.innerHTML = '';
+    if (tags) {
+        tags.split(',').forEach(t => {
+            const trimmed = t.trim();
+            if (trimmed) {
+                const span = document.createElement('span');
+                span.className = 'tag-pill';
+                span.textContent = '#' + trimmed;
+                tagsContainer.appendChild(span);
+            }
+        });
+    } else {
+        tagsContainer.innerHTML = '<span style="font-size: 11px; color: var(--text-muted);">No tags</span>';
+    }
+
+    // Action handlers
+    document.getElementById('inspectEditBtn').onclick = function() {
+        closeInspectorModal();
+        openEditModal(id);
+    };
+    document.getElementById('inspectDeleteForm').action = "{{ url_for('admin_gallery.delete', id=0) }}".replace('/0', '/' + id);
+
+    document.getElementById('inspectorModal').classList.add('active');
+}
+
+function closeInspectorModal() {
+    document.getElementById('inspectorModal').classList.remove('active');
+}
+
+function copyInspectUrl() {
+    const input = document.getElementById('inspectUrlInput');
+    input.select();
+    navigator.clipboard.writeText(input.value).then(() => {
+        alert('Asset URL copied to clipboard!');
+    });
+}
+
+// Upload Modal
+function openUploadModal() {
+    document.getElementById('uploadModal').classList.add('active');
+}
+
+function closeUploadModal() {
+    document.getElementById('uploadModal').classList.remove('active');
+}
+
+function previewUploadFile(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('uploadThumbPreview');
+            preview.src = e.target.result;
+            preview.style.display = 'inline-block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Drag & drop handlers for upload
+const dropzone = document.getElementById('uploadDropzone');
+if (dropzone) {
+    ['dragenter', 'dragover'].forEach(name => {
+        dropzone.addEventListener(name, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.add('dragover');
+        });
+    });
+    ['dragleave', 'drop'].forEach(name => {
+        dropzone.addEventListener(name, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.remove('dragover');
+        });
+    });
+    dropzone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length) {
+            const fileInput = document.getElementById('uploadFileInput');
+            fileInput.files = files;
+            previewUploadFile(fileInput);
+        }
+    });
+}
+
+// Edit Modal
+function openEditModal(id) {
+    const card = document.getElementById('asset-card-' + id);
+    if (!card) return;
+
+    const title = card.dataset.title || '';
+    const cat = card.dataset.category || 'UI / UX';
+    const projId = card.dataset.projectId || '';
+    const desc = card.dataset.description || '';
+    const tags = card.dataset.tags || '';
+    const vis = card.dataset.visibility || 'published';
+    const url = card.dataset.url || '';
+    const featured = card.dataset.featured === '1';
+
+    document.getElementById('editTitleInput').value = title;
+    document.getElementById('editCategorySelect').value = cat;
+    document.getElementById('editProjectSelect').value = projId;
+    document.getElementById('editDescriptionInput').value = desc;
+    document.getElementById('editTagsInput').value = tags;
+    document.getElementById('editVisibilitySelect').value = vis;
+    document.getElementById('editFeaturedCheck').checked = featured;
+    document.getElementById('editThumbPreview').src = url;
+
+    document.getElementById('editAssetForm').action = "{{ url_for('admin_gallery.edit', id=0) }}".replace('/0', '/' + id);
+
+    document.getElementById('editModal').classList.add('active');
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').classList.remove('active');
+}
+
+// Keyboard shortcuts (Escape key closes open modal)
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeInspectorModal();
+        closeUploadModal();
+        closeEditModal();
+    }
+});
+</script>
+{% endblock %}

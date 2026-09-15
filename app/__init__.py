@@ -112,13 +112,23 @@ def create_app(config_name="default"):
                 except Exception:
                     db.session.rollback()
 
-    # Inject global site settings into all templates
+    # Inject global site settings and storage stats into all templates
     @app.context_processor
-    def inject_settings():
+    def inject_global_data():
+        settings = None
         try:
-            return {"settings": SiteSetting.get_settings()}
+            settings = SiteSetting.get_settings()
         except Exception:
-            return {"settings": None}
+            pass
+
+        storage = None
+        try:
+            from app.services.storage_service import get_storage_stats
+            storage = get_storage_stats()
+        except Exception:
+            pass
+
+        return {"settings": settings, "storage": storage}
 
     # Static uploads route
     @app.route("/uploads/<path:filename>")

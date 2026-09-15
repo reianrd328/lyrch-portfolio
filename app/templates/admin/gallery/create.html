@@ -1,42 +1,88 @@
 {% extends "admin/base.html" %}
 
-{% block title %}Upload Image — MY WORK CMS{% endblock %}
+{% block title %}Upload Creative Asset — LYRCH CMS{% endblock %}
 
 {% block admin_content %}
-<div class="telemetry-card" style="max-width: 600px; margin: 0 auto; width: 100%;">
+<div class="telemetry-card" style="max-width: 680px; margin: 0 auto; width: 100%;">
     <div class="card-header-bar">
         <div class="header-label">
-            <i class="fa-regular fa-image"></i>
-            <span>ADD TO GALLERY</span>
+            <i class="fa-solid fa-cloud-arrow-up" style="color: var(--neon-cyan);"></i>
+            <span>UPLOAD CREATIVE ASSET</span>
         </div>
-        <a href="{{ url_for('admin_gallery.index') }}" class="header-link">&larr; Back to Gallery</a>
+        <a href="{{ url_for('admin_gallery.index') }}" class="header-link">&larr; Back to Asset Library</a>
     </div>
 
     <form method="POST" action="{{ url_for('admin_gallery.create') }}" enctype="multipart/form-data" style="margin-top: 18px; display: flex; flex-direction: column; gap: 14px;">
         <div>
-            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">IMAGE TITLE</label>
-            <input type="text" name="title" required placeholder="PAWSHOP UI Design" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px; font-family: var(--font-mono);">ASSET FILE * (PNG, JPG, WEBP, SVG, GIF)</label>
+            <input type="file" name="image" required accept="image/*" style="font-size: 12px; color: var(--text-muted); background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 10px; width: 100%;">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px; font-family: var(--font-mono);">ASSET TITLE *</label>
+                <input type="text" name="title" required placeholder="Dashboard Cyberpunk UI" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+            </div>
+
+            <div>
+                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px; font-family: var(--font-mono);">CATEGORY</label>
+                <select name="category" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+                    <option value="UI / UX">UI / UX</option>
+                    <option value="Projects">Projects</option>
+                    <option value="AI">AI</option>
+                    <option value="Branding">Branding</option>
+                    <option value="Screenshots">Screenshots</option>
+                    <option value="Graphics">Graphics</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px; font-family: var(--font-mono);">BELONGS TO PROJECT</label>
+                <select name="project_id" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+                    <option value="">None / Standalone Asset</option>
+                    {% for p in projects %}
+                        <option value="{{ p.id }}">{{ p.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px; font-family: var(--font-mono);">VISIBILITY STATUS</label>
+                <select name="visibility" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+                    <option value="published">🟢 Published (Live on site)</option>
+                    <option value="draft">🟡 Draft (Hidden from public)</option>
+                    <option value="private">🔒 Private (Admin only)</option>
+                </select>
+            </div>
         </div>
 
         <div>
-            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">CATEGORY</label>
-            <input type="text" name="category" value="UI / UX" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px; font-family: var(--font-mono);">DESCRIPTION</label>
+            <textarea name="description" rows="2" placeholder="Visual concept, UX flow, or color notes..." style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;"></textarea>
         </div>
 
-        <div>
-            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">IMAGE FILE</label>
-            <input type="file" name="image" required accept="image/*" style="font-size: 12px; color: var(--text-muted);">
+        <div style="display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center;">
+            <div>
+                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px; font-family: var(--font-mono);">TAGS (COMMA SEPARATED)</label>
+                <input type="text" name="tags" placeholder="figma, darkmode, mobile, ui" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+            </div>
+            <div style="padding-top: 14px;">
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #fff; cursor: pointer;">
+                    <input type="checkbox" name="featured" value="1" style="accent-color: var(--neon-cyan);">
+                    <span>Featured Asset</span>
+                </label>
+            </div>
         </div>
 
-        <div>
-            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">DESCRIPTION</label>
-            <textarea name="description" rows="2" placeholder="Command Center interface..." style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;"></textarea>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px;">
+            <a href="{{ url_for('admin_gallery.index') }}" class="btn-command-secondary">Cancel</a>
+            <button type="submit" class="btn-command-primary">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload &amp; Save Asset
+            </button>
         </div>
-
-        <button type="submit" class="btn-command-primary" style="margin-top: 8px;">
-            Save Gallery Asset
-        </button>
     </form>
 </div>
 {% endblock %}
-

@@ -102,7 +102,7 @@ def video_studio():
 
 @public_bp.route("/gallery")
 def gallery():
-    items = GalleryItem.query.order_by(GalleryItem.order_index.asc(), GalleryItem.id.desc()).all()
+    items = GalleryItem.query.filter(GalleryItem.visibility == "published").order_by(GalleryItem.order_index.asc(), GalleryItem.id.desc()).all()
     return render_template("public/gallery.html", items=items)
 
 @public_bp.route("/files")

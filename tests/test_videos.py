@@ -39,7 +39,16 @@ class VideoTestCase(unittest.TestCase):
                 featured=True,
                 visibility="published"
             )
-            db.session.add_all([v1, v2, v3])
+            v4 = Video(
+                title="Coffee Commercial Ad Standalone",
+                slug="coffee-commercial-ad-standalone",
+                album=None,
+                tools_used="Gemini, Runway",
+                duration="0:30",
+                featured=False,
+                visibility="published"
+            )
+            db.session.add_all([v1, v2, v3, v4])
             db.session.commit()
 
     def tearDown(self):
@@ -167,7 +176,7 @@ class VideoTestCase(unittest.TestCase):
         self.assertIn(b"Kung Fu Chronicles", hub_res.data)
         self.assertIn(b"Commercials 2026", hub_res.data)
         self.assertIn(b"STANDALONE VIDEOS", hub_res.data)
-        self.assertIn(b"Coffee Commercial Ad", hub_res.data)
+        self.assertIn(b"Coffee Commercial Ad Standalone", hub_res.data)
 
         # 2. Inside Album View (Click into Kung Fu Chronicles)
         inside_res = self.client.get("/admin/videos/?album=Kung Fu Chronicles")
@@ -176,7 +185,7 @@ class VideoTestCase(unittest.TestCase):
         self.assertIn(b"Kung Fu Chronicles", inside_res.data)
         self.assertIn(b"AI Kung Fu Scene", inside_res.data)
         self.assertIn(b"AI Kung Fu Finale", inside_res.data)
-        self.assertNotIn(b"Coffee Commercial Ad", inside_res.data)
+        self.assertNotIn(b"Coffee Commercial Ad Standalone", inside_res.data)
 
         # 3. Filter Tabs (e.g. albums tab, standalone tab)
         tab_albums = self.client.get("/admin/videos/?tab=albums")
