@@ -80,15 +80,32 @@ def create_app(config_name="default"):
         if not app.config.get("TESTING") and current_user.is_authenticated and request.path.startswith("/admin"):
             sess_token = session.get("admin_session_token")
 
-            # If user has an active session token in DB and it doesn't match this browser's session
-            if current_user.active_session_token and sess_token != current_user.active_session_token:
+            # Conflict: DB has a token from another device that differs from this browser
+            if current_user.active_session_token and sess_token and sess_token != current_user.active_session_token:
                 session.pop("admin_session_token", None)
                 logout_user()
                 flash("Admin session closed: Your session was terminated or opened on another device.", "warning")
                 return redirect(url_for("auth.login"))
 
-            # Refresh heartbeat on user interaction
-            if sess_token and current_user.active_session_token == sess_token:
+            # Auto-heal: If session token exists in cookie but DB token was cleared or restarted
+            if sess_token and not current_user.active_session_token:
+                current_user.active_session_token = sess_token
+                current_user.active_session_heartbeat = datetime.utcnow()
+                try:
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+            elif not sess_token and not current_user.active_session_token:
+                import secrets
+                new_token = secrets.token_hex(24)
+                session["admin_session_token"] = new_token
+                current_user.active_session_token = new_token
+                current_user.active_session_heartbeat = datetime.utcnow()
+                try:
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+            elif sess_token and current_user.active_session_token == sess_token:
                 current_user.active_session_heartbeat = datetime.utcnow()
                 try:
                     db.session.commit()

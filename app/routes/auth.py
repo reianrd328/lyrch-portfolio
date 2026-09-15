@@ -71,8 +71,8 @@ def login():
             db.session.commit()
 
             session["admin_session_token"] = new_token
-            # Session cookie strictly expires when browser process is closed
-            login_user(user, remember=False)
+            session.permanent = True
+            login_user(user, remember=True)
 
             log = ActivityLog(
                 title=f"Admin session opened on {device_desc}",
@@ -101,10 +101,22 @@ def heartbeat():
     """Receives periodic ping from the active admin window to verify lock validity."""
     sess_token = session.get("admin_session_token")
     if not sess_token or sess_token != current_user.active_session_token:
+        # If DB token is None but browser is authenticated with token, heal it
+        if sess_token and not current_user.active_session_token:
+            current_user.active_session_token = sess_token
+            current_user.active_session_heartbeat = datetime.utcnow()
+            try:
+                db.session.commit()
+                return jsonify({"status": "ok"})
+            except Exception:
+                db.session.rollback()
         return jsonify({"status": "revoked", "message": "Session invalidated or opened on another device."}), 401
 
     current_user.active_session_heartbeat = datetime.utcnow()
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
     return jsonify({"status": "ok"})
 
 @auth_bp.route("/close-session", methods=["POST"])

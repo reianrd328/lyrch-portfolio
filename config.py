@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -8,7 +9,11 @@ load_dotenv(BASE_DIR / ".env")
 class Config:
     """Base Configuration"""
     SECRET_KEY = os.getenv("SECRET_KEY", "lyrch-command-center-default-key-3026")
-    SESSION_PERMANENT = False
+    SESSION_PERMANENT = True
+    PERMANENT_SESSION_LIFETIME = timedelta(days=7)
+    REMEMBER_COOKIE_DURATION = timedelta(days=7)
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
     
     # Upload configuration (supports Render Persistent Disk or local folder)
     upload_env = os.getenv("UPLOAD_FOLDER", "uploads")

@@ -165,36 +165,9 @@
     <!-- Scripts -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script>
-        // Single-Device Session Heartbeat & Window-Close Auto-Logout
+        // Single-Device Session Heartbeat & Keep-Alive
         (function() {
-            let isInternalNavigation = false;
-
-            // Track internal user navigation so normal link clicks / forms don't fire close beacon
-            document.addEventListener('click', function(e) {
-                const link = e.target.closest('a') || e.target.closest('button') || e.target.closest('input[type="submit"]');
-                if (link) {
-                    isInternalNavigation = true;
-                    setTimeout(function() { isInternalNavigation = false; }, 3000);
-                }
-            }, true);
-
-            window.addEventListener('submit', function() {
-                isInternalNavigation = true;
-                setTimeout(function() { isInternalNavigation = false; }, 3000);
-            }, true);
-
-            // Send close session beacon when the browser tab or entire window is closed
-            function handleWindowClose() {
-                if (!isInternalNavigation && navigator.sendBeacon) {
-                    navigator.sendBeacon("{{ url_for('auth.close_session') }}");
-                }
-            }
-
-            window.addEventListener('beforeunload', handleWindowClose);
-            window.addEventListener('pagehide', handleWindowClose);
-
-            // Periodic heartbeat every 15 seconds to verify session validity and keep device lock alive
-            setInterval(function() {
+            function sendHeartbeat() {
                 fetch("{{ url_for('auth.heartbeat') }}", {
                     method: 'POST',
                     headers: {
@@ -202,15 +175,26 @@
                     }
                 })
                 .then(function(res) {
-                    if (res.status === 401 || !res.ok) {
-                        // Session revoked or opened on another device
+                    if (res.status === 401) {
+                        // Only redirect if explicitly 401 Unauthorized (clearance taken over by another device)
                         window.location.href = "{{ url_for('auth.login') }}?reason=conflict";
                     }
                 })
                 .catch(function(err) {
+                    // Suppress transient network hiccups during form submissions or page transitions
                     console.warn("Session check notice:", err);
                 });
-            }, 15000);
+            }
+
+            // Periodic heartbeat every 20 seconds to maintain active device lock
+            setInterval(sendHeartbeat, 20000);
+
+            // Re-sync heartbeat immediately when the user returns to this browser tab
+            document.addEventListener('visibilitychange', function() {
+                if (document.visibilityState === 'visible') {
+                    sendHeartbeat();
+                }
+            });
         })();
     </script>
     {% block extra_js %}{% endblock %}
