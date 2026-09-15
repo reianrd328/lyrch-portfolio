@@ -1,3 +1,4 @@
+import io
 import unittest
 from app import create_app
 from app.models import db, GalleryItem, Project, User, SiteSetting
@@ -305,6 +306,58 @@ class GalleryTestCase(unittest.TestCase):
             # Verify it was also appended to configured SiteSetting categories
             settings = SiteSetting.get_settings()
             self.assertIn("Generative Cyber Art", settings.gallery_categories)
+
+    def test_gallery_batch_multi_upload(self):
+        self.login_admin()
+        with self.app.app_context():
+            p = Project.query.filter_by(title="Cyberpunk Dashboard").first()
+            p_id = p.id
+
+        # 1. Batch upload with custom title
+        img1 = (io.BytesIO(b"fake image data 1"), "screen_one.png")
+        img2 = (io.BytesIO(b"fake image data 2"), "screen_two.png")
+        img3 = (io.BytesIO(b"fake image data 3"), "screen_three.png")
+
+        res = self.client.post("/admin/gallery/create", data={
+            "title": "Batch Showcase",
+            "category": "UI / UX",
+            "project_id": str(p_id),
+            "description": "Multi-upload test",
+            "tags": "multi, batch",
+            "visibility": "published",
+            "images": [img1, img2, img3]
+        }, follow_redirects=True)
+        self.assertEqual(res.status_code, 200)
+
+        with self.app.app_context():
+            item1 = GalleryItem.query.filter_by(title="Batch Showcase (1)").first()
+            item2 = GalleryItem.query.filter_by(title="Batch Showcase (2)").first()
+            item3 = GalleryItem.query.filter_by(title="Batch Showcase (3)").first()
+            self.assertIsNotNone(item1)
+            self.assertIsNotNone(item2)
+            self.assertIsNotNone(item3)
+            self.assertEqual(item1.project_id, p_id)
+            self.assertEqual(item2.project_id, p_id)
+            self.assertEqual(item3.category, "UI / UX")
+
+        # 2. Batch upload with blank title (auto-deriving filename)
+        imgA = (io.BytesIO(b"fake image A"), "mobile_login_flow.png")
+        imgB = (io.BytesIO(b"fake image B"), "checkout_success_hud.png")
+
+        res_blank = self.client.post("/admin/gallery/create", data={
+            "title": "",
+            "category": "Screenshots",
+            "visibility": "published",
+            "images": [imgA, imgB]
+        }, follow_redirects=True)
+        self.assertEqual(res_blank.status_code, 200)
+
+        with self.app.app_context():
+            itemA = GalleryItem.query.filter_by(title="Mobile Login Flow").first()
+            itemB = GalleryItem.query.filter_by(title="Checkout Success Hud").first()
+            self.assertIsNotNone(itemA)
+            self.assertIsNotNone(itemB)
+            self.assertEqual(itemA.category, "Screenshots")
 
 if __name__ == "__main__":
     unittest.main()

@@ -24,7 +24,7 @@
             {% endif %}
 
             <a href="{{ url_for('admin_videos.create', album=selected_album if selected_album and selected_album != '__standalone__' else '') }}" class="btn-command-primary" style="font-size: 12px; padding: 7px 18px; font-weight: 700; box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);">
-                <i class="fa-solid fa-plus"></i> Upload Video
+                <i class="fa-solid fa-cloud-arrow-up"></i> {% if selected_album and selected_album != '__standalone__' %}+ Upload to Album{% else %}+ Upload Video(s){% endif %}
             </a>
         </div>
     </div>
@@ -328,7 +328,7 @@
                     {{ videos|length }} Videos
                 </span>
                 <a href="{{ url_for('admin_videos.create', album=selected_album if selected_album and selected_album != '__standalone__' else '') }}" class="btn-command-primary" style="font-size: 11.5px; padding: 6px 14px;">
-                    <i class="fa-solid fa-plus"></i> Add Video Inside
+                    <i class="fa-solid fa-cloud-arrow-up"></i> + Upload Video(s) to Album
                 </a>
             </div>
         </div>

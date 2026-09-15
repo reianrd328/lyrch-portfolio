@@ -3,6 +3,7 @@ from flask_login import login_required
 from app.models import db, Video, ActivityLog
 from app.services.upload_service import save_upload_file, delete_file
 import re
+from pathlib import Path
 
 videos_bp = Blueprint("admin_videos", __name__)
 
@@ -80,14 +81,6 @@ def index():
 def create():
     if request.method == "POST":
         title = request.form.get("title", "").strip()
-        if not title:
-            flash("Video title is required", "danger")
-            return redirect(request.url)
-
-        slug = slugify(title)
-        existing = Video.query.filter_by(slug=slug).first()
-        if existing:
-            slug = f"{slug}-{Video.query.count() + 1}"
 
         album_select = request.form.get("album_select", "").strip()
         album_custom = request.form.get("album_custom", "").strip()
@@ -111,7 +104,7 @@ def create():
         featured = bool(request.form.get("featured"))
         visibility = request.form.get("visibility", "published")
 
-        # Media files
+        # Media files - Thumbnail if provided
         thumbnail_file = request.files.get("thumbnail")
         thumbnail_url = None
         if thumbnail_file and thumbnail_file.filename:
@@ -119,43 +112,123 @@ def create():
             if success:
                 thumbnail_url = res
 
-        video_file = request.files.get("video")
-        video_url = None
-        if video_file and video_file.filename:
-            success, res = save_upload_file(video_file, subfolder="videos", allowed_types="video")
-            if success:
-                video_url = res
-        elif request.form.get("video_external_url"):
-            video_url = request.form.get("video_external_url")
+        # Collect uploaded video files (supports 'videos' and 'video', single or multiple)
+        raw_video_files = request.files.getlist("videos")
+        if not raw_video_files or (len(raw_video_files) == 1 and not raw_video_files[0].filename):
+            raw_video_files = request.files.getlist("video")
 
-        video = Video(
-            title=title,
-            slug=slug,
-            album=album,
-            category=category,
-            tools_used=tools_used,
-            platforms=platforms,
-            duration=duration,
-            aspect_ratio=aspect_ratio,
-            prompt_text=prompt_text,
-            workflow_notes=workflow_notes,
-            description=description,
-            featured=featured,
-            visibility=visibility,
-            thumbnail_url=thumbnail_url,
-            video_url=video_url
-        )
-        db.session.add(video)
+        valid_video_files = [f for f in raw_video_files if f and f.filename]
+        external_url = request.form.get("video_external_url", "").strip()
+
+        if not valid_video_files and not external_url and not title:
+            flash("Please enter a video title, upload video file(s), or provide an external video URL.", "danger")
+            return redirect(request.url)
+
+        created_videos = []
+        failed_files = []
+
+        if valid_video_files:
+            total_files = len(valid_video_files)
+            for idx, vf in enumerate(valid_video_files):
+                success, res = save_upload_file(vf, subfolder="videos", allowed_types="video")
+                if not success:
+                    failed_files.append((vf.filename, res))
+                    continue
+
+                # Smart titling:
+                # 1. Title given: "Title" (if 1 file) or "Title - Part 1", "Title - Part 2", ...
+                # 2. No title: clean formatted filename (e.g. "cyberpunk_scene_01.mp4" -> "Cyberpunk Scene 01")
+                if title:
+                    vid_title = title if total_files == 1 else f"{title} - Part {idx + 1}"
+                else:
+                    stem = Path(vf.filename).stem
+                    clean_name = re.sub(r'[\-_]+', ' ', stem).strip()
+                    vid_title = clean_name.title() if clean_name else f"Video {idx + 1}"
+
+                base_slug = slugify(vid_title)
+                slug = base_slug
+                counter = 1
+                while Video.query.filter_by(slug=slug).first():
+                    slug = f"{base_slug}-{counter}"
+                    counter += 1
+
+                video = Video(
+                    title=vid_title,
+                    slug=slug,
+                    album=album,
+                    category=category,
+                    tools_used=tools_used,
+                    platforms=platforms,
+                    duration=duration,
+                    aspect_ratio=aspect_ratio,
+                    prompt_text=prompt_text,
+                    workflow_notes=workflow_notes,
+                    description=description,
+                    featured=featured,
+                    visibility=visibility,
+                    thumbnail_url=thumbnail_url,
+                    video_url=res
+                )
+                db.session.add(video)
+                created_videos.append(video)
+        else:
+            # Fallback for external URL only
+            vid_title = title or "AI Creative Video"
+            base_slug = slugify(vid_title)
+            slug = base_slug
+            counter = 1
+            while Video.query.filter_by(slug=slug).first():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+
+            video = Video(
+                title=vid_title,
+                slug=slug,
+                album=album,
+                category=category,
+                tools_used=tools_used,
+                platforms=platforms,
+                duration=duration,
+                aspect_ratio=aspect_ratio,
+                prompt_text=prompt_text,
+                workflow_notes=workflow_notes,
+                description=description,
+                featured=featured,
+                visibility=visibility,
+                thumbnail_url=thumbnail_url,
+                video_url=external_url
+            )
+            db.session.add(video)
+            created_videos.append(video)
+
+        if not created_videos and failed_files:
+            err_msg = ", ".join([f"{fn}: {err}" for fn, err in failed_files])
+            flash(f"Video upload failed: {err_msg}", "danger")
+            return redirect(request.url)
+
+        db.session.commit()
+
+        if len(created_videos) == 1:
+            log_title = f"Published AI Video: {created_videos[0].title}" + (f" (Album: {album})" if album else "")
+            flash_msg = f"AI Video '{created_videos[0].title}' created successfully!"
+        else:
+            log_title = f"Batch uploaded {len(created_videos)} AI Videos" + (f" (Album: {album})" if album else "")
+            flash_msg = f"Successfully uploaded {len(created_videos)} AI videos" + (f" to album '{album}'" if album else "") + "!"
 
         log = ActivityLog(
-            title=f"Published AI Video: {title}" + (f" (Album: {album})" if album else ""),
+            title=log_title,
             activity_type="video",
             time_label="Just now"
         )
         db.session.add(log)
         db.session.commit()
 
-        flash(f"AI Video '{title}' created successfully!", "success")
+        flash(flash_msg, "success")
+        if failed_files:
+            flash(f"Note: {len(failed_files)} file(s) could not be uploaded due to invalid formats.", "warning")
+
+        if album:
+            return redirect(url_for("admin_videos.index", album=album))
         return redirect(url_for("admin_videos.index"))
 
     preselected_album = request.args.get("album", "").strip()

@@ -5,6 +5,7 @@ from app.models import db, GalleryItem, Project
 from app.services.upload_service import save_upload_file, delete_file
 
 import re
+from pathlib import Path
 
 def slugify(text):
     text = (text or "").lower().strip()
@@ -215,47 +216,87 @@ def create():
         visibility = request.form.get("visibility", "published").strip()
         featured = bool(request.form.get("featured"))
 
-        img_file = request.files.get("image")
-        if not img_file or not img_file.filename:
+        # Collect uploaded image files (supports 'images' and 'image' input names, single or multiple)
+        raw_files = request.files.getlist("images")
+        if not raw_files or (len(raw_files) == 1 and not raw_files[0].filename):
+            raw_files = request.files.getlist("image")
+
+        valid_files = [f for f in raw_files if f and f.filename]
+        if not valid_files:
             if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return jsonify({"success": False, "error": "Image file is required"}), 400
-            flash("Image file is required", "danger")
+                return jsonify({"success": False, "error": "Please select at least one image file to upload"}), 400
+            flash("Please select at least one image file to upload.", "danger")
             return redirect(request.url)
 
-        success, res = save_upload_file(img_file, subfolder="gallery", allowed_types="image")
-        if not success:
+        created_items = []
+        failed_files = []
+        total_files = len(valid_files)
+
+        for idx, img_file in enumerate(valid_files):
+            success, res = save_upload_file(img_file, subfolder="gallery", allowed_types="image")
+            if not success:
+                failed_files.append((img_file.filename, res))
+                continue
+
+            # File size calculation
+            file_size_bytes = 0
+            try:
+                full_path = os.path.join(current_app.config["UPLOAD_FOLDER"], "gallery", os.path.basename(res))
+                if os.path.exists(full_path):
+                    file_size_bytes = os.path.getsize(full_path)
+            except Exception:
+                pass
+
+            # Smart titling:
+            # 1. Custom title given: "Title" (if 1 file) or "Title (1)", "Title (2)", ...
+            # 2. No title: clean human title from filename (e.g. "ui_dashboard.png" -> "Ui Dashboard")
+            if title:
+                item_title = title if total_files == 1 else f"{title} ({idx + 1})"
+            else:
+                stem = Path(img_file.filename).stem
+                clean_name = re.sub(r'[\-_]+', ' ', stem).strip()
+                item_title = clean_name.title() if clean_name else f"Asset {idx + 1}"
+
+            item = GalleryItem(
+                title=item_title,
+                category=category,
+                project_id=project_id,
+                description=description,
+                tags=tags,
+                visibility=visibility,
+                featured=featured,
+                image_url=res,
+                file_size_bytes=file_size_bytes
+            )
+            db.session.add(item)
+            created_items.append(item)
+
+        if not created_items and failed_files:
+            err_msg = ", ".join([f"{fn}: {err}" for fn, err in failed_files])
             if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return jsonify({"success": False, "error": res}), 400
-            flash(f"Upload failed: {res}", "danger")
+                return jsonify({"success": False, "error": f"Upload failed: {err_msg}"}), 400
+            flash(f"Upload failed: {err_msg}", "danger")
             return redirect(request.url)
 
-        # File size calculation
-        file_size_bytes = 0
-        try:
-            full_path = os.path.join(current_app.config["UPLOAD_FOLDER"], "gallery", os.path.basename(res))
-            if os.path.exists(full_path):
-                file_size_bytes = os.path.getsize(full_path)
-        except Exception:
-            pass
-
-        item = GalleryItem(
-            title=title or "Creative Asset",
-            category=category,
-            project_id=project_id,
-            description=description,
-            tags=tags,
-            visibility=visibility,
-            featured=featured,
-            image_url=res,
-            file_size_bytes=file_size_bytes
-        )
-        db.session.add(item)
         db.session.commit()
 
         if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return jsonify({"success": True, "item": item.to_dict()})
+            return jsonify({
+                "success": True,
+                "count": len(created_items),
+                "items": [item.to_dict() for item in created_items],
+                "item": created_items[0].to_dict() if created_items else None,
+                "message": f"Successfully uploaded {len(created_items)} creative asset(s)!"
+            })
 
-        flash(f"Creative asset '{item.title}' uploaded successfully!", "success")
+        if len(created_items) == 1:
+            flash(f"Creative asset '{created_items[0].title}' uploaded successfully!", "success")
+        else:
+            flash(f"Successfully uploaded {len(created_items)} creative assets to the library!", "success")
+
+        if failed_files:
+            flash(f"Note: {len(failed_files)} file(s) could not be uploaded due to invalid formats.", "warning")
+
         return redirect(url_for("admin_gallery.index"))
 
     projects = Project.query.order_by(Project.title.asc()).all()

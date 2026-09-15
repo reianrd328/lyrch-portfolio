@@ -1,3 +1,4 @@
+import io
 import unittest
 from app import create_app
 from app.models import db, Video, User
@@ -197,6 +198,63 @@ class VideoTestCase(unittest.TestCase):
         self.assertEqual(tab_standalone.status_code, 200)
         self.assertIn(b"STANDALONE VIDEOS", tab_standalone.data)
         self.assertNotIn(b"YOUR ALBUMS", tab_standalone.data)
+
+    def test_admin_batch_video_upload(self):
+        self.login_admin()
+
+        # 1. Batch upload multiple videos into an album with custom title
+        vid1 = (io.BytesIO(b"fake mp4 video bytes 1"), "cyber_scene_a.mp4")
+        vid2 = (io.BytesIO(b"fake mp4 video bytes 2"), "cyber_scene_b.mp4")
+
+        res = self.client.post("/admin/videos/create", data={
+            "title": "Neon Chase",
+            "album_select": "Kung Fu Chronicles",
+            "category": "AI Creative",
+            "tools_used": "Gemini Video, Runway Gen-3",
+            "duration": "0:15",
+            "aspect_ratio": "9:16",
+            "visibility": "published",
+            "videos": [vid1, vid2]
+        }, follow_redirects=True)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertIn(b"Kung Fu Chronicles", res.data)
+        self.assertIn(b"Neon Chase - Part 1", res.data)
+        self.assertIn(b"Neon Chase - Part 2", res.data)
+
+        with self.app.app_context():
+            v1 = Video.query.filter_by(title="Neon Chase - Part 1").first()
+            v2 = Video.query.filter_by(title="Neon Chase - Part 2").first()
+            self.assertIsNotNone(v1)
+            self.assertIsNotNone(v2)
+            self.assertEqual(v1.album, "Kung Fu Chronicles")
+            self.assertEqual(v2.album, "Kung Fu Chronicles")
+            self.assertEqual(v1.aspect_ratio, "9:16")
+
+        # 2. Batch upload with blank title into a new album (auto-deriving filenames)
+        vidA = (io.BytesIO(b"fake webm bytes A"), "epic_boss_fight.mp4")
+        vidB = (io.BytesIO(b"fake webm bytes B"), "victory_celebration.mp4")
+
+        res_new_album = self.client.post("/admin/videos/create", data={
+            "title": "",
+            "album_select": "__new__",
+            "album_custom": "Epic Boss Series",
+            "category": "Commercial",
+            "videos": [vidA, vidB]
+        }, follow_redirects=True)
+
+        self.assertEqual(res_new_album.status_code, 200)
+        self.assertIn(b"Epic Boss Series", res_new_album.data)
+        self.assertIn(b"Epic Boss Fight", res_new_album.data)
+        self.assertIn(b"Victory Celebration", res_new_album.data)
+
+        with self.app.app_context():
+            va = Video.query.filter_by(title="Epic Boss Fight").first()
+            vb = Video.query.filter_by(title="Victory Celebration").first()
+            self.assertIsNotNone(va)
+            self.assertIsNotNone(vb)
+            self.assertEqual(va.album, "Epic Boss Series")
+            self.assertEqual(vb.album, "Epic Boss Series")
 
 if __name__ == "__main__":
     unittest.main()

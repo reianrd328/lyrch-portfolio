@@ -22,10 +22,10 @@ class Config:
     else:
         UPLOAD_FOLDER = os.path.join(BASE_DIR, upload_env)
 
-    MAX_CONTENT_LENGTH = int(os.getenv("MAX_CONTENT_LENGTH", 50 * 1024 * 1024))  # 50MB
+    MAX_CONTENT_LENGTH = int(os.getenv("MAX_CONTENT_LENGTH", 200 * 1024 * 1024))  # 200MB default for batch video/image uploads
     
     ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp", "svg", "jfif", "bmp"}
-    ALLOWED_VIDEO_EXTENSIONS = {"mp4", "webm", "mov", "avi"}
+    ALLOWED_VIDEO_EXTENSIONS = {"mp4", "webm", "mov", "avi", "mkv"}
     ALLOWED_DOC_EXTENSIONS = {"pdf", "docx", "doc", "txt", "zip"}
     
     # Database configuration (TiDB, MySQL, PostgreSQL, or zero-config SQLite)

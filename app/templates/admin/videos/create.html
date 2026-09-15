@@ -15,8 +15,14 @@
     <form method="POST" action="{{ url_for('admin_videos.create') }}" enctype="multipart/form-data" style="margin-top: 18px; display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
         <div style="display: flex; flex-direction: column; gap: 14px;">
             <div>
-                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">TITLE</label>
-                <input type="text" name="title" required placeholder="AI Kung Fu Coffee Commercial" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <label style="font-size: 11px; color: var(--text-muted); margin: 0;">VIDEO TITLE</label>
+                    <span style="font-size: 10px; color: var(--text-muted); font-weight: normal;">(Optional for batch)</span>
+                </div>
+                <input type="text" name="title" id="videoTitleInput" placeholder="e.g. AI Kung Fu Series (blank = use video file names)" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+                <span style="font-size: 10.5px; color: var(--text-muted); margin-top: 3px; display: block;">
+                    If multiple videos are selected, they will be numbered (e.g. "Title - Part 1, Part 2...") or inherit their file names.
+                </span>
             </div>
 
             <div>
@@ -117,24 +123,61 @@
             </div>
 
             <div style="background: rgba(15,23,42,0.6); padding: 16px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 10px;">
-                <h4 style="font-size: 12px; color: #ffffff;">VIDEO FILE / UPLOAD</h4>
-                <input type="file" name="video" accept="video/mp4,video/webm" style="font-size: 11px; color: var(--text-muted);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h4 style="font-size: 12px; color: #ffffff; margin: 0;">VIDEO FILE(S) / UPLOAD</h4>
+                    <span style="font-size: 10px; font-family: var(--font-mono); color: var(--neon-cyan); background: rgba(0,240,255,0.08); padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(0,240,255,0.25);">
+                        MULTI-UPLOAD
+                    </span>
+                </div>
+                <input type="file" name="videos" id="videoFilesInput" multiple accept="video/mp4,video/webm,video/quicktime,video/x-matroska" onchange="handleVideoFilesChange(this)" style="font-size: 11px; color: var(--text-muted); cursor: pointer;">
+                
+                <div id="videoBatchQueueSummary" style="display: none; font-size: 11.5px; font-family: var(--font-mono); color: var(--neon-cyan); background: rgba(0,240,255,0.08); padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(0,240,255,0.2); line-height: 1.5;"></div>
+
+                <div style="font-size: 10.5px; color: var(--text-muted); border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 6px;">
+                    Supports MP4, WebM, MOV, MKV. Hold <kbd style="background: rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 3px;">Ctrl</kbd> / <kbd style="background: rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 3px;">Shift</kbd> to select multiple videos at once.
+                </div>
                 <input type="url" name="video_external_url" placeholder="Or External URL (YouTube / Cloud MP4)" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 7px 10px; color: #fff; font-size: 11px;">
             </div>
 
             <div style="background: rgba(15,23,42,0.6); padding: 16px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 10px;">
-                <h4 style="font-size: 12px; color: #ffffff;">VIDEO THUMBNAIL</h4>
+                <h4 style="font-size: 12px; color: #ffffff;">VIDEO THUMBNAIL (OPTIONAL)</h4>
                 <input type="file" name="thumbnail" accept="image/*" style="font-size: 11px; color: var(--text-muted);">
             </div>
 
-            <button type="submit" class="btn-command-primary">
-                <i class="fa-solid fa-upload"></i> Upload &amp; Publish Video
+            <button type="submit" id="videoSubmitBtn" class="btn-command-primary">
+                <i class="fa-solid fa-upload"></i> <span id="videoSubmitBtnText">Upload &amp; Publish Video</span>
             </button>
         </div>
     </form>
 </div>
 
 <script>
+function handleVideoFilesChange(input) {
+    const files = input.files;
+    const summary = document.getElementById('videoBatchQueueSummary');
+    const submitText = document.getElementById('videoSubmitBtnText');
+    if (!files || files.length === 0) {
+        if (summary) summary.style.display = 'none';
+        if (submitText) submitText.textContent = 'Upload & Publish Video';
+        return;
+    }
+    let totalBytes = 0;
+    for (let i = 0; i < files.length; i++) totalBytes += files[i].size;
+    const sizeMB = (totalBytes / (1024 * 1024)).toFixed(1);
+
+    if (summary) {
+        summary.style.display = 'block';
+        if (files.length === 1) {
+            summary.innerHTML = `<i class="fa-solid fa-circle-check"></i> 1 video ready: <strong>${files[0].name}</strong> (${sizeMB} MB)`;
+            if (submitText) submitText.textContent = 'Upload & Publish Video';
+        } else {
+            const names = Array.from(files).slice(0, 3).map(f => f.name).join(', ') + (files.length > 3 ? ` +${files.length - 3} more` : '');
+            summary.innerHTML = `<i class="fa-solid fa-layer-group"></i> <strong>${files.length} videos queued</strong> (${sizeMB} MB total)<br><span style="font-size: 10.5px; color: rgba(255,255,255,0.7);">${names}</span>`;
+            if (submitText) submitText.textContent = `Upload & Publish ${files.length} Videos`;
+        }
+    }
+}
+
 function handleAlbumDropdownChange(val) {
     const container = document.getElementById('newAlbumContainer');
     const customInput = document.getElementById('albumCustomInput');

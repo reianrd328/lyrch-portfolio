@@ -1080,33 +1080,46 @@
 
 <!-- 6. UPLOAD WORKFLOW MODAL -->
 <div id="uploadModal" class="cyber-modal" onclick="if(event.target === this) closeUploadModal();">
-    <div class="cyber-modal-content" style="max-width: 640px;">
+    <div class="cyber-modal-content" style="max-width: 660px;">
         <div class="modal-header-bar">
             <h3>
                 <i class="fa-solid fa-cloud-arrow-up" style="color: var(--neon-cyan);"></i>
-                <span>Upload Creative Asset</span>
+                <span>Upload Creative Assets</span>
             </h3>
             <button type="button" class="modal-close-btn" onclick="closeUploadModal()">&times;</button>
         </div>
 
-        <form method="POST" action="{{ url_for('admin_gallery.create') }}" enctype="multipart/form-data" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
-            <!-- Drag & Drop Zone -->
+        <form id="uploadAssetForm" method="POST" action="{{ url_for('admin_gallery.create') }}" enctype="multipart/form-data" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+            <!-- Drag & Drop Zone (Supports Single or Multi-File) -->
             <div>
-                <label class="inspector-label" style="display: block; margin-bottom: 6px;">ASSET FILE (PNG • JPG • WEBP • SVG • GIF)</label>
-                <div class="dropzone-box" id="uploadDropzone" onclick="document.getElementById('uploadFileInput').click();">
-                    <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
-                    <div style="font-size: 13px; font-weight: 600; color: #fff;">Drop your image here or click to browse</div>
-                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Supports PNG, JPG, WebP, SVG, GIF up to 16MB</div>
-                    <img id="uploadThumbPreview" class="dropzone-preview-thumb" alt="Preview">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <label class="inspector-label" style="margin: 0;">ASSET FILES (PNG • JPG • WEBP • SVG • GIF)</label>
+                    <span style="font-size: 10px; font-family: var(--font-mono); color: var(--neon-cyan); background: rgba(0,240,255,0.08); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(0,240,255,0.25);">
+                        <i class="fa-solid fa-layer-group"></i> BATCH UPLOAD SUPPORTED
+                    </span>
                 </div>
-                <input type="file" name="image" id="uploadFileInput" required accept="image/*" style="display: none;" onchange="previewUploadFile(this)">
+                <div class="dropzone-box" id="uploadDropzone" onclick="document.getElementById('uploadFileInput').click();" style="cursor: pointer; position: relative; min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
+                    <i class="fa-solid fa-cloud-arrow-up dropzone-icon" id="dropzoneIcon"></i>
+                    <div id="dropzoneMainText" style="font-size: 13px; font-weight: 600; color: #fff;">Drop images here or click to browse</div>
+                    <div id="dropzoneSubText" style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Select or drop multiple assets at the same time</div>
+                    
+                    <!-- Multi-file preview container -->
+                    <div id="uploadMultiPreview" style="display: none; width: 100%; margin-top: 14px;">
+                        <div id="uploadBatchSummary" style="font-size: 11.5px; font-family: var(--font-mono); color: var(--neon-cyan); margin-bottom: 8px; text-align: left; background: rgba(0,240,255,0.08); padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(0,240,255,0.2);"></div>
+                        <div id="uploadThumbGrid" style="display: flex; flex-wrap: wrap; gap: 8px; max-height: 140px; overflow-y: auto; padding: 4px;"></div>
+                    </div>
+                </div>
+                <input type="file" name="images" id="uploadFileInput" multiple accept="image/*" style="display: none;" onchange="previewUploadFile(this)">
             </div>
 
             <!-- Title & Category Row -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                 <div>
-                    <label class="inspector-label" style="display: block; margin-bottom: 4px;">TITLE *</label>
-                    <input type="text" name="title" required placeholder="Dashboard Cyberpunk UI" class="search-input-field" style="padding-left: 12px;">
+                    <label class="inspector-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span>TITLE</span>
+                        <span style="font-size: 10px; color: var(--text-muted); font-weight: normal;">(Optional for batch)</span>
+                    </label>
+                    <input type="text" name="title" id="uploadTitleInput" placeholder="e.g. Cyberpunk UI (blank = use file names)" class="search-input-field" style="padding-left: 12px;">
                 </div>
                 <div>
                     <label class="inspector-label" style="display: block; margin-bottom: 4px;">CATEGORY</label>
@@ -1174,8 +1187,8 @@
             <!-- Submit Button -->
             <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08);">
                 <button type="button" class="btn-command-secondary" onclick="closeUploadModal()">Cancel</button>
-                <button type="submit" class="btn-command-primary">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> Upload &amp; Register Asset
+                <button type="submit" id="uploadSubmitBtn" class="btn-command-primary">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> <span id="uploadSubmitBtnText">Upload &amp; Save Assets</span>
                 </button>
             </div>
         </form>
@@ -1559,6 +1572,23 @@ function openUploadModal() {
     const catInput = document.getElementById('uploadCustomCatInput');
     if (catInput) catInput.value = '';
 
+    const fileInput = document.getElementById('uploadFileInput');
+    if (fileInput) fileInput.value = '';
+    const titleInput = document.getElementById('uploadTitleInput');
+    if (titleInput) titleInput.value = '';
+
+    const multiPreview = document.getElementById('uploadMultiPreview');
+    if (multiPreview) multiPreview.style.display = 'none';
+    const thumbGrid = document.getElementById('uploadThumbGrid');
+    if (thumbGrid) thumbGrid.innerHTML = '';
+    const btnText = document.getElementById('uploadSubmitBtnText');
+    if (btnText) btnText.textContent = 'Upload & Save Assets';
+
+    const mainText = document.getElementById('dropzoneMainText');
+    if (mainText) mainText.textContent = 'Drop images here or click to browse';
+    const subText = document.getElementById('dropzoneSubText');
+    if (subText) subText.textContent = 'Select or drop multiple assets at the same time';
+
     document.getElementById('uploadModal').classList.add('active');
 }
 
@@ -1573,17 +1603,95 @@ function closeUploadModal() {
     if (catContainer) catContainer.style.display = 'none';
     const catInput = document.getElementById('uploadCustomCatInput');
     if (catInput) catInput.value = '';
+
+    const fileInput = document.getElementById('uploadFileInput');
+    if (fileInput) fileInput.value = '';
+    const multiPreview = document.getElementById('uploadMultiPreview');
+    if (multiPreview) multiPreview.style.display = 'none';
+    const thumbGrid = document.getElementById('uploadThumbGrid');
+    if (thumbGrid) thumbGrid.innerHTML = '';
+    const btnText = document.getElementById('uploadSubmitBtnText');
+    if (btnText) btnText.textContent = 'Upload & Save Assets';
 }
 
 function previewUploadFile(input) {
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const preview = document.getElementById('uploadThumbPreview');
-            preview.src = e.target.result;
-            preview.style.display = 'inline-block';
-        };
-        reader.readAsDataURL(input.files[0]);
+    const files = input.files;
+    if (!files || files.length === 0) return;
+
+    const multiWrap = document.getElementById('uploadMultiPreview');
+    const summary = document.getElementById('uploadBatchSummary');
+    const grid = document.getElementById('uploadThumbGrid');
+    const btnText = document.getElementById('uploadSubmitBtnText');
+    const mainText = document.getElementById('dropzoneMainText');
+    const subText = document.getElementById('dropzoneSubText');
+
+    let totalSizeBytes = 0;
+    for (let i = 0; i < files.length; i++) totalSizeBytes += files[i].size;
+    const sizeMB = (totalSizeBytes / (1024 * 1024)).toFixed(2);
+
+    if (multiWrap && grid && summary) {
+        multiWrap.style.display = 'block';
+        grid.innerHTML = '';
+
+        if (files.length === 1) {
+            summary.innerHTML = `<i class="fa-solid fa-circle-check" style="color: var(--neon-cyan);"></i> 1 file selected (${(files[0].size / 1024).toFixed(1)} KB): <strong style="color: #fff;">${files[0].name}</strong>`;
+            if (btnText) btnText.textContent = 'Upload & Save Asset';
+            if (mainText) mainText.textContent = '1 image ready to upload';
+        } else {
+            summary.innerHTML = `<i class="fa-solid fa-layer-group" style="color: var(--neon-cyan);"></i> <strong>${files.length} assets queued</strong> (${sizeMB} MB total) &mdash; will be uploaded simultaneously`;
+            if (btnText) btnText.textContent = `Upload & Save ${files.length} Assets`;
+            if (mainText) mainText.textContent = `${files.length} images ready to upload`;
+        }
+        if (subText) subText.textContent = 'Click dropzone to change selection or add files';
+
+        // Render thumbnails for queued files
+        const maxPreviews = Math.min(files.length, 14);
+        for (let i = 0; i < maxPreviews; i++) {
+            const file = files[i];
+            const thumbWrap = document.createElement('div');
+            thumbWrap.style.position = 'relative';
+            thumbWrap.style.width = '56px';
+            thumbWrap.style.height = '56px';
+            thumbWrap.style.borderRadius = '6px';
+            thumbWrap.style.overflow = 'hidden';
+            thumbWrap.style.border = '1px solid rgba(0, 240, 255, 0.4)';
+            thumbWrap.style.background = '#0b112c';
+            thumbWrap.style.flexShrink = '0';
+
+            const img = document.createElement('img');
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            img.alt = file.name;
+            img.title = `${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
+
+            const reader = new FileReader();
+            reader.onload = (function(targetImg) {
+                return function(e) { targetImg.src = e.target.result; };
+            })(img);
+            reader.readAsDataURL(file);
+
+            thumbWrap.appendChild(img);
+            grid.appendChild(thumbWrap);
+        }
+
+        if (files.length > 14) {
+            const moreBadge = document.createElement('div');
+            moreBadge.style.width = '56px';
+            moreBadge.style.height = '56px';
+            moreBadge.style.borderRadius = '6px';
+            moreBadge.style.border = '1px dashed rgba(255,255,255,0.25)';
+            moreBadge.style.display = 'flex';
+            moreBadge.style.alignItems = 'center';
+            moreBadge.style.justifyContent = 'center';
+            moreBadge.style.fontSize = '11px';
+            moreBadge.style.color = 'var(--neon-cyan)';
+            moreBadge.style.fontFamily = 'var(--font-mono)';
+            moreBadge.style.background = 'rgba(0,0,0,0.3)';
+            moreBadge.style.flexShrink = '0';
+            moreBadge.textContent = `+${files.length - 14}`;
+            grid.appendChild(moreBadge);
+        }
     }
 }
 
@@ -1607,7 +1715,7 @@ if (dropzone) {
     dropzone.addEventListener('drop', (e) => {
         const dt = e.dataTransfer;
         const files = dt.files;
-        if (files.length) {
+        if (files && files.length) {
             const fileInput = document.getElementById('uploadFileInput');
             fileInput.files = files;
             previewUploadFile(fileInput);
