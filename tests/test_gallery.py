@@ -96,11 +96,18 @@ class GalleryTestCase(unittest.TestCase):
         res = self.client.get("/admin/gallery/")
         self.assertEqual(res.status_code, 200)
         self.assertIn(b"CREATIVE ASSET LIBRARY", res.data)
-        self.assertIn(b"HUD Analytics Interface", res.data)
-        self.assertIn(b"PawShop Checkout Flow", res.data)
-        self.assertIn(b"Secret Neon Graphic Asset", res.data)
+        self.assertIn(b"YOUR ASSET FOLDERS", res.data)
+        self.assertIn(b"Screenshots", res.data)
+        self.assertIn(b"UI / UX", res.data)
         # Verify telemetry stats
         self.assertIn(b"Total Assets", res.data)
+
+        # Flat view shows individual asset cards
+        res_flat = self.client.get("/admin/gallery/?view=flat")
+        self.assertEqual(res_flat.status_code, 200)
+        self.assertIn(b"HUD Analytics Interface", res_flat.data)
+        self.assertIn(b"PawShop Checkout Flow", res_flat.data)
+        self.assertIn(b"Secret Neon Graphic Asset", res_flat.data)
 
     def test_admin_gallery_filters(self):
         self.login_admin()
@@ -395,7 +402,40 @@ class GalleryTestCase(unittest.TestCase):
         # PawShop asset should NOT be in this project album
         self.assertNotIn(b"PawShop Checkout Flow", res_drilldown.data)
 
+    def test_gallery_category_folders_view(self):
+        self.login_admin()
+
+        # 1. Visiting /admin/gallery/ defaults to Category Folders view
+        res = self.client.get("/admin/gallery/")
+        self.assertEqual(res.status_code, 200)
+        self.assertIn(b"YOUR ASSET FOLDERS", res.data)
+        self.assertIn(b"FOLDER", res.data)
+        self.assertIn(b"Screenshots", res.data)
+        self.assertIn(b"UI / UX", res.data)
+        self.assertIn(b"OPEN FOLDER", res.data)
+        self.assertIn(b"+ NEW FOLDER", res.data)
+        self.assertIn(b"All Assets", res.data)
+
+        # 2. Drilling down into a specific category folder (e.g. ?cat=Screenshots)
+        res_folder = self.client.get("/admin/gallery/?cat=Screenshots")
+        self.assertEqual(res_folder.status_code, 200)
+        self.assertIn(b"CURRENT FOLDER", res_folder.data)
+        self.assertIn(b"Screenshots", res_folder.data)
+        self.assertIn(b"All Folders", res_folder.data)
+        self.assertIn(b"+ Upload to Screenshots", res_folder.data)
+        self.assertIn(b"PawShop Checkout Flow", res_folder.data)
+        # UI/UX item should NOT appear inside Screenshots folder
+        self.assertNotIn(b"HUD Analytics Interface", res_folder.data)
+
+        # 3. Viewing all assets in flat grid (?view=flat)
+        res_flat = self.client.get("/admin/gallery/?view=flat")
+        self.assertEqual(res_flat.status_code, 200)
+        self.assertIn(b"HUD Analytics Interface", res_flat.data)
+        self.assertIn(b"PawShop Checkout Flow", res_flat.data)
+        self.assertIn(b"Secret Neon Graphic Asset", res_flat.data)
+
 if __name__ == "__main__":
     unittest.main()
+
 
 

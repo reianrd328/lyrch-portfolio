@@ -159,10 +159,50 @@ def index():
     else:
         project_stats.sort(key=lambda x: x["id"], reverse=True)
 
+    # Compute Category Folder statistics
+    category_stats = []
+    for c in categories:
+        if c == "Projects":
+            c_items = [i for i in all_items if i.project_id]
+        else:
+            c_items = [i for i in all_items if i.category == c]
+        
+        cover_item = next((i for i in reversed(c_items) if i.image_url), c_items[-1] if c_items else None)
+        cover_url = cover_item.image_url if cover_item else None
+        
+        pub_count = sum(1 for i in c_items if i.visibility == "published")
+        if len(c_items) > 0:
+            if pub_count == len(c_items):
+                status_badge = "Published"
+                status_class = "live"
+            elif pub_count == 0:
+                status_badge = "Draft"
+                status_class = "draft"
+            else:
+                status_badge = f"{pub_count}/{len(c_items)} Live"
+                status_class = "live"
+        else:
+            status_badge = "Empty"
+            status_class = "draft"
+            
+        category_stats.append({
+            "name": c,
+            "count": len(c_items),
+            "cover_url": cover_url,
+            "status_badge": status_badge,
+            "status_class": status_class,
+            "items": c_items
+        })
+
+    # Sort category_stats so folders with assets appear first
+    category_stats.sort(key=lambda x: (x["count"] == 0, -x["count"]))
+
     # Determine default view_mode
     if not view_mode:
         if selected_cat == "Projects" and not selected_project:
             view_mode = "albums"
+        elif (not selected_cat or selected_cat == "All") and not query_text and (not selected_status or selected_status == "all") and not selected_project:
+            view_mode = "folders"
         else:
             view_mode = "flat"
 
@@ -228,6 +268,7 @@ def index():
         items=items,
         projects=projects,
         project_stats=project_stats,
+        category_stats=category_stats,
         current_project=current_project,
         view_mode=view_mode,
         standalone_count=standalone_count,
