@@ -87,6 +87,22 @@ def check_and_apply_migrations(app):
         except Exception as e:
             app.logger.warning(f"Migration checker notice: {e}")
 
+        # Check and initialize site_settings.gallery_categories
+        try:
+            inspector = inspect(db.engine)
+            if "site_settings" in inspector.get_table_names():
+                setting_cols = {c["name"] for c in inspector.get_columns("site_settings")}
+                if "gallery_categories" not in setting_cols:
+                    try:
+                        db.session.execute(text("ALTER TABLE site_settings ADD COLUMN gallery_categories TEXT DEFAULT 'UI / UX, Projects, AI, Branding, Screenshots, Graphics, Other'"))
+                        db.session.commit()
+                        app.logger.info("Added column gallery_categories to site_settings table.")
+                    except Exception as err:
+                        db.session.rollback()
+                        app.logger.warning(f"Migration notice for site_settings.gallery_categories: {err}")
+        except Exception as e:
+            app.logger.warning(f"Site settings migration notice: {e}")
+
         # Check and initialize portfolio_profiles table
         try:
             from app.models.profile import PortfolioProfile

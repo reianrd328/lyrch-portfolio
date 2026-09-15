@@ -1,6 +1,6 @@
 import unittest
 from app import create_app
-from app.models import db, GalleryItem, Project, User
+from app.models import db, GalleryItem, Project, User, SiteSetting
 from app.services.storage_service import format_bytes, get_storage_stats
 
 class GalleryTestCase(unittest.TestCase):
@@ -254,6 +254,57 @@ class GalleryTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         # Ensure private/draft items are not publicly visible
         self.assertNotIn(b"Secret Neon Graphic Asset", res.data)
+
+    def test_gallery_category_customization(self):
+        self.login_admin()
+
+        # Update categories via JSON endpoint
+        custom_cats = "Photography, 3D Architecture, Motion Design, Branding, Other"
+        res = self.client.post(
+            "/admin/gallery/categories/update",
+            json={"categories": custom_cats}
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.get_json()
+        self.assertTrue(data["success"])
+        self.assertIn("Photography", data["categories"])
+        self.assertIn("3D Architecture", data["categories"])
+
+        with self.app.app_context():
+            settings = SiteSetting.get_settings()
+            self.assertEqual(settings.gallery_categories, "Photography, 3D Architecture, Motion Design, Branding, Other")
+
+        # Verify the admin gallery index displays the new categories
+        index_res = self.client.get("/admin/gallery/")
+        self.assertEqual(index_res.status_code, 200)
+        self.assertIn(b"Photography", index_res.data)
+        self.assertIn(b"3D Architecture", index_res.data)
+        self.assertIn(b"Edit Categories", index_res.data)
+
+    def test_gallery_on_the_fly_custom_category(self):
+        self.login_admin()
+        with self.app.app_context():
+            item = GalleryItem.query.filter_by(title="HUD Analytics Interface").first()
+            item_id = item.id
+
+        # Edit item and supply __custom__ category with custom_category="Generative Cyber Art"
+        res = self.client.post(
+            f"/admin/gallery/edit/{item_id}",
+            json={
+                "title": "HUD Analytics Interface",
+                "category": "__custom__",
+                "custom_category": "Generative Cyber Art"
+            }
+        )
+        self.assertEqual(res.status_code, 200)
+
+        with self.app.app_context():
+            updated = db.session.get(GalleryItem, item_id)
+            self.assertEqual(updated.category, "Generative Cyber Art")
+
+            # Verify it was also appended to configured SiteSetting categories
+            settings = SiteSetting.get_settings()
+            self.assertIn("Generative Cyber Art", settings.gallery_categories)
 
 if __name__ == "__main__":
     unittest.main()

@@ -42,6 +42,50 @@ def resolve_or_create_project(project_id_raw, custom_project_title, default_cate
         return int(project_id_raw)
     return None
 
+def get_gallery_categories():
+    """Returns configured gallery categories, merged with any categories from database."""
+    from app.models.settings import SiteSetting
+    try:
+        settings = SiteSetting.get_settings()
+        configured_raw = getattr(settings, "gallery_categories", None) or "UI / UX, Projects, AI, Branding, Screenshots, Graphics, Other"
+    except Exception:
+        configured_raw = "UI / UX, Projects, AI, Branding, Screenshots, Graphics, Other"
+
+    cats = []
+    for c in configured_raw.split(","):
+        cleaned = c.strip()
+        if cleaned and cleaned not in cats and cleaned != "All":
+            cats.append(cleaned)
+
+    # Include existing categories in DB
+    try:
+        used_cats = db.session.query(GalleryItem.category).distinct().all()
+        for (uc,) in used_cats:
+            if uc and uc.strip() and uc.strip() not in cats and uc.strip() != "All":
+                cats.append(uc.strip())
+    except Exception:
+        pass
+
+    return cats or ["UI / UX", "Projects", "AI", "Branding", "Screenshots", "Graphics", "Other"]
+
+def resolve_category(category_raw, custom_category_raw):
+    cat = (category_raw or "").strip()
+    custom_cat = (custom_category_raw or "").strip()
+    if cat == "__custom__" and custom_cat:
+        # Also persist to SiteSetting gallery_categories if not present
+        try:
+            from app.models.settings import SiteSetting
+            settings = SiteSetting.get_settings()
+            configured = [c.strip() for c in (settings.gallery_categories or "").split(",") if c.strip()]
+            if custom_cat not in configured:
+                configured.append(custom_cat)
+                settings.gallery_categories = ", ".join(configured)
+                db.session.commit()
+        except Exception:
+            pass
+        return custom_cat
+    return cat or "General"
+
 gallery_bp = Blueprint("admin_gallery", __name__)
 
 @gallery_bp.route("/")
@@ -55,6 +99,7 @@ def index():
 
     all_items = GalleryItem.query.all()
     projects = Project.query.order_by(Project.title.asc()).all()
+    categories = get_gallery_categories()
 
     # Telemetry Stats
     total_assets = len(all_items)
@@ -62,6 +107,15 @@ def index():
     screenshots_count = sum(1 for i in all_items if i.category == "Screenshots")
     graphics_count = sum(1 for i in all_items if i.category in ("Graphics", "Branding"))
     drafts_count = sum(1 for i in all_items if i.visibility == "draft")
+
+    # Dynamic telemetry list for all user-defined categories
+    telemetry_cats = []
+    for c in categories:
+        if c == "Projects":
+            cnt = sum(1 for i in all_items if i.project_id)
+        else:
+            cnt = sum(1 for i in all_items if i.category == c)
+        telemetry_cats.append({"name": c, "count": cnt})
 
     # Base query for filtered results
     query = GalleryItem.query
@@ -106,6 +160,8 @@ def index():
         "admin/gallery/index.html",
         items=items,
         projects=projects,
+        categories=categories,
+        telemetry_cats=telemetry_cats,
         total_assets=total_assets,
         ui_projects_count=ui_projects_count,
         screenshots_count=screenshots_count,
@@ -118,12 +174,39 @@ def index():
         sort_by=sort_by
     )
 
+@gallery_bp.route("/categories/update", methods=["POST"])
+@login_required
+def update_categories():
+    new_categories_raw = request.form.get("categories", "") or (request.json.get("categories", "") if request.is_json else "")
+    from app.models.settings import SiteSetting
+    settings = SiteSetting.get_settings()
+
+    cats = []
+    for c in new_categories_raw.split(","):
+        cleaned = c.strip()
+        if cleaned and cleaned not in cats and cleaned != "All":
+            cats.append(cleaned)
+
+    if not cats:
+        cats = ["UI / UX", "Projects", "AI", "Branding", "Screenshots", "Graphics", "Other"]
+
+    settings.gallery_categories = ", ".join(cats)
+    db.session.commit()
+
+    if request.is_json:
+        return jsonify({"success": True, "categories": cats, "message": "Categories updated successfully."})
+
+    flash("Creative asset categories updated successfully!", "success")
+    return redirect(url_for("admin_gallery.index"))
+
 @gallery_bp.route("/create", methods=["GET", "POST"])
 @login_required
 def create():
     if request.method == "POST":
         title = request.form.get("title", "").strip()
-        category = request.form.get("category", "UI / UX")
+        category_raw = request.form.get("category", "UI / UX")
+        custom_category_raw = request.form.get("custom_category", "")
+        category = resolve_category(category_raw, custom_category_raw)
         project_id_raw = request.form.get("project_id", "").strip()
         new_project_title = request.form.get("new_project_title", "").strip()
         project_id = resolve_or_create_project(project_id_raw, new_project_title, default_category=category)
@@ -176,7 +259,8 @@ def create():
         return redirect(url_for("admin_gallery.index"))
 
     projects = Project.query.order_by(Project.title.asc()).all()
-    return render_template("admin/gallery/create.html", projects=projects)
+    categories = get_gallery_categories()
+    return render_template("admin/gallery/create.html", projects=projects, categories=categories)
 
 @gallery_bp.route("/api/item/<int:id>", methods=["GET"])
 @login_required
@@ -193,7 +277,9 @@ def edit(id):
     if request.is_json:
         data = request.get_json() or {}
         title = data.get("title", "").strip()
-        category = data.get("category", item.category)
+        category_raw = data.get("category", item.category)
+        custom_category_raw = data.get("custom_category", "")
+        category = resolve_category(category_raw, custom_category_raw)
         project_id_raw = data.get("project_id")
         new_project_title = data.get("new_project_title", "")
         project_id = resolve_or_create_project(project_id_raw, new_project_title, default_category=category)
@@ -203,7 +289,9 @@ def edit(id):
         featured = bool(data.get("featured", item.featured))
     else:
         title = request.form.get("title", "").strip()
-        category = request.form.get("category", item.category)
+        category_raw = request.form.get("category", item.category)
+        custom_category_raw = request.form.get("custom_category", "").strip()
+        category = resolve_category(category_raw, custom_category_raw)
         project_id_raw = request.form.get("project_id", "").strip()
         new_project_title = request.form.get("new_project_title", "").strip()
         project_id = resolve_or_create_project(project_id_raw, new_project_title, default_category=category)

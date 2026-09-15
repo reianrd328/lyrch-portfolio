@@ -83,6 +83,9 @@ class SiteSetting(db.Model):
     gdrive_refresh_token = db.Column(db.Text, nullable=True)
     gdrive_user_email = db.Column(db.String(120), nullable=True)
 
+    # 10. Creative Asset Library Categories
+    gallery_categories = db.Column(db.Text, default="UI / UX, Projects, AI, Branding, Screenshots, Graphics, Other")
+
     @classmethod
     def get_settings(cls):
         """Retrieves or creates the primary site settings record."""

@@ -740,18 +740,12 @@
                 <i class="fa-solid fa-photo-film" style="color: var(--neon-cyan);"></i>
                 <span class="count">{{ total_assets }}</span> Total Assets
             </a>
-            <a href="{{ url_for('admin_gallery.index', cat='UI / UX') }}" class="telemetry-pill {% if selected_cat == 'UI / UX' %}active{% endif %}">
-                <i class="fa-solid fa-palette" style="color: #38bdf8;"></i>
-                <span class="count">{{ ui_projects_count }}</span> UI / UX
-            </a>
-            <a href="{{ url_for('admin_gallery.index', cat='Screenshots') }}" class="telemetry-pill {% if selected_cat == 'Screenshots' %}active{% endif %}">
-                <i class="fa-solid fa-desktop" style="color: #a855f7;"></i>
-                <span class="count">{{ screenshots_count }}</span> Screenshots
-            </a>
-            <a href="{{ url_for('admin_gallery.index', cat='Graphics') }}" class="telemetry-pill {% if selected_cat == 'Graphics' %}active{% endif %}">
-                <i class="fa-solid fa-wand-magic-sparkles" style="color: #ec4899;"></i>
-                <span class="count">{{ graphics_count }}</span> Graphics
-            </a>
+            {% for tc in telemetry_cats[:4] %}
+                <a href="{{ url_for('admin_gallery.index', cat=tc.name) }}" class="telemetry-pill {% if selected_cat == tc.name %}active{% endif %}">
+                    <i class="fa-solid fa-tag" style="color: var(--neon-cyan);"></i>
+                    <span class="count">{{ tc.count }}</span> {{ tc.name }}
+                </a>
+            {% endfor %}
             <a href="{{ url_for('admin_gallery.index', status='draft') }}" class="telemetry-pill {% if selected_status == 'draft' %}active{% endif %}">
                 <i class="fa-solid fa-clock" style="color: #fbbf24;"></i>
                 <span class="count">{{ drafts_count }}</span> Drafts
@@ -805,12 +799,17 @@
             <div class="filter-row-pills">
                 <div class="category-pills-list">
                     <span style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); margin-right: 4px;">CATEGORY:</span>
-                    {% set categories = ['All', 'UI / UX', 'Projects', 'AI', 'Branding', 'Screenshots', 'Graphics', 'Other'] %}
+                    <a href="javascript:void(0);" onclick="setCategoryFilter('All')" class="cat-pill {% if not selected_cat or selected_cat == 'All' %}active{% endif %}">
+                        All
+                    </a>
                     {% for cat in categories %}
                         <a href="javascript:void(0);" onclick="setCategoryFilter('{{ cat }}')" class="cat-pill {% if selected_cat == cat %}active{% endif %}">
                             {{ cat }}
                         </a>
                     {% endfor %}
+                    <button type="button" onclick="openCategoriesModal()" class="btn-command-secondary" style="padding: 3px 9px; font-size: 10.5px; margin-left: 6px; border-color: rgba(0,240,255,0.4); color: var(--neon-cyan); display: inline-flex; align-items: center; gap: 4px;" title="Customize / Edit Categories">
+                        <i class="fa-solid fa-gear"></i> Edit Categories
+                    </button>
                 </div>
 
                 <div class="status-pills-list">
@@ -838,13 +837,9 @@
             <!-- Change Category -->
             <select id="bulkCategorySelect" class="filter-select" style="padding: 5px 10px; font-size: 11px;">
                 <option value="">🏷 Set Category...</option>
-                <option value="UI / UX">UI / UX</option>
-                <option value="Projects">Projects</option>
-                <option value="AI">AI</option>
-                <option value="Branding">Branding</option>
-                <option value="Screenshots">Screenshots</option>
-                <option value="Graphics">Graphics</option>
-                <option value="Other">Other</option>
+                {% for c in categories %}
+                    <option value="{{ c }}">{{ c }}</option>
+                {% endfor %}
             </select>
             <button type="button" class="btn-command-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="executeBulkAction('change_category')">Apply</button>
 
@@ -1115,15 +1110,15 @@
                 </div>
                 <div>
                     <label class="inspector-label" style="display: block; margin-bottom: 4px;">CATEGORY</label>
-                    <select name="category" class="filter-select" style="width: 100%;">
-                        <option value="UI / UX">UI / UX</option>
-                        <option value="Projects">Projects</option>
-                        <option value="AI">AI</option>
-                        <option value="Branding">Branding</option>
-                        <option value="Screenshots">Screenshots</option>
-                        <option value="Graphics">Graphics</option>
-                        <option value="Other">Other</option>
+                    <select name="category" id="uploadCategorySelect" class="filter-select" style="width: 100%;" onchange="toggleCustomCategoryField('upload')">
+                        {% for c in categories %}
+                            <option value="{{ c }}">{{ c }}</option>
+                        {% endfor %}
+                        <option value="__custom__" style="color: var(--neon-cyan); font-weight: 600;">+ Enter New Category...</option>
                     </select>
+                    <div id="uploadCustomCatContainer" style="display: none; margin-top: 6px;">
+                        <input type="text" name="custom_category" id="uploadCustomCatInput" placeholder="Enter custom category name..." class="search-input-field" style="padding-left: 12px; border-color: var(--neon-cyan); box-shadow: 0 0 8px rgba(0,240,255,0.2);">
+                    </div>
                 </div>
             </div>
 
@@ -1216,15 +1211,15 @@
                 </div>
                 <div>
                     <label class="inspector-label" style="display: block; margin-bottom: 4px;">CATEGORY</label>
-                    <select name="category" id="editCategorySelect" class="filter-select" style="width: 100%;">
-                        <option value="UI / UX">UI / UX</option>
-                        <option value="Projects">Projects</option>
-                        <option value="AI">AI</option>
-                        <option value="Branding">Branding</option>
-                        <option value="Screenshots">Screenshots</option>
-                        <option value="Graphics">Graphics</option>
-                        <option value="Other">Other</option>
+                    <select name="category" id="editCategorySelect" class="filter-select" style="width: 100%;" onchange="toggleCustomCategoryField('edit')">
+                        {% for c in categories %}
+                            <option value="{{ c }}">{{ c }}</option>
+                        {% endfor %}
+                        <option value="__custom__" style="color: var(--neon-cyan); font-weight: 600;">+ Enter New Category...</option>
                     </select>
+                    <div id="editCustomCatContainer" style="display: none; margin-top: 6px;">
+                        <input type="text" name="custom_category" id="editCustomCatInput" placeholder="Enter custom category name..." class="search-input-field" style="padding-left: 12px; border-color: var(--neon-cyan); box-shadow: 0 0 8px rgba(0,240,255,0.2);">
+                    </div>
                 </div>
             </div>
 
@@ -1282,6 +1277,83 @@
                 <button type="button" class="btn-command-secondary" onclick="closeEditModal()">Cancel</button>
                 <button type="submit" class="btn-command-primary">
                     <i class="fa-regular fa-floppy-disk"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 8. CUSTOMIZE CATEGORIES MODAL -->
+<div id="manageCategoriesModal" class="cyber-modal" onclick="if(event.target === this) closeCategoriesModal();">
+    <div class="cyber-modal-content" style="max-width: 620px;">
+        <div class="modal-header-bar">
+            <h3>
+                <i class="fa-solid fa-tags" style="color: var(--neon-cyan);"></i>
+                <span>Customize Gallery Categories</span>
+            </h3>
+            <button type="button" class="modal-close-btn" onclick="closeCategoriesModal()">&times;</button>
+        </div>
+
+        <form id="manageCategoriesForm" method="POST" action="{{ url_for('admin_gallery.update_categories') }}" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+            <p style="margin: 0; font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+                Adapt the Creative Asset Library to match your exact portfolio specialty (Design, Architecture, Photography, Development, etc.). Existing assets will keep their assigned categories.
+            </p>
+
+            <!-- Quick Presets -->
+            <div>
+                <label class="inspector-label" style="display: block; margin-bottom: 6px;">QUICK DISCIPLINE PRESETS</label>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    <button type="button" class="btn-command-secondary" style="padding: 4px 9px; font-size: 11px;" onclick="applyCategoryPreset('designer')">
+                        🎨 Design / UI
+                    </button>
+                    <button type="button" class="btn-command-secondary" style="padding: 4px 9px; font-size: 11px;" onclick="applyCategoryPreset('photo')">
+                        📷 Photography
+                    </button>
+                    <button type="button" class="btn-command-secondary" style="padding: 4px 9px; font-size: 11px;" onclick="applyCategoryPreset('developer')">
+                        💻 Dev & Tech
+                    </button>
+                    <button type="button" class="btn-command-secondary" style="padding: 4px 9px; font-size: 11px;" onclick="applyCategoryPreset('video')">
+                        🎬 Video & 3D
+                    </button>
+                    <button type="button" class="btn-command-secondary" style="padding: 4px 9px; font-size: 11px;" onclick="applyCategoryPreset('writer')">
+                        ✍️ Content / Writing
+                    </button>
+                </div>
+            </div>
+
+            <!-- Active Categories Tag Badges -->
+            <div>
+                <label class="inspector-label" style="display: block; margin-bottom: 6px;">ACTIVE CATEGORIES</label>
+                <div id="categoryTagsContainer" style="display: flex; flex-wrap: wrap; gap: 6px; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; min-height: 52px; align-items: center;">
+                    <!-- Rendered by JS -->
+                </div>
+            </div>
+
+            <!-- Add Category Field -->
+            <div>
+                <label class="inspector-label" style="display: block; margin-bottom: 4px;">ADD NEW CATEGORY</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="newCategoryTagInput" placeholder="e.g. Architecture, Brand Guidelines, 3D Render..." class="search-input-field" style="padding-left: 12px; flex: 1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addCategoryTag();}">
+                    <button type="button" class="btn-command-primary" style="white-space: nowrap; padding: 0 14px;" onclick="addCategoryTag()">
+                        <i class="fa-solid fa-plus"></i> Add
+                    </button>
+                </div>
+            </div>
+
+            <!-- Raw comma separated input (synced) -->
+            <div>
+                <label class="inspector-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <span>COMMA-SEPARATED LIST</span>
+                    <span style="font-size: 10px; color: var(--text-muted); font-weight: normal;">(Auto-syncs with tags)</span>
+                </label>
+                <textarea name="categories" id="rawCategoriesInput" rows="2" class="search-input-field" style="padding: 8px 12px; font-family: var(--font-mono); font-size: 12px; resize: vertical;" oninput="syncFromRawCategories()">{{ categories|join(', ') }}</textarea>
+            </div>
+
+            <!-- Modal Footer -->
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08);">
+                <button type="button" class="btn-command-secondary" onclick="closeCategoriesModal()">Cancel</button>
+                <button type="submit" class="btn-command-primary">
+                    <i class="fa-regular fa-floppy-disk"></i> Save Categories
                 </button>
             </div>
         </form>
@@ -1479,6 +1551,14 @@ function openUploadModal() {
     if (container) container.style.display = 'none';
     const input = document.getElementById('uploadNewProjectInput');
     if (input) input.value = '';
+
+    const catSelect = document.getElementById('uploadCategorySelect');
+    if (catSelect && catSelect.options.length > 0) catSelect.selectedIndex = 0;
+    const catContainer = document.getElementById('uploadCustomCatContainer');
+    if (catContainer) catContainer.style.display = 'none';
+    const catInput = document.getElementById('uploadCustomCatInput');
+    if (catInput) catInput.value = '';
+
     document.getElementById('uploadModal').classList.add('active');
 }
 
@@ -1488,6 +1568,11 @@ function closeUploadModal() {
     if (container) container.style.display = 'none';
     const input = document.getElementById('uploadNewProjectInput');
     if (input) input.value = '';
+
+    const catContainer = document.getElementById('uploadCustomCatContainer');
+    if (catContainer) catContainer.style.display = 'none';
+    const catInput = document.getElementById('uploadCustomCatInput');
+    if (catInput) catInput.value = '';
 }
 
 function previewUploadFile(input) {
@@ -1545,7 +1630,29 @@ function openEditModal(id) {
     const featured = card.dataset.featured === '1';
 
     document.getElementById('editTitleInput').value = title;
-    document.getElementById('editCategorySelect').value = cat;
+    
+    // Category select matching or fallback
+    const editCatSelect = document.getElementById('editCategorySelect');
+    if (editCatSelect) {
+        let matched = false;
+        for (let opt of editCatSelect.options) {
+            if (opt.value === cat) {
+                editCatSelect.value = cat;
+                matched = true;
+                break;
+            }
+        }
+        if (!matched && cat) {
+            const newOpt = new Option(cat, cat, true, true);
+            editCatSelect.insertBefore(newOpt, editCatSelect.querySelector('option[value="__custom__"]'));
+            editCatSelect.value = cat;
+        }
+    }
+    const editCatContainer = document.getElementById('editCustomCatContainer');
+    if (editCatContainer) editCatContainer.style.display = 'none';
+    const editCatInput = document.getElementById('editCustomCatInput');
+    if (editCatInput) editCatInput.value = '';
+
     document.getElementById('editProjectSelect').value = projId;
     document.getElementById('editDescriptionInput').value = desc;
     document.getElementById('editTagsInput').value = tags;
@@ -1570,6 +1677,158 @@ function closeEditModal() {
     if (editContainer) editContainer.style.display = 'none';
     const editInput = document.getElementById('editNewProjectInput');
     if (editInput) editInput.value = '';
+
+    const editCatContainer = document.getElementById('editCustomCatContainer');
+    if (editCatContainer) editCatContainer.style.display = 'none';
+    const editCatInput = document.getElementById('editCustomCatInput');
+    if (editCatInput) editCatInput.value = '';
+}
+
+// Custom Category toggles for Upload & Edit modals
+function toggleCustomCategoryField(mode) {
+    if (mode === 'upload') {
+        const sel = document.getElementById('uploadCategorySelect');
+        const container = document.getElementById('uploadCustomCatContainer');
+        const input = document.getElementById('uploadCustomCatInput');
+        if (sel && container) {
+            if (sel.value === '__custom__') {
+                container.style.display = 'block';
+                if (input) input.focus();
+            } else {
+                container.style.display = 'none';
+                if (input) input.value = '';
+            }
+        }
+    } else if (mode === 'edit') {
+        const sel = document.getElementById('editCategorySelect');
+        const container = document.getElementById('editCustomCatContainer');
+        const input = document.getElementById('editCustomCatInput');
+        if (sel && container) {
+            if (sel.value === '__custom__') {
+                container.style.display = 'block';
+                if (input) input.focus();
+            } else {
+                container.style.display = 'none';
+                if (input) input.value = '';
+            }
+        }
+    }
+}
+
+// Manage Categories State & Functions
+let currentCategories = {{ categories|tojson }};
+
+const categoryPresets = {
+    designer: ['UI / UX', 'Projects', 'AI', 'Branding', 'Screenshots', 'Graphics', 'Other'],
+    photo: ['Portraits', 'Landscapes', 'Street', 'Commercial', 'Studio', 'Events', 'Other'],
+    developer: ['Web Apps', 'Mobile', 'Backend', 'DevOps', 'Architecture', 'Screenshots', 'Other'],
+    video: ['Short Films', 'Commercials', 'AI Video', '3D Motion', 'VFX', 'BTS', 'Other'],
+    writer: ['Articles', 'Case Studies', 'Social Media', 'Copywriting', 'Guides', 'Other']
+};
+
+function renderCategoryTags() {
+    const container = document.getElementById('categoryTagsContainer');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    if (currentCategories.length === 0) {
+        container.innerHTML = '<span style="font-size: 11px; color: var(--text-muted); font-style: italic;">No categories configured yet. Add one below.</span>';
+        return;
+    }
+    
+    currentCategories.forEach((cat, idx) => {
+        const tag = document.createElement('span');
+        tag.style.display = 'inline-flex';
+        tag.style.alignItems = 'center';
+        tag.style.gap = '6px';
+        tag.style.padding = '4px 10px';
+        tag.style.background = 'rgba(0, 240, 255, 0.08)';
+        tag.style.border = '1px solid rgba(0, 240, 255, 0.3)';
+        tag.style.borderRadius = '20px';
+        tag.style.fontSize = '11.5px';
+        tag.style.color = '#fff';
+        
+        tag.innerHTML = `
+            <span>${cat}</span>
+            <button type="button" onclick="removeCategoryTag(${idx})" style="background: none; border: none; color: rgba(255,255,255,0.6); cursor: pointer; padding: 0 2px; font-size: 13px; line-height: 1; transition: color 0.15s;" onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">&times;</button>
+        `;
+        container.appendChild(tag);
+    });
+    
+    const rawInput = document.getElementById('rawCategoriesInput');
+    if (rawInput) rawInput.value = currentCategories.join(', ');
+}
+
+function addCategoryTag() {
+    const input = document.getElementById('newCategoryTagInput');
+    if (!input) return;
+    const val = input.value.trim();
+    if (val && !currentCategories.includes(val) && val.toLowerCase() !== 'all') {
+        currentCategories.push(val);
+        renderCategoryTags();
+    }
+    input.value = '';
+    input.focus();
+}
+
+function removeCategoryTag(index) {
+    currentCategories.splice(index, 1);
+    renderCategoryTags();
+}
+
+function applyCategoryPreset(presetKey) {
+    if (categoryPresets[presetKey]) {
+        currentCategories = [...categoryPresets[presetKey]];
+        renderCategoryTags();
+    }
+}
+
+function syncFromRawCategories() {
+    const raw = document.getElementById('rawCategoriesInput').value;
+    currentCategories = raw.split(',').map(s => s.trim()).filter(s => s.length > 0 && s.toLowerCase() !== 'all');
+    currentCategories = [...new Set(currentCategories)];
+    renderCategoryTagsWithoutRawSync();
+}
+
+function renderCategoryTagsWithoutRawSync() {
+    const container = document.getElementById('categoryTagsContainer');
+    if (!container) return;
+    container.innerHTML = '';
+    if (currentCategories.length === 0) {
+        container.innerHTML = '<span style="font-size: 11px; color: var(--text-muted); font-style: italic;">No categories configured yet. Add one below.</span>';
+        return;
+    }
+    currentCategories.forEach((cat, idx) => {
+        const tag = document.createElement('span');
+        tag.style.display = 'inline-flex';
+        tag.style.alignItems = 'center';
+        tag.style.gap = '6px';
+        tag.style.padding = '4px 10px';
+        tag.style.background = 'rgba(0, 240, 255, 0.08)';
+        tag.style.border = '1px solid rgba(0, 240, 255, 0.3)';
+        tag.style.borderRadius = '20px';
+        tag.style.fontSize = '11.5px';
+        tag.style.color = '#fff';
+        
+        tag.innerHTML = `
+            <span>${cat}</span>
+            <button type="button" onclick="removeCategoryTag(${idx})" style="background: none; border: none; color: rgba(255,255,255,0.6); cursor: pointer; padding: 0 2px; font-size: 13px; line-height: 1; transition: color 0.15s;" onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">&times;</button>
+        `;
+        container.appendChild(tag);
+    });
+}
+
+function openCategoriesModal() {
+    renderCategoryTags();
+    document.getElementById('manageCategoriesModal').classList.add('active');
+    setTimeout(() => {
+        const input = document.getElementById('newCategoryTagInput');
+        if (input) input.focus();
+    }, 100);
+}
+
+function closeCategoriesModal() {
+    document.getElementById('manageCategoriesModal').classList.remove('active');
 }
 
 // Keyboard shortcuts (Escape key closes open modal)
@@ -1578,6 +1837,7 @@ document.addEventListener('keydown', function(e) {
         closeInspectorModal();
         closeUploadModal();
         closeEditModal();
+        closeCategoriesModal();
     }
 });
 </script>
