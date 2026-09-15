@@ -97,10 +97,76 @@ def index():
     selected_project = request.args.get("project_id", "").strip()
     selected_status = request.args.get("status", "all").strip()
     sort_by = request.args.get("sort", "newest").strip()
+    view_mode = request.args.get("view", "").strip()
 
     all_items = GalleryItem.query.all()
     projects = Project.query.order_by(Project.title.asc()).all()
     categories = get_gallery_categories()
+
+    current_project = None
+    if selected_project and selected_project.isdigit():
+        current_project = db.session.get(Project, int(selected_project))
+
+    # Compute Project Album statistics
+    project_stats = []
+    for p in projects:
+        p_items = [i for i in all_items if i.project_id == p.id]
+        if not p_items:
+            continue
+        cover_item = next((i for i in reversed(p_items) if i.image_url), p_items[-1] if p_items else None)
+        cover_url = cover_item.image_url if cover_item else None
+        
+        cats = sorted(list({i.category for i in p_items if i.category}))
+        category_label = ", ".join(cats[:2]) if cats else (p.category or "Project")
+        
+        pub_count = sum(1 for i in p_items if i.visibility == "published")
+        if pub_count == len(p_items):
+            status_badge = "Published"
+            status_class = "live"
+        elif pub_count == 0:
+            status_badge = "Draft"
+            status_class = "draft"
+        else:
+            status_badge = f"{pub_count}/{len(p_items)} Live"
+            status_class = "live"
+            
+        project_stats.append({
+            "id": p.id,
+            "title": p.title,
+            "slug": p.slug,
+            "category_label": category_label,
+            "count": len(p_items),
+            "cover_url": cover_url,
+            "status_badge": status_badge,
+            "status_class": status_class,
+            "items": p_items
+        })
+
+    # Apply search filter to project stats if searching in albums mode
+    if query_text:
+        project_stats = [
+            ps for ps in project_stats
+            if query_text.lower() in ps["title"].lower() or query_text.lower() in ps["category_label"].lower()
+        ]
+
+    # Sort project_stats
+    if sort_by == "title_asc":
+        project_stats.sort(key=lambda x: x["title"].lower())
+    elif sort_by == "title_desc":
+        project_stats.sort(key=lambda x: x["title"].lower(), reverse=True)
+    elif sort_by == "oldest":
+        project_stats.sort(key=lambda x: x["id"])
+    else:
+        project_stats.sort(key=lambda x: x["id"], reverse=True)
+
+    # Determine default view_mode
+    if not view_mode:
+        if selected_cat == "Projects" and not selected_project:
+            view_mode = "albums"
+        else:
+            view_mode = "flat"
+
+    standalone_count = sum(1 for i in all_items if not i.project_id)
 
     # Telemetry Stats
     total_assets = len(all_items)
@@ -161,6 +227,10 @@ def index():
         "admin/gallery/index.html",
         items=items,
         projects=projects,
+        project_stats=project_stats,
+        current_project=current_project,
+        view_mode=view_mode,
+        standalone_count=standalone_count,
         categories=categories,
         telemetry_cats=telemetry_cats,
         total_assets=total_assets,

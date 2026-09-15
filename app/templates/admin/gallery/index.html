@@ -546,6 +546,128 @@
     color: var(--text-muted);
 }
 
+/* Project Album Styling (Matching AI Video Studio) */
+.project-album-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 18px;
+}
+
+.album-card {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(168, 85, 247, 0.35);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+.album-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--neon-purple);
+    box-shadow: 0 8px 30px rgba(168, 85, 247, 0.25);
+}
+
+.album-cover-wrap {
+    height: 145px;
+    position: relative;
+    background: #0b112c;
+    overflow: hidden;
+}
+
+.album-cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.album-card:hover .album-cover-img {
+    transform: scale(1.04);
+}
+
+.album-cover-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.2) 60%, rgba(15, 23, 42, 0.6) 100%);
+}
+
+.album-badge-left {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(11, 17, 44, 0.85);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(168, 85, 247, 0.6);
+    color: #e9d5ff;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+}
+
+.album-badge-right {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--neon-cyan);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+}
+
+.album-info-body {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex: 1;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.create-album-dashed-card {
+    background: rgba(15, 23, 42, 0.4);
+    border: 2px dashed rgba(0, 240, 255, 0.35);
+    border-radius: 12px;
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.create-album-dashed-card:hover {
+    border-color: var(--neon-cyan);
+    background: rgba(0, 240, 255, 0.06);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 240, 255, 0.15);
+}
+
+/* Inside Album Breadcrumb & Header Bar */
+.inside-album-header {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
 /* Modal Windows */
 .cyber-modal {
     position: fixed;
@@ -812,11 +934,34 @@
                     </button>
                 </div>
 
-                <div class="status-pills-list">
-                    <span style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); margin-right: 4px;">SHOWING:</span>
-                    <span style="font-size: 11px; color: #fff; font-family: var(--font-mono); font-weight: 600;">
-                        {{ items|length }} of {{ total_assets }} assets
-                    </span>
+                <div class="status-pills-list" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    {% if selected_cat == 'Projects' and not current_project %}
+                    <div style="display: flex; gap: 3px; background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 2px;">
+                        <a href="{{ url_for('admin_gallery.index', cat='Projects', view='albums', q=query_text, sort=sort_by, status=selected_status) }}"
+                           class="btn-command-secondary"
+                           style="padding: 3px 8px; font-size: 10.5px; border: none; {% if view_mode == 'albums' %}background: rgba(168,85,247,0.3); color: #e9d5ff; font-weight: 700; border: 1px solid rgba(168,85,247,0.5);{% else %}color: var(--text-muted); background: transparent;{% endif %}"
+                           title="Grouped Project Albums View">
+                            <i class="fa-solid fa-folder"></i> Albums ({{ project_stats|length }})
+                        </a>
+                        <a href="{{ url_for('admin_gallery.index', cat='Projects', view='flat', q=query_text, sort=sort_by, status=selected_status) }}"
+                           class="btn-command-secondary"
+                           style="padding: 3px 8px; font-size: 10.5px; border: none; {% if view_mode == 'flat' %}background: rgba(0,240,255,0.2); color: #fff; font-weight: 700; border: 1px solid rgba(0,240,255,0.4);{% else %}color: var(--text-muted); background: transparent;{% endif %}"
+                           title="Flat Assets Grid">
+                            <i class="fa-solid fa-table-cells"></i> Flat Grid ({{ items|length }})
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    <div>
+                        <span style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); margin-right: 4px;">SHOWING:</span>
+                        <span style="font-size: 11px; color: #fff; font-family: var(--font-mono); font-weight: 600;">
+                            {% if selected_cat == 'Projects' and view_mode == 'albums' and not current_project %}
+                                {{ project_stats|length }} Project Album{% if project_stats|length != 1 %}s{% endif %}
+                            {% else %}
+                                {{ items|length }} of {{ total_assets }} assets
+                            {% endif %}
+                        </span>
+                    </div>
                 </div>
             </div>
         </form>
@@ -882,113 +1027,237 @@
         <input type="hidden" name="new_project_id" id="bulkFormNewProj">
     </form>
 
-    <!-- 4. Asset Cards Grid -->
-    {% if items %}
-        <div class="asset-grid">
-            {% for item in items %}
-                <div class="asset-card" id="asset-card-{{ item.id }}"
-                     data-id="{{ item.id }}"
-                     data-title="{{ item.title }}"
-                     data-category="{{ item.category }}"
-                     data-project="{{ item.project.title if item.project else '' }}"
-                     data-project-id="{{ item.project_id or '' }}"
-                     data-description="{{ item.description or '' }}"
-                     data-tags="{{ item.tags or '' }}"
-                     data-visibility="{{ item.visibility }}"
-                     data-size="{{ item.file_size_formatted }}"
-                     data-url="{{ item.image_url }}"
-                     data-created="{{ item.created_at.strftime('%b %d, %Y') if item.created_at else '' }}"
-                     data-featured="{{ '1' if item.featured else '0' }}">
-
-                    <!-- Thumbnail with 16:9 ratio -->
-                    <div class="asset-thumb-wrap">
-                        <img src="{{ item.image_url }}" alt="{{ item.title }}" class="asset-thumb-img" loading="lazy">
-                        
-                        <!-- Category Badge -->
-                        <span class="asset-badge-category">{{ item.category }}</span>
-
-                        <!-- Checkbox -->
-                        <div class="asset-checkbox-wrap">
-                            <input type="checkbox" class="asset-checkbox item-select-check" value="{{ item.id }}" onchange="onItemCheckboxChange()">
-                        </div>
-
-                        <!-- Hover Overlay -->
-                        <div class="asset-hover-overlay">
-                            <button type="button" class="btn-view-full" onclick="openInspectorModal({{ item.id }})">
-                                <i class="fa-solid fa-eye"></i> VIEW FULL
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Card Body -->
-                    <div class="asset-card-body">
-                        <h4 class="asset-card-title" title="{{ item.title }}">{{ item.title }}</h4>
-
-                        <div class="asset-meta-row">
-                            <span>{{ item.category }}</span>
-                            {% if item.project %}
-                                <span>•</span>
-                                <span class="asset-meta-project" title="Linked Project: {{ item.project.title }}">
-                                    <i class="fa-solid fa-diagram-project" style="font-size: 9.5px;"></i>
-                                    {{ item.project.title }}
-                                </span>
-                            {% endif %}
-                        </div>
-
-                        {% if item.tags_list %}
-                            <div class="asset-tags-container">
-                                {% for tag in item.tags_list[:3] %}
-                                    <span class="tag-pill">#{{ tag }}</span>
-                                {% endfor %}
-                                {% if item.tags_list|length > 3 %}
-                                    <span class="tag-pill">+{{ item.tags_list|length - 3 }}</span>
-                                {% endif %}
-                            </div>
-                        {% endif %}
-
-                        <!-- Footer: Status & Size -->
-                        <div class="asset-footer-row">
-                            <div>
-                                {% if item.visibility == 'published' %}
-                                    <span class="badge-vis-published"><i class="fa-solid fa-circle" style="font-size: 7px;"></i> PUBLISHED</span>
-                                {% elif item.visibility == 'draft' %}
-                                    <span class="badge-vis-draft"><i class="fa-solid fa-circle" style="font-size: 7px;"></i> DRAFT</span>
-                                {% else %}
-                                    <span class="badge-vis-private"><i class="fa-solid fa-lock" style="font-size: 8px;"></i> PRIVATE</span>
-                                {% endif %}
-                            </div>
-                            <div class="asset-size-badge">{{ item.file_size_formatted }}</div>
-                        </div>
-                    </div>
-
-                    <!-- Quick Actions Row -->
-                    <div class="asset-card-actions">
-                        <button type="button" class="btn-card-action" onclick="openInspectorModal({{ item.id }})" title="View Details">
-                            <i class="fa-regular fa-eye"></i> View
-                        </button>
-                        <button type="button" class="btn-card-action" onclick="openEditModal({{ item.id }})" title="Edit Metadata">
-                            <i class="fa-regular fa-pen-to-square"></i> Edit
-                        </button>
-                        <form method="POST" action="{{ url_for('admin_gallery.delete', id=item.id) }}" onsubmit="return confirm('Delete this asset from library?');" style="margin: 0;">
-                            <button type="submit" class="btn-card-action danger" style="width: 100%;" title="Delete Asset">
-                                <i class="fa-regular fa-trash-can"></i> Del
-                            </button>
-                        </form>
-                    </div>
+    <!-- 4. Inside Project Album (Drilldown View) -->
+    {% if current_project %}
+    <div class="inside-album-header">
+        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <a href="{{ url_for('admin_gallery.index', cat='Projects') }}" class="btn-command-secondary" style="font-size: 11.5px; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px;" title="Back to All Project Albums">
+                <i class="fa-solid fa-arrow-left"></i> All Project Albums
+            </a>
+            <div>
+                <div style="font-family: var(--font-mono); font-size: 10px; color: var(--neon-purple); text-transform: uppercase; font-weight: 700; letter-spacing: 0.8px; display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-folder-open"></i> CURRENT PROJECT ALBUM
                 </div>
-            {% endfor %}
+                <h3 style="font-family: var(--font-display); font-size: 18px; color: #fff; margin: 2px 0 0; display: flex; align-items: center; gap: 8px;">
+                    {{ current_project.title }}
+                </h3>
+            </div>
         </div>
-    {% else %}
-        <div class="asset-empty-state">
-            <i class="fa-regular fa-images" style="font-size: 42px; color: var(--neon-cyan); margin-bottom: 12px; opacity: 0.8;"></i>
-            <h3 style="color: #fff; font-size: 16px; margin-bottom: 6px;">No Creative Assets Found</h3>
-            <p style="font-size: 12.5px; max-width: 420px; margin: 0 auto 18px;">
-                No visual assets match your active filter criteria. Try clearing search filters or upload a new asset.
-            </p>
-            <button type="button" class="btn-command-primary" onclick="openUploadModal()">
-                <i class="fa-solid fa-plus"></i> Upload First Asset
+
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span style="font-family: var(--font-mono); font-size: 11.5px; color: var(--neon-cyan); background: rgba(0,240,255,0.1); border: 1px solid rgba(0,240,255,0.25); padding: 4px 10px; border-radius: 4px;">
+                {{ items|length }} Asset{% if items|length != 1 %}s{% endif %}
+            </span>
+            <button type="button" onclick="openUploadModalWithProject({{ current_project.id }}, '{{ current_project.title|replace('\'', '\\\'') }}')" class="btn-command-primary" style="font-size: 11.5px; padding: 6px 14px;">
+                <i class="fa-solid fa-cloud-arrow-up"></i> + Upload to This Project
             </button>
         </div>
+    </div>
+    {% endif %}
+
+    <!-- 5. Content Grid (Grouped Albums vs Flat Assets) -->
+    {% if selected_cat == 'Projects' and view_mode == 'albums' and not current_project %}
+        <!-- Project Albums Grid Mode (AI Video Studio Design) -->
+        <div style="margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 10px;">
+                <div>
+                    <h3 style="font-family: var(--font-display); font-size: 16px; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-folder-open" style="color: var(--neon-purple);"></i>
+                        <span>YOUR PROJECT ALBUMS</span>
+                    </h3>
+                    <span style="font-size: 11px; color: var(--text-muted);">
+                        Grouped UI collections, project deliverables, and visual design assets
+                    </span>
+                </div>
+                <button type="button" onclick="openUploadModalWithNewProject()" class="btn-command-primary" style="font-size: 11.5px; padding: 6px 14px; background: rgba(168,85,247,0.18); border-color: var(--neon-purple); color: #e9d5ff;">
+                    <i class="fa-solid fa-folder-plus"></i> + NEW PROJECT ASSETS
+                </button>
+            </div>
+
+            {% if project_stats %}
+            <div class="project-album-grid">
+                {% for alb in project_stats %}
+                <div class="album-card" id="project-album-{{ alb.id }}">
+                    <!-- ALBUM COVER (Top Half) -->
+                    <div class="album-cover-wrap">
+                        {% if alb.cover_url %}
+                            <img src="{{ alb.cover_url }}" alt="{{ alb.title }}" class="album-cover-img" loading="lazy">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="{{ alb.title }}" class="album-cover-img" style="opacity: 0.5;">
+                        {% endif %}
+                        <div class="album-cover-overlay"></div>
+
+                        <!-- Badges -->
+                        <div class="album-badge-left">
+                            <i class="fa-solid fa-layer-group" style="color: var(--neon-purple);"></i> PROJECT ALBUM
+                        </div>
+                        <div class="album-badge-right">
+                            {{ alb.category_label }}
+                        </div>
+                    </div>
+
+                    <!-- ALBUM INFO (Bottom Half) -->
+                    <div class="album-info-body">
+                        <div>
+                            <h4 style="font-family: var(--font-display); font-size: 15px; color: #fff; margin: 0 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ alb.title }}">
+                                {{ alb.title }}
+                            </h4>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <span style="font-size: 12px; color: var(--neon-cyan); font-family: var(--font-mono); font-weight: 700;">
+                                    {{ alb.count }} Asset{% if alb.count != 1 %}s{% endif %}
+                                </span>
+                                <span class="badge-status badge-{{ alb.status_class }}" style="font-size: 10px;">
+                                    {{ alb.status_badge }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Action: Open Album Button -->
+                        <a href="{{ url_for('admin_gallery.index', project_id=alb.id) }}" class="btn-command-secondary" style="width: 100%; justify-content: center; font-size: 12px; font-weight: 700; padding: 8px; border-color: rgba(0,240,255,0.4); color: #fff; background: rgba(0,240,255,0.08); text-decoration: none; display: flex; align-items: center; gap: 6px;">
+                            <span>OPEN ALBUM</span> &rarr;
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- + CREATE PROJECT ASSETS Card (Dashed Border) -->
+                <div onclick="openUploadModalWithNewProject()" class="create-album-dashed-card">
+                    <div style="width: 50px; height: 50px; border-radius: 50%; background: rgba(0,240,255,0.1); border: 1.5px solid var(--neon-cyan); display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                        <i class="fa-solid fa-plus" style="font-size: 22px; color: var(--neon-cyan);"></i>
+                    </div>
+                    <h4 style="font-family: var(--font-display); font-size: 14px; color: #fff; margin: 0 0 6px; letter-spacing: 0.5px;">
+                        + NEW PROJECT ASSETS
+                    </h4>
+                    <p style="font-size: 11px; color: var(--text-muted); margin: 0 0 14px; max-width: 180px;">
+                        Upload visuals and create a new project collection
+                    </p>
+                    <span class="btn-command-secondary" style="font-size: 11px; padding: 4px 12px; pointer-events: none;">
+                        New Project &rarr;
+                    </span>
+                </div>
+            </div>
+            {% else %}
+            <div class="asset-empty-state">
+                <i class="fa-solid fa-folder-open" style="font-size: 42px; color: var(--neon-purple); margin-bottom: 12px; opacity: 0.8;"></i>
+                <h3 style="color: #fff; font-size: 16px; margin-bottom: 6px;">No Project Albums Found</h3>
+                <p style="font-size: 12.5px; max-width: 420px; margin: 0 auto 18px;">
+                    Visual assets assigned to projects will automatically appear here as organized albums.
+                </p>
+                <button type="button" class="btn-command-primary" onclick="openUploadModalWithNewProject()">
+                    <i class="fa-solid fa-plus"></i> Create First Project Album
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <!-- Flat Assets Grid (Inside Album, Flat Mode, or other categories) -->
+        {% if items %}
+            <div class="asset-grid">
+                {% for item in items %}
+                    <div class="asset-card" id="asset-card-{{ item.id }}"
+                         data-id="{{ item.id }}"
+                         data-title="{{ item.title }}"
+                         data-category="{{ item.category }}"
+                         data-project="{{ item.project.title if item.project else '' }}"
+                         data-project-id="{{ item.project_id or '' }}"
+                         data-description="{{ item.description or '' }}"
+                         data-tags="{{ item.tags or '' }}"
+                         data-visibility="{{ item.visibility }}"
+                         data-size="{{ item.file_size_formatted }}"
+                         data-url="{{ item.image_url }}"
+                         data-created="{{ item.created_at.strftime('%b %d, %Y') if item.created_at else '' }}"
+                         data-featured="{{ '1' if item.featured else '0' }}">
+
+                        <!-- Thumbnail with 16:9 ratio -->
+                        <div class="asset-thumb-wrap">
+                            <img src="{{ item.image_url }}" alt="{{ item.title }}" class="asset-thumb-img" loading="lazy">
+                            
+                            <!-- Category Badge -->
+                            <span class="asset-badge-category">{{ item.category }}</span>
+
+                            <!-- Checkbox -->
+                            <div class="asset-checkbox-wrap">
+                                <input type="checkbox" class="asset-checkbox item-select-check" value="{{ item.id }}" onchange="onItemCheckboxChange()">
+                            </div>
+
+                            <!-- Hover Overlay -->
+                            <div class="asset-hover-overlay">
+                                <button type="button" class="btn-view-full" onclick="openInspectorModal({{ item.id }})">
+                                    <i class="fa-solid fa-eye"></i> VIEW FULL
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="asset-card-body">
+                            <h4 class="asset-card-title" title="{{ item.title }}">{{ item.title }}</h4>
+
+                            <div class="asset-meta-row">
+                                <span>{{ item.category }}</span>
+                                {% if item.project %}
+                                    <span>•</span>
+                                    <span class="asset-meta-project" title="Linked Project: {{ item.project.title }}">
+                                        <i class="fa-solid fa-diagram-project" style="font-size: 9.5px;"></i>
+                                        {{ item.project.title }}
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                            {% if item.tags_list %}
+                                <div class="asset-tags-container">
+                                    {% for tag in item.tags_list[:3] %}
+                                        <span class="tag-pill">#{{ tag }}</span>
+                                    {% endfor %}
+                                    {% if item.tags_list|length > 3 %}
+                                        <span class="tag-pill">+{{ item.tags_list|length - 3 }}</span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+
+                            <!-- Footer: Status & Size -->
+                            <div class="asset-footer-row">
+                                <div>
+                                    {% if item.visibility == 'published' %}
+                                        <span class="badge-vis-published"><i class="fa-solid fa-circle" style="font-size: 7px;"></i> PUBLISHED</span>
+                                    {% elif item.visibility == 'draft' %}
+                                        <span class="badge-vis-draft"><i class="fa-solid fa-circle" style="font-size: 7px;"></i> DRAFT</span>
+                                    {% else %}
+                                        <span class="badge-vis-private"><i class="fa-solid fa-lock" style="font-size: 8px;"></i> PRIVATE</span>
+                                    {% endif %}
+                                </div>
+                                <div class="asset-size-badge">{{ item.file_size_formatted }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions Row -->
+                        <div class="asset-card-actions">
+                            <button type="button" class="btn-card-action" onclick="openInspectorModal({{ item.id }})" title="View Details">
+                                <i class="fa-regular fa-eye"></i> View
+                            </button>
+                            <button type="button" class="btn-card-action" onclick="openEditModal({{ item.id }})" title="Edit Metadata">
+                                <i class="fa-regular fa-pen-to-square"></i> Edit
+                            </button>
+                            <form method="POST" action="{{ url_for('admin_gallery.delete', id=item.id) }}" onsubmit="return confirm('Delete this asset from library?');" style="margin: 0;">
+                                <button type="submit" class="btn-card-action danger" style="width: 100%;" title="Delete Asset">
+                                    <i class="fa-regular fa-trash-can"></i> Del
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="asset-empty-state">
+                <i class="fa-regular fa-images" style="font-size: 42px; color: var(--neon-cyan); margin-bottom: 12px; opacity: 0.8;"></i>
+                <h3 style="color: #fff; font-size: 16px; margin-bottom: 6px;">No Creative Assets Found</h3>
+                <p style="font-size: 12.5px; max-width: 420px; margin: 0 auto 18px;">
+                    No visual assets match your active filter criteria. Try clearing search filters or upload a new asset.
+                </p>
+                <button type="button" class="btn-command-primary" onclick="openUploadModal()">
+                    <i class="fa-solid fa-plus"></i> Upload First Asset
+                </button>
+            </div>
+        {% endif %}
     {% endif %}
 
 </div>
@@ -1590,6 +1859,28 @@ function openUploadModal() {
     if (subText) subText.textContent = 'Select or drop multiple assets at the same time';
 
     document.getElementById('uploadModal').classList.add('active');
+}
+
+function openUploadModalWithProject(projectId, projectTitle) {
+    openUploadModal();
+    const uploadSelect = document.getElementById('uploadProjectSelect');
+    if (uploadSelect && projectId) {
+        uploadSelect.value = projectId;
+        toggleNewProjectField('upload');
+    }
+}
+
+function openUploadModalWithNewProject() {
+    openUploadModal();
+    const uploadSelect = document.getElementById('uploadProjectSelect');
+    if (uploadSelect) {
+        uploadSelect.value = '__new__';
+        toggleNewProjectField('upload');
+        const input = document.getElementById('uploadNewProjectInput');
+        if (input) {
+            setTimeout(() => input.focus(), 150);
+        }
+    }
 }
 
 function closeUploadModal() {

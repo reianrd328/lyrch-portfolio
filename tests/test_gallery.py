@@ -359,6 +359,43 @@ class GalleryTestCase(unittest.TestCase):
             self.assertIsNotNone(itemB)
             self.assertEqual(itemA.category, "Screenshots")
 
+    def test_gallery_project_albums_view(self):
+        self.login_admin()
+        with self.app.app_context():
+            p1 = Project.query.filter_by(title="Cyberpunk Dashboard").first()
+            p1_id = p1.id
+            p2 = Project.query.filter_by(title="PawShop Mobile").first()
+            p2_id = p2.id
+
+        # 1. Visiting category 'Projects' defaults to Project Albums view
+        res = self.client.get("/admin/gallery/?cat=Projects")
+        self.assertEqual(res.status_code, 200)
+        self.assertIn(b"YOUR PROJECT ALBUMS", res.data)
+        self.assertIn(b"PROJECT ALBUM", res.data)
+        self.assertIn(b"Cyberpunk Dashboard", res.data)
+        self.assertIn(b"PawShop Mobile", res.data)
+        self.assertIn(b"OPEN ALBUM", res.data)
+        self.assertIn(b"+ NEW PROJECT ASSETS", res.data)
+        self.assertIn(b"Flat Grid", res.data)
+
+        # 2. Visiting with view=flat shows loose assets grid
+        res_flat = self.client.get("/admin/gallery/?cat=Projects&view=flat")
+        self.assertEqual(res_flat.status_code, 200)
+        self.assertIn(b"HUD Analytics Interface", res_flat.data)
+        self.assertIn(b"PawShop Checkout Flow", res_flat.data)
+
+        # 3. Drilling down into a specific project album (?project_id=...)
+        res_drilldown = self.client.get(f"/admin/gallery/?project_id={p1_id}")
+        self.assertEqual(res_drilldown.status_code, 200)
+        self.assertIn(b"CURRENT PROJECT ALBUM", res_drilldown.data)
+        self.assertIn(b"Cyberpunk Dashboard", res_drilldown.data)
+        self.assertIn(b"All Project Albums", res_drilldown.data)
+        self.assertIn(b"+ Upload to This Project", res_drilldown.data)
+        self.assertIn(b"HUD Analytics Interface", res_drilldown.data)
+        # PawShop asset should NOT be in this project album
+        self.assertNotIn(b"PawShop Checkout Flow", res_drilldown.data)
+
 if __name__ == "__main__":
     unittest.main()
+
 
