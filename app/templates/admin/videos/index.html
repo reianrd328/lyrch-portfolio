@@ -4,218 +4,320 @@
 
 {% block admin_content %}
 <div class="telemetry-card">
-    <!-- Header Bar -->
-    <div class="card-header-bar">
-        <div class="header-label">
-            <i class="fa-solid fa-clapperboard" style="color: var(--neon-cyan);"></i>
-            <span>AI VIDEO STUDIO PRODUCTION MANAGER</span>
+    <!-- Top Header Bar -->
+    <div class="card-header-bar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+            <div class="header-label" style="display: flex; align-items: center; gap: 9px; font-family: var(--font-display); font-size: 18px; color: #fff; letter-spacing: 0.5px;">
+                <span style="font-size: 22px; filter: drop-shadow(0 0 8px rgba(0,240,255,0.6));">🎬</span>
+                <span style="color: var(--neon-cyan); font-weight: 800;">AI VIDEO STUDIO</span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); margin-top: 2px; text-transform: uppercase; letter-spacing: 1px;">
+                Production Manager
+            </div>
         </div>
-        <div style="display: flex; gap: 8px;">
-            {% if selected_album or view_mode == 'all' %}
-            <a href="{{ url_for('admin_videos.index') }}" class="btn-command-secondary" style="font-size: 11.5px; padding: 6px 12px;">
-                <i class="fa-solid fa-arrow-left"></i> Back to Albums
-            </a>
-            {% else %}
-            <a href="{{ url_for('admin_videos.index', view='all') }}" class="btn-command-secondary" style="font-size: 11.5px; padding: 6px 12px;">
-                <i class="fa-solid fa-list-ul"></i> View All Videos ({{ total_videos_count }})
+
+        <div style="display: flex; gap: 10px; align-items: center;">
+            {% if selected_album %}
+            <a href="{{ url_for('admin_videos.index') }}" class="btn-command-secondary" style="font-size: 11.5px; padding: 7px 14px;">
+                <i class="fa-solid fa-arrow-left"></i> Back to Studio Hub
             </a>
             {% endif %}
 
-            <a href="{{ url_for('admin_videos.create', album=selected_album if selected_album and selected_album != '__standalone__' else '') }}" class="btn-command-primary" style="font-size: 11.5px; padding: 6px 14px;">
-                <i class="fa-solid fa-plus"></i> {% if selected_album and selected_album != '__standalone__' %}Add Video to {{ selected_album }}{% else %}Upload AI Video{% endif %}
+            <a href="{{ url_for('admin_videos.create', album=selected_album if selected_album and selected_album != '__standalone__' else '') }}" class="btn-command-primary" style="font-size: 12px; padding: 7px 18px; font-weight: 700; box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);">
+                <i class="fa-solid fa-plus"></i> Upload Video
             </a>
         </div>
     </div>
 
     <!-- ============================================================= -->
-    <!-- VIEW A: OUTSIDE ALBUM HUB (Default: Icon & Album Folder Cards) -->
+    <!-- VIEW A: MAIN STUDIO DASHBOARD (Albums & Standalone)           -->
     <!-- ============================================================= -->
-    {% if not selected_album and view_mode != 'all' %}
-    <div style="margin-top: 18px;">
-        <div style="margin-bottom: 18px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px;">
+    {% if not selected_album %}
+
+    <!-- 1. VIDEO LIBRARY Telemetry Filter Bar -->
+    <div style="background: rgba(15,23,42,0.65); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px 18px; margin: 18px 0 24px;">
+        <div style="font-size: 11px; font-family: var(--font-mono); color: var(--neon-cyan); text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-layer-group"></i> VIDEO LIBRARY
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+            <!-- All Videos Pill -->
+            <a href="{{ url_for('admin_videos.index', tab='all') }}" class="pill-filter {% if active_tab == 'all' %}active{% endif %}">
+                <span class="pill-label">All Videos</span>
+                <span class="pill-count">{{ total_videos_count }}</span>
+            </a>
+            <!-- Albums Pill -->
+            <a href="{{ url_for('admin_videos.index', tab='albums') }}" class="pill-filter {% if active_tab == 'albums' %}active{% endif %}">
+                <span class="pill-label">Albums</span>
+                <span class="pill-count">{{ albums|length }}</span>
+            </a>
+            <!-- Standalone Pill -->
+            <a href="{{ url_for('admin_videos.index', tab='standalone') }}" class="pill-filter {% if active_tab == 'standalone' %}active{% endif %}">
+                <span class="pill-label">Standalone</span>
+                <span class="pill-count">{{ standalone_count }}</span>
+            </a>
+            <!-- Drafts Pill -->
+            <a href="{{ url_for('admin_videos.index', tab='drafts') }}" class="pill-filter {% if active_tab == 'drafts' %}active{% endif %}">
+                <span class="pill-label">Drafts</span>
+                <span class="pill-count">{{ drafts_count }}</span>
+            </a>
+        </div>
+    </div>
+
+    {# 2. ALBUMS SECTION (Shown on 'all' and 'albums' tabs) #}
+    {% if active_tab in ['all', 'albums'] %}
+    <div style="margin-bottom: 36px;">
+        <!-- Section Header Bar -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 10px;">
             <div>
-                <h3 style="font-family: var(--font-display); font-size: 17px; color: #f8fafc; margin: 0 0 4px;">
-                    <i class="fa-solid fa-layer-group" style="color: var(--neon-purple); margin-right: 6px;"></i>
-                    VIDEO ALBUMS &amp; SERIES HUB
+                <h3 style="font-family: var(--font-display); font-size: 16px; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-folder-open" style="color: var(--neon-purple);"></i>
+                    <span>YOUR ALBUMS</span>
                 </h3>
-                <p style="font-size: 12px; color: var(--text-muted); margin: 0;">
-                    Click any album card below to enter and manage the videos uploaded inside.
-                </p>
+                <span style="font-size: 11px; color: var(--text-muted);">
+                    Grouped video series, commercial campaigns, and AI film collections
+                </span>
             </div>
-            <span style="font-family: var(--font-mono); font-size: 11px; color: var(--neon-cyan); background: rgba(0,240,255,0.08); border: 1px solid rgba(0,240,255,0.25); padding: 4px 10px; border-radius: 20px;">
-                {{ album_stats|length }} Albums &bull; {{ total_videos_count }} Total Videos
-            </span>
+            <button type="button" onclick="openCreateAlbumModal()" class="btn-command-primary" style="font-size: 11.5px; padding: 6px 14px; background: rgba(168,85,247,0.18); border-color: var(--neon-purple); color: #e9d5ff;">
+                <i class="fa-solid fa-folder-plus"></i> + CREATE ALBUM
+            </button>
         </div>
 
         <!-- Album Cards Grid -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
-            <!-- 1. "ALL VIDEOS" MASTER ICON CARD (Inspired by user design) -->
-            <a href="{{ url_for('admin_videos.index', view='all') }}" style="text-decoration: none; color: inherit;">
-                <div class="telemetry-card album-hub-card" style="background: linear-gradient(135deg, rgba(15,23,42,0.9) 0%, rgba(30,27,75,0.85) 100%); border: 1.5px solid rgba(0, 240, 255, 0.4); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; min-height: 240px; box-shadow: 0 8px 30px rgba(0, 240, 255, 0.15); transition: all 0.25s ease; cursor: pointer;">
-                    <div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                            <span style="background: rgba(0,240,255,0.15); border: 1px solid var(--neon-cyan); color: var(--neon-cyan); font-family: var(--font-mono); font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: 700;">
-                                MASTER ARCHIVE
-                            </span>
-                            <i class="fa-solid fa-arrow-up-right-from-square" style="color: var(--neon-cyan); font-size: 12px;"></i>
-                        </div>
-
-                        <!-- 3D Clapperboard / Film Badge -->
-                        <div style="text-align: center; margin: 10px 0 16px;">
-                            <div style="width: 80px; height: 80px; margin: 0 auto; border-radius: 12px; overflow: hidden; border: 1.5px solid rgba(168,85,247,0.5); box-shadow: 0 0 20px rgba(168,85,247,0.3); background: #0b112c; display: flex; align-items: center; justify-content: center;">
-                                <img src="{{ url_for('static', filename='images/branding/ai_video_studio_album.jpg') }}" alt="AI Video Studio" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src=''; this.parentElement.innerHTML='<i class=\'fa-solid fa-clapperboard\' style=\'font-size: 34px; color: var(--neon-cyan);\'></i>';">
-                            </div>
-                        </div>
-
-                        <div style="text-align: center;">
-                            <h4 style="font-family: var(--font-display); font-size: 15px; color: #fff; margin: 0 0 2px; letter-spacing: 0.5px;">
-                                AI VIDEO STUDIO
-                            </h4>
-                            <div style="font-size: 10.5px; color: var(--text-muted); font-family: var(--font-mono); text-transform: uppercase;">
-                                PRODUCTION MANAGER
-                            </div>
-                        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px;">
+            {% for alb in album_stats %}
+            <div class="album-card" style="background: rgba(15,23,42,0.85); border: 1px solid rgba(168,85,247,0.35); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; transition: all 0.25s ease; box-shadow: 0 4px 20px rgba(0,0,0,0.35);">
+                <!-- ALBUM COVER (Top Half) -->
+                <div style="height: 140px; position: relative; background: #0b112c; overflow: hidden;">
+                    {% if alb.cover_url %}
+                        <img src="{{ alb.cover_url }}" alt="{{ alb.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="{{ alb.name }}" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.6;">
+                    {% endif %}
+                    <div style="position: absolute; inset: 0; background: linear-gradient(0deg, rgba(15,23,42,0.95) 0%, rgba(15,23,42,0.2) 60%, rgba(15,23,42,0.6) 100%);"></div>
+                    
+                    <!-- Floating Badges on Cover -->
+                    <div style="position: absolute; top: 10px; left: 10px;">
+                        <span style="background: rgba(11,17,44,0.85); backdrop-filter: blur(4px); border: 1px solid rgba(168,85,247,0.6); color: #e9d5ff; font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-family: var(--font-mono);">
+                            <i class="fa-solid fa-layer-group" style="color: var(--neon-purple);"></i> ALBUM
+                        </span>
                     </div>
-
-                    <div style="margin-top: 16px;">
-                        <div class="btn-command-secondary" style="width: 100%; justify-content: center; font-weight: 700; background: rgba(0,240,255,0.12); border-color: var(--neon-cyan); color: #fff; font-size: 12px; padding: 7px 10px;">
-                            <i class="fa-solid fa-layer-group" style="color: var(--neon-cyan);"></i> All Videos ({{ total_videos_count }})
-                        </div>
+                    <div style="position: absolute; top: 10px; right: 10px;">
+                        <span style="background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.15); color: var(--neon-cyan); font-size: 10px; padding: 2px 7px; border-radius: 4px; font-family: var(--font-mono);">
+                            {{ alb.tools_label }}
+                        </span>
                     </div>
                 </div>
-            </a>
 
-            <!-- 2. CREATED ALBUMS (For each album created by user) -->
-            {% for alb in album_stats %}
-            <a href="{{ url_for('admin_videos.index', album=alb.name) }}" style="text-decoration: none; color: inherit;">
-                <div class="telemetry-card album-hub-card" style="background: rgba(15,23,42,0.85); border: 1px solid rgba(168,85,247,0.35); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; min-height: 240px; box-shadow: 0 6px 25px rgba(0,0,0,0.5); transition: all 0.25s ease; cursor: pointer; position: relative; overflow: hidden;">
-                    <!-- Cover Background Tint if video thumbnail exists -->
-                    {% if alb.cover_url %}
-                    <div style="position: absolute; inset: 0; background: url('{{ alb.cover_url }}') center/cover no-repeat; opacity: 0.15; filter: blur(2px); z-index: 0;"></div>
-                    {% endif %}
-
-                    <div style="position: relative; z-index: 1;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <span style="background: rgba(168,85,247,0.2); border: 1px solid var(--neon-purple); color: #e9d5ff; font-family: var(--font-mono); font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: 700;">
-                                <i class="fa-solid fa-folder-open"></i> ALBUM
-                            </span>
-                            <span style="font-family: var(--font-mono); font-size: 11px; color: var(--neon-cyan); font-weight: 700;">
-                                {{ alb.count }} Video{% if alb.count != 1 %}s{% endif %}
-                            </span>
-                        </div>
-
-                        <!-- Album Visual Header -->
-                        <div style="margin: 12px 0 16px;">
-                            <div style="height: 100px; border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.08); background: #000;">
-                                {% if alb.cover_url %}
-                                    <img src="{{ alb.cover_url }}" alt="{{ alb.name }}" style="width: 100%; height: 100%; object-fit: cover;">
-                                {% else %}
-                                    <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="{{ alb.name }}" style="width: 100%; height: 100%; object-fit: cover;">
-                                {% endif %}
-                                <div style="position: absolute; inset: 0; background: linear-gradient(0deg, rgba(11,17,44,0.9) 0%, rgba(11,17,44,0.2) 100%);"></div>
-                                <div style="position: absolute; bottom: 8px; left: 10px; right: 10px; display: flex; align-items: center; gap: 6px;">
-                                    <i class="fa-solid fa-clapperboard" style="color: var(--neon-cyan); font-size: 13px;"></i>
-                                    <span style="font-size: 11px; color: #fff; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                        {{ alb.tools_label }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <h4 style="font-family: var(--font-display); font-size: 16px; color: #fff; margin: 0 0 4px; line-height: 1.3;">
+                <!-- ALBUM INFO (Bottom Half) -->
+                <div style="padding: 14px; display: flex; flex-direction: column; justify-content: space-between; flex: 1; border-top: 1px solid rgba(255,255,255,0.06);">
+                    <div>
+                        <h4 style="font-family: var(--font-display); font-size: 15px; color: #fff; margin: 0 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ alb.name }}">
                             {{ alb.name }}
                         </h4>
-                        <p style="font-size: 11.5px; color: var(--text-muted); margin: 0; line-height: 1.4;">
-                            Contains {{ alb.count }} generative video reel{% if alb.count != 1 %}s{% endif %}.
-                        </p>
-                    </div>
-
-                    <div style="position: relative; z-index: 1; margin-top: 16px; display: flex; gap: 6px;">
-                        <div class="btn-command-secondary" style="flex: 1; justify-content: center; font-size: 11.5px; padding: 6px 10px;">
-                            <i class="fa-solid fa-play"></i> Open Album &rarr;
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <span style="font-size: 12px; color: var(--neon-cyan); font-family: var(--font-mono); font-weight: 700;">
+                                {{ alb.count }} Video{% if alb.count != 1 %}s{% endif %}
+                            </span>
+                            <span class="badge-status badge-{{ alb.status_class }}" style="font-size: 10px;">
+                                {{ alb.status_badge }}
+                            </span>
                         </div>
                     </div>
+
+                    <!-- Action: Open Album Button -->
+                    <a href="{{ url_for('admin_videos.index', album=alb.name) }}" class="btn-command-secondary" style="width: 100%; justify-content: center; font-size: 12px; font-weight: 700; padding: 8px; border-color: rgba(0,240,255,0.4); color: #fff; background: rgba(0,240,255,0.08); text-decoration: none;">
+                        OPEN ALBUM &rarr;
+                    </a>
                 </div>
-            </a>
+            </div>
             {% endfor %}
 
-            <!-- 3. STANDALONE VIDEOS CARD (if any videos have no album) -->
-            {% if standalone_count > 0 %}
-            <a href="{{ url_for('admin_videos.index', album='__standalone__') }}" style="text-decoration: none; color: inherit;">
-                <div class="telemetry-card album-hub-card" style="background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; min-height: 240px; box-shadow: 0 6px 25px rgba(0,0,0,0.5); transition: all 0.25s ease; cursor: pointer;">
-                    <div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <span style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; font-family: var(--font-mono); font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: 700;">
-                                STANDALONE
-                            </span>
-                            <span style="font-family: var(--font-mono); font-size: 11px; color: var(--neon-cyan); font-weight: 700;">
-                                {{ standalone_count }} Videos
-                            </span>
-                        </div>
-
-                        <div style="text-align: center; margin: 20px 0;">
-                            <i class="fa-solid fa-compact-disc" style="font-size: 42px; color: #94a3b8;"></i>
-                        </div>
-
-                        <h4 style="font-family: var(--font-display); font-size: 16px; color: #fff; margin: 0 0 4px; text-align: center;">
-                            Single Releases
-                        </h4>
-                        <p style="font-size: 11.5px; color: var(--text-muted); margin: 0; text-align: center;">
-                            Individual videos not assigned to any specific album.
-                        </p>
-                    </div>
-
-                    <div style="margin-top: 16px;">
-                        <div class="btn-command-secondary" style="width: 100%; justify-content: center; font-size: 11.5px; padding: 6px 10px;">
-                            View Standalone &rarr;
-                        </div>
-                    </div>
+            <!-- + CREATE ALBUM Card (Dashed Border) -->
+            <div onclick="openCreateAlbumModal()" class="album-card create-album-dashed-card" style="background: rgba(15,23,42,0.4); border: 2px dashed rgba(0, 240, 255, 0.35); border-radius: 12px; min-height: 250px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; cursor: pointer; transition: all 0.25s ease;">
+                <div style="width: 50px; height: 50px; border-radius: 50%; background: rgba(0,240,255,0.1); border: 1.5px solid var(--neon-cyan); display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                    <i class="fa-solid fa-plus" style="font-size: 22px; color: var(--neon-cyan);"></i>
                 </div>
-            </a>
-            {% endif %}
-
-            <!-- 4. "+ CREATE NEW ALBUM" CARD -->
-            <a href="{{ url_for('admin_videos.create', album='__new__') }}" style="text-decoration: none; color: inherit;">
-                <div class="telemetry-card album-hub-card" style="background: rgba(15,23,42,0.4); border: 2px dashed rgba(0, 240, 255, 0.3); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 240px; transition: all 0.25s ease; cursor: pointer; text-align: center;">
-                    <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(0,240,255,0.1); border: 1px solid rgba(0,240,255,0.3); display: flex; align-items: center; justify-content: center; margin-bottom: 14px;">
-                        <i class="fa-solid fa-folder-plus" style="font-size: 20px; color: var(--neon-cyan);"></i>
-                    </div>
-                    <h4 style="font-family: var(--font-display); font-size: 15px; color: #fff; margin: 0 0 4px;">
-                        + CREATE NEW ALBUM
-                    </h4>
-                    <p style="font-size: 11.5px; color: var(--text-muted); margin: 0 0 14px; max-width: 200px;">
-                        Start a new group / series and upload its first AI video reel.
-                    </p>
-                    <span class="btn-command-secondary" style="font-size: 11px; padding: 4px 12px;">
-                        Create Album &rarr;
-                    </span>
-                </div>
-            </a>
+                <h4 style="font-family: var(--font-display); font-size: 14px; color: #fff; margin: 0 0 6px; letter-spacing: 0.5px;">
+                    + CREATE ALBUM
+                </h4>
+                <p style="font-size: 11px; color: var(--text-muted); margin: 0 0 14px; max-width: 180px;">
+                    Create a new series &amp; add videos inside
+                </p>
+                <span class="btn-command-secondary" style="font-size: 11px; padding: 4px 12px; pointer-events: none;">
+                    New Album &rarr;
+                </span>
+            </div>
         </div>
     </div>
+    {% endif %}
+
+    {# 3. STANDALONE VIDEOS SECTION (Shown on 'all' and 'standalone' tabs) #}
+    {% if active_tab in ['all', 'standalone'] %}
+    <div style="margin-bottom: 24px;">
+        <!-- Section Header Bar -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 10px;">
+            <div>
+                <h3 style="font-family: var(--font-display); font-size: 16px; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-film" style="color: var(--neon-cyan);"></i>
+                    <span>STANDALONE VIDEOS</span>
+                </h3>
+                <span style="font-size: 11px; color: var(--text-muted);">
+                    Individual videos not assigned to an album
+                </span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-family: var(--font-mono); font-size: 11px; color: var(--neon-cyan); background: rgba(0,240,255,0.08); border: 1px solid rgba(0,240,255,0.25); padding: 3px 8px; border-radius: 4px;">
+                    {{ standalone_videos|length }} Videos
+                </span>
+                <a href="{{ url_for('admin_videos.create') }}" class="btn-command-secondary" style="font-size: 11px; padding: 5px 10px;">
+                    <i class="fa-solid fa-plus"></i> Upload Standalone
+                </a>
+            </div>
+        </div>
+
+        <!-- Standalone Video Grid -->
+        {% if standalone_videos %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+            {% for v in standalone_videos %}
+            <div style="background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 12px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="height: 140px; border-radius: 6px; overflow: hidden; position: relative;">
+                        {% if v.thumbnail_url %}
+                            <img src="{{ v.thumbnail_url }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% endif %}
+                        <span class="video-duration-badge">{{ v.duration }}</span>
+                        <span style="position: absolute; top: 8px; left: 8px; background: rgba(15,23,42,0.85); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-family: var(--font-mono);">
+                            STANDALONE
+                        </span>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                            <h4 style="color: #fff; font-size: 13.5px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ v.title }}</h4>
+                            <span style="font-size: 10px; color: var(--neon-cyan); font-family: var(--font-mono);">{{ v.aspect_ratio }}</span>
+                        </div>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">{{ v.category }} &bull; {{ v.tools_used }}</p>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px;">
+                    <span class="badge-status badge-{{ 'live' if v.visibility == 'published' else 'draft' }}">&bull; {{ v.visibility|upper }}</span>
+                    <div style="display: flex; gap: 6px;">
+                        <a href="{{ url_for('admin_videos.edit', id=v.id) }}" class="btn-command-secondary" style="padding: 3px 8px; font-size: 11px;" title="Edit Video">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </a>
+                        <form method="POST" action="{{ url_for('admin_videos.delete', id=v.id) }}" onsubmit="return confirm('Delete video \'{{ v.title }}\'?');" style="margin: 0;">
+                            <button type="submit" class="btn-command-secondary" style="padding: 3px 8px; font-size: 11px; color: #f87171;" title="Delete Video">
+                                <i class="fa-regular fa-trash-can"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 40px 20px; background: rgba(15,23,42,0.4); border: 1px dashed rgba(255,255,255,0.08); border-radius: 10px;">
+            <i class="fa-solid fa-film" style="font-size: 32px; color: #475569; margin-bottom: 10px;"></i>
+            <h4 style="color: #fff; font-size: 14px; margin: 0 0 4px;">No standalone videos</h4>
+            <p style="font-size: 11.5px; color: var(--text-muted); margin: 0 0 14px;">All your videos are currently organized inside albums.</p>
+            <a href="{{ url_for('admin_videos.create') }}" class="btn-command-secondary" style="font-size: 11px; padding: 5px 12px;">
+                <i class="fa-solid fa-plus"></i> Upload Single Video
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- 4. DRAFTS VIEW (Shown when 'drafts' tab is clicked) -->
+    {% if active_tab == 'drafts' %}
+    <div style="margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 10px;">
+            <div>
+                <h3 style="font-family: var(--font-display); font-size: 16px; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-file-pen" style="color: #f59e0b;"></i>
+                    <span>DRAFT VIDEOS</span>
+                </h3>
+                <span style="font-size: 11px; color: var(--text-muted);">
+                    Unpublished video reels requiring review before publishing
+                </span>
+            </div>
+            <span style="font-family: var(--font-mono); font-size: 11px; color: #f59e0b; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); padding: 3px 8px; border-radius: 4px;">
+                {{ videos|length }} Drafts
+            </span>
+        </div>
+
+        {% if videos %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+            {% for v in videos %}
+            <div style="background: rgba(15,23,42,0.7); border: 1px solid rgba(245,158,11,0.3); border-radius: var(--radius-sm); padding: 12px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="height: 140px; border-radius: 6px; overflow: hidden; position: relative;">
+                        {% if v.thumbnail_url %}
+                            <img src="{{ v.thumbnail_url }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% endif %}
+                        <span class="video-duration-badge">{{ v.duration }}</span>
+                        {% if v.album %}
+                        <span style="position: absolute; top: 8px; left: 8px; background: rgba(11,17,44,0.85); backdrop-filter: blur(4px); border: 1px solid rgba(168,85,247,0.6); color: #e9d5ff; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-family: var(--font-mono);">
+                            {{ v.album }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <h4 style="color: #fff; font-size: 13.5px; margin: 0;">{{ v.title }}</h4>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">{{ v.category }} &bull; {{ v.tools_used }}</p>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px;">
+                    <span class="badge-status badge-draft">&bull; DRAFT</span>
+                    <div style="display: flex; gap: 6px;">
+                        <a href="{{ url_for('admin_videos.edit', id=v.id) }}" class="btn-command-secondary" style="padding: 3px 8px; font-size: 11px;" title="Publish / Edit">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </a>
+                        <form method="POST" action="{{ url_for('admin_videos.delete', id=v.id) }}" onsubmit="return confirm('Delete video \'{{ v.title }}\'?');" style="margin: 0;">
+                            <button type="submit" class="btn-command-secondary" style="padding: 3px 8px; font-size: 11px; color: #f87171;" title="Delete">
+                                <i class="fa-regular fa-trash-can"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 40px 20px; background: rgba(15,23,42,0.4); border: 1px dashed rgba(255,255,255,0.08); border-radius: 10px;">
+            <i class="fa-solid fa-circle-check" style="font-size: 32px; color: #10b981; margin-bottom: 10px;"></i>
+            <h4 style="color: #fff; font-size: 14px; margin: 0 0 4px;">No drafts pending</h4>
+            <p style="font-size: 11.5px; color: var(--text-muted); margin: 0;">All uploaded videos are currently published and live.</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
 
     <!-- ============================================================= -->
-    <!-- VIEW B: INSIDE THE ALBUM (Shows videos uploaded inside)       -->
+    <!-- VIEW B: INSIDE THE ALBUM (Drilldown View)                     -->
     <!-- ============================================================= -->
     {% else %}
     <div style="margin-top: 16px;">
-        <!-- Inside Album Breadcrumb & Info Bar -->
+        <!-- Inside Album Breadcrumb & Header Bar -->
         <div style="background: rgba(15,23,42,0.85); border: 1px solid rgba(0,240,255,0.3); border-radius: 10px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
-            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                <a href="{{ url_for('admin_videos.index') }}" class="btn-command-secondary" style="font-size: 11px; padding: 4px 10px;" title="Return to Album Hub">
+            <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                <a href="{{ url_for('admin_videos.index') }}" class="btn-command-secondary" style="font-size: 11.5px; padding: 6px 12px;" title="Return to Album Hub">
                     <i class="fa-solid fa-arrow-left"></i> All Albums
                 </a>
                 <div>
-                    <div style="font-family: var(--font-mono); font-size: 10.5px; color: var(--neon-purple); text-transform: uppercase; font-weight: 700;">
-                        CURRENT ALBUM VIEW
+                    <div style="font-family: var(--font-mono); font-size: 10px; color: var(--neon-purple); text-transform: uppercase; font-weight: 700; letter-spacing: 0.8px;">
+                        CURRENT ALBUM
                     </div>
-                    <h3 style="font-family: var(--font-display); font-size: 18px; color: #fff; margin: 0;">
+                    <h3 style="font-family: var(--font-display); font-size: 18px; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
                         {% if selected_album == '__standalone__' %}
-                            <i class="fa-solid fa-compact-disc" style="color: #94a3b8; margin-right: 6px;"></i> Single Releases (Standalone)
-                        {% elif selected_album %}
-                            <i class="fa-solid fa-folder-open" style="color: var(--neon-purple); margin-right: 6px;"></i> {{ selected_album }}
+                            <i class="fa-solid fa-compact-disc" style="color: #94a3b8;"></i> Single Releases (Standalone)
                         {% else %}
-                            <i class="fa-solid fa-layer-group" style="color: var(--neon-cyan); margin-right: 6px;"></i> All Production Videos
+                            <i class="fa-solid fa-folder-open" style="color: var(--neon-purple);"></i> {{ selected_album }}
                         {% endif %}
                     </h3>
                 </div>
@@ -225,7 +327,7 @@
                 <span style="font-family: var(--font-mono); font-size: 11.5px; color: var(--neon-cyan); background: rgba(0,240,255,0.1); border: 1px solid rgba(0,240,255,0.25); padding: 4px 10px; border-radius: 4px;">
                     {{ videos|length }} Videos
                 </span>
-                <a href="{{ url_for('admin_videos.create', album=selected_album if selected_album and selected_album != '__standalone__' else '') }}" class="btn-command-primary" style="font-size: 11px; padding: 5px 12px;">
+                <a href="{{ url_for('admin_videos.create', album=selected_album if selected_album and selected_album != '__standalone__' else '') }}" class="btn-command-primary" style="font-size: 11.5px; padding: 6px 14px;">
                     <i class="fa-solid fa-plus"></i> Add Video Inside
                 </a>
             </div>
@@ -233,51 +335,46 @@
 
         <!-- Videos Inside This Album -->
         {% if videos %}
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
             {% for v in videos %}
-                <div style="background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 12px; display: flex; flex-direction: column; justify-content: space-between;">
-                    <div>
-                        <div style="height: 150px; border-radius: 6px; overflow: hidden; position: relative;">
-                            {% if v.thumbnail_url %}
-                                <img src="{{ v.thumbnail_url }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
-                            {% else %}
-                                <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
-                            {% endif %}
-                            <span class="video-duration-badge">{{ v.duration }}</span>
-                            {% if v.album %}
-                            <span style="position: absolute; top: 8px; left: 8px; background: rgba(11,17,44,0.85); backdrop-filter: blur(4px); border: 1px solid rgba(168,85,247,0.6); color: #e9d5ff; font-size: 9.5px; padding: 2px 7px; border-radius: 4px; font-weight: 700; letter-spacing: 0.4px;">
-                                <i class="fa-solid fa-layer-group" style="color: var(--neon-purple);"></i> {{ v.album }}
-                            </span>
-                            {% endif %}
-                        </div>
-                        <div style="margin-top: 10px;">
-                            <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                                <h4 style="color: #fff; font-size: 14px; margin: 0;">{{ v.title }}</h4>
-                                <span style="font-size: 10px; color: var(--neon-cyan); font-family: var(--font-mono);">{{ v.aspect_ratio }}</span>
-                            </div>
-                            <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">{{ v.category }} &bull; {{ v.tools_used }}</p>
-                            {% if v.description %}
-                            <p style="font-size: 11px; color: #94a3b8; margin-top: 4px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                                {{ v.description }}
-                            </p>
-                            {% endif %}
-                        </div>
+            <div style="background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 12px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="height: 150px; border-radius: 6px; overflow: hidden; position: relative;">
+                        {% if v.thumbnail_url %}
+                            <img src="{{ v.thumbnail_url }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% endif %}
+                        <span class="video-duration-badge">{{ v.duration }}</span>
                     </div>
-
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px;">
-                        <span class="badge-status badge-{{ 'live' if v.visibility == 'published' else 'draft' }}">&bull; {{ v.visibility|upper }}</span>
-                        <div style="display: flex; gap: 6px;">
-                            <a href="{{ url_for('admin_videos.edit', id=v.id) }}" class="btn-command-secondary" style="padding: 3px 8px; font-size: 11px;" title="Edit Video">
-                                <i class="fa-solid fa-pen-to-square"></i>
-                            </a>
-                            <form method="POST" action="{{ url_for('admin_videos.delete', id=v.id) }}" onsubmit="return confirm('Delete video \'{{ v.title }}\'?');" style="margin: 0;">
-                                <button type="submit" class="btn-command-secondary" style="padding: 3px 8px; font-size: 11px; color: #f87171;" title="Delete Video">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </button>
-                            </form>
+                    <div style="margin-top: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                            <h4 style="color: #fff; font-size: 14px; margin: 0;">{{ v.title }}</h4>
+                            <span style="font-size: 10px; color: var(--neon-cyan); font-family: var(--font-mono);">{{ v.aspect_ratio }}</span>
                         </div>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">{{ v.category }} &bull; {{ v.tools_used }}</p>
+                        {% if v.description %}
+                        <p style="font-size: 11px; color: #94a3b8; margin-top: 4px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            {{ v.description }}
+                        </p>
+                        {% endif %}
                     </div>
                 </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px;">
+                    <span class="badge-status badge-{{ 'live' if v.visibility == 'published' else 'draft' }}">&bull; {{ v.visibility|upper }}</span>
+                    <div style="display: flex; gap: 6px;">
+                        <a href="{{ url_for('admin_videos.edit', id=v.id) }}" class="btn-command-secondary" style="padding: 3px 8px; font-size: 11px;" title="Edit Video">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </a>
+                        <form method="POST" action="{{ url_for('admin_videos.delete', id=v.id) }}" onsubmit="return confirm('Delete video \'{{ v.title }}\'?');" style="margin: 0;">
+                            <button type="submit" class="btn-command-secondary" style="padding: 3px 8px; font-size: 11px; color: #f87171;" title="Delete Video">
+                                <i class="fa-regular fa-trash-can"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
             {% endfor %}
         </div>
         {% else %}
@@ -296,11 +393,122 @@
     {% endif %}
 </div>
 
+<!-- ============================================================= -->
+<!-- QUICK CREATE ALBUM MODAL                                      -->
+<!-- ============================================================= -->
+<div id="createAlbumModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(5px); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: #0f172a; border: 1px solid var(--neon-cyan); border-radius: 12px; padding: 24px; width: 90%; max-width: 440px; box-shadow: 0 10px 40px rgba(0, 240, 255, 0.25);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 16px; color: #fff;">
+                <i class="fa-solid fa-folder-plus" style="color: var(--neon-cyan);"></i>
+                <span>+ CREATE NEW ALBUM</span>
+            </div>
+            <button type="button" onclick="closeCreateAlbumModal()" style="background: none; border: none; color: #94a3b8; font-size: 16px; cursor: pointer;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
+            Enter an album name for your new series or commercial campaign:
+        </p>
+
+        <div style="margin-bottom: 18px;">
+            <input type="text" id="newAlbumModalInput" placeholder="e.g. AI Video Series, Product Ads, Cinematic" style="width: 100%; background: rgba(15,23,42,0.9); border: 1px solid rgba(168,85,247,0.5); border-radius: 6px; padding: 10px 12px; color: #fff; font-size: 13px;">
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" onclick="closeCreateAlbumModal()" class="btn-command-secondary" style="font-size: 12px; padding: 7px 14px;">
+                Cancel
+            </button>
+            <button type="button" onclick="submitCreateAlbumModal()" class="btn-command-primary" style="font-size: 12px; padding: 7px 16px; font-weight: 700;">
+                Create &amp; Add Video &rarr;
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function openCreateAlbumModal() {
+    const modal = document.getElementById('createAlbumModal');
+    modal.style.display = 'flex';
+    setTimeout(() => {
+        const inp = document.getElementById('newAlbumModalInput');
+        if (inp) inp.focus();
+    }, 50);
+}
+
+function closeCreateAlbumModal() {
+    const modal = document.getElementById('createAlbumModal');
+    modal.style.display = 'none';
+}
+
+function submitCreateAlbumModal() {
+    const inp = document.getElementById('newAlbumModalInput');
+    const name = inp ? inp.value.trim() : '';
+    if (!name) {
+        alert('Please enter an album name.');
+        return;
+    }
+    window.location.href = "{{ url_for('admin_videos.create') }}?album=" + encodeURIComponent(name);
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeCreateAlbumModal();
+    }
+});
+</script>
+
 <style>
-.album-hub-card:hover {
+/* Pill filter styling matching user design */
+.pill-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(15,23,42,0.85);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 6px 14px;
+    color: #cbd5e1;
+    font-size: 12px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.pill-filter:hover {
+    border-color: var(--neon-cyan);
+    color: #fff;
+    transform: translateY(-1px);
+}
+.pill-filter.active {
+    background: rgba(0, 240, 255, 0.12);
+    border-color: var(--neon-cyan);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+}
+.pill-filter .pill-label {
+    font-weight: 500;
+}
+.pill-filter .pill-count {
+    background: rgba(0,0,0,0.5);
+    border-radius: 12px;
+    padding: 1px 7px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--neon-cyan);
+    font-weight: 700;
+}
+
+/* Album Card Hover */
+.album-card:hover {
     transform: translateY(-4px);
     border-color: var(--neon-cyan) !important;
-    box-shadow: 0 10px 35px rgba(0, 240, 255, 0.25) !important;
+    box-shadow: 0 10px 30px rgba(0, 240, 255, 0.22) !important;
+}
+
+.create-album-dashed-card:hover {
+    border-color: var(--neon-cyan) !important;
+    background: rgba(0,240,255,0.06) !important;
 }
 </style>
 {% endblock %}

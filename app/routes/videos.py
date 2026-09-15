@@ -14,7 +14,7 @@ def slugify(text):
 @login_required
 def index():
     selected_album = request.args.get("album", "").strip()
-    view_mode = request.args.get("view", "").strip()
+    active_tab = request.args.get("tab", "all").strip()
     all_videos = Video.query.order_by(Video.id.desc()).all()
     
     albums = sorted(list({v.album for v in all_videos if v.album}))
@@ -25,15 +25,29 @@ def index():
         alb_videos = [v for v in all_videos if v.album == alb]
         cover_thumb = next((v.thumbnail_url for v in alb_videos if v.thumbnail_url), None)
         tools = sorted(list({t for v in alb_videos for t in v.tools_list}))
+        pub_count = sum(1 for v in alb_videos if v.visibility == "published")
+        if pub_count == len(alb_videos):
+            status_badge = "Published"
+            status_class = "live"
+        elif pub_count == 0:
+            status_badge = "Draft"
+            status_class = "draft"
+        else:
+            status_badge = f"{pub_count}/{len(alb_videos)} Published"
+            status_class = "live"
+
         album_stats.append({
             "name": alb,
             "count": len(alb_videos),
             "cover_url": cover_thumb,
             "tools_label": ", ".join(tools[:2]) if tools else "AI Studio",
+            "status_badge": status_badge,
+            "status_class": status_class,
             "latest_video": alb_videos[0] if alb_videos else None
         })
 
     standalone_videos = [v for v in all_videos if not v.album]
+    draft_videos = [v for v in all_videos if v.visibility == "draft"]
     
     # Filter videos if an album is selected
     if selected_album:
@@ -41,6 +55,10 @@ def index():
             videos = standalone_videos
         else:
             videos = [v for v in all_videos if v.album == selected_album]
+    elif active_tab == "drafts":
+        videos = draft_videos
+    elif active_tab == "standalone":
+        videos = standalone_videos
     else:
         videos = all_videos
 
@@ -49,10 +67,12 @@ def index():
         videos=videos,
         albums=albums,
         album_stats=album_stats,
+        standalone_videos=standalone_videos,
         standalone_count=len(standalone_videos),
+        drafts_count=len(draft_videos),
         total_videos_count=len(all_videos),
         selected_album=selected_album,
-        view_mode=view_mode
+        active_tab=active_tab
     )
 
 @videos_bp.route("/create", methods=["GET", "POST"])

@@ -156,29 +156,38 @@ class VideoTestCase(unittest.TestCase):
 
     def test_admin_album_hub_and_inside_view(self):
         self.login_admin()
-        # 1. Outside Album Hub View
+        # 1. Main AI Video Studio Production Manager Dashboard View
         hub_res = self.client.get("/admin/videos/")
         self.assertEqual(hub_res.status_code, 200)
-        self.assertIn(b"VIDEO ALBUMS &amp; SERIES HUB", hub_res.data)
+        self.assertIn(b"AI VIDEO STUDIO", hub_res.data)
+        self.assertIn(b"Production Manager", hub_res.data)
+        self.assertIn(b"VIDEO LIBRARY", hub_res.data)
+        self.assertIn(b"YOUR ALBUMS", hub_res.data)
+        self.assertIn(b"+ CREATE ALBUM", hub_res.data)
         self.assertIn(b"Kung Fu Chronicles", hub_res.data)
         self.assertIn(b"Commercials 2026", hub_res.data)
-        self.assertIn(b"All Videos (3)", hub_res.data)
+        self.assertIn(b"STANDALONE VIDEOS", hub_res.data)
+        self.assertIn(b"Coffee Commercial Ad", hub_res.data)
 
         # 2. Inside Album View (Click into Kung Fu Chronicles)
         inside_res = self.client.get("/admin/videos/?album=Kung Fu Chronicles")
         self.assertEqual(inside_res.status_code, 200)
-        self.assertIn(b"Back to Albums", inside_res.data)
+        self.assertIn(b"All Albums", inside_res.data)
         self.assertIn(b"Kung Fu Chronicles", inside_res.data)
         self.assertIn(b"AI Kung Fu Scene", inside_res.data)
         self.assertIn(b"AI Kung Fu Finale", inside_res.data)
         self.assertNotIn(b"Coffee Commercial Ad", inside_res.data)
 
-        # 3. View All Videos Mode
-        all_res = self.client.get("/admin/videos/?view=all")
-        self.assertEqual(all_res.status_code, 200)
-        self.assertIn(b"Back to Albums", all_res.data)
-        self.assertIn(b"All Production Videos", all_res.data)
-        self.assertIn(b"Coffee Commercial Ad", all_res.data)
+        # 3. Filter Tabs (e.g. albums tab, standalone tab)
+        tab_albums = self.client.get("/admin/videos/?tab=albums")
+        self.assertEqual(tab_albums.status_code, 200)
+        self.assertIn(b"YOUR ALBUMS", tab_albums.data)
+        self.assertNotIn(b"STANDALONE VIDEOS", tab_albums.data)
+
+        tab_standalone = self.client.get("/admin/videos/?tab=standalone")
+        self.assertEqual(tab_standalone.status_code, 200)
+        self.assertIn(b"STANDALONE VIDEOS", tab_standalone.data)
+        self.assertNotIn(b"YOUR ALBUMS", tab_standalone.data)
 
 if __name__ == "__main__":
     unittest.main()
