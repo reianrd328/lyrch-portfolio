@@ -14,27 +14,57 @@
         </a>
     </div>
 
+    <!-- Album Filter Pills -->
+    {% if albums %}
+    <div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+        <span style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-right: 4px;">
+            <i class="fa-solid fa-filter"></i> Albums:
+        </span>
+        <a href="{{ url_for('admin_videos.index') }}" class="btn-command-secondary" style="font-size: 11px; padding: 4px 10px; border-radius: 20px; {% if not selected_album %}background: rgba(0,240,255,0.15); border-color: var(--neon-cyan); color: var(--neon-cyan);{% endif %}">
+            All Videos
+        </a>
+        {% for alb in albums %}
+        <a href="{{ url_for('admin_videos.index', album=alb) }}" class="btn-command-secondary" style="font-size: 11px; padding: 4px 10px; border-radius: 20px; {% if selected_album == alb %}background: rgba(168,85,247,0.2); border-color: var(--neon-purple); color: #c084fc;{% endif %}">
+            <i class="fa-solid fa-layer-group"></i> {{ alb }}
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <div style="margin-top: 18px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
         {% for v in videos %}
-            <div style="background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 12px;">
-                <div style="height: 140px; border-radius: 6px; overflow: hidden; position: relative;">
-                    {% if v.thumbnail_url %}
-                        <img src="{{ v.thumbnail_url }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
-                    {% else %}
-                        <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
-                    {% endif %}
-                    <span class="video-duration-badge">{{ v.duration }}</span>
-                </div>
-                <div style="margin-top: 10px;">
-                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                        <h4 style="color: #fff; font-size: 13px;">{{ v.title }}</h4>
-                        <span style="font-size: 10px; color: var(--neon-cyan);">{{ v.aspect_ratio }}</span>
+            <div style="background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 12px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="height: 140px; border-radius: 6px; overflow: hidden; position: relative;">
+                        {% if v.thumbnail_url %}
+                            <img src="{{ v.thumbnail_url }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% endif %}
+                        <span class="video-duration-badge">{{ v.duration }}</span>
+                        {% if v.album %}
+                        <span style="position: absolute; top: 8px; left: 8px; background: rgba(11,17,44,0.85); backdrop-filter: blur(4px); border: 1px solid rgba(168,85,247,0.6); color: #e9d5ff; font-size: 9.5px; padding: 2px 7px; border-radius: 4px; font-weight: 700; letter-spacing: 0.4px;">
+                            <i class="fa-solid fa-layer-group" style="color: var(--neon-purple);"></i> {{ v.album }}
+                        </span>
+                        {% endif %}
                     </div>
-                    <p style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">{{ v.tools_used }}</p>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px;">
-                        <span class="badge-status badge-{{ 'live' if v.visibility == 'published' else 'draft' }}">&bull; {{ v.visibility|upper }}</span>
-                        <form method="POST" action="{{ url_for('admin_videos.delete', id=v.id) }}" onsubmit="return confirm('Delete video?');">
-                            <button type="submit" class="btn-command-secondary" style="padding: 3px 8px; font-size: 11px; color: #f87171;">
+                    <div style="margin-top: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                            <h4 style="color: #fff; font-size: 13px; margin: 0;">{{ v.title }}</h4>
+                            <span style="font-size: 10px; color: var(--neon-cyan);">{{ v.aspect_ratio }}</span>
+                        </div>
+                        <p style="font-size: 10.5px; color: var(--text-muted); margin-top: 4px;">{{ v.category }} &bull; {{ v.tools_used }}</p>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px;">
+                    <span class="badge-status badge-{{ 'live' if v.visibility == 'published' else 'draft' }}">&bull; {{ v.visibility|upper }}</span>
+                    <div style="display: flex; gap: 6px;">
+                        <a href="{{ url_for('admin_videos.edit', id=v.id) }}" class="btn-command-secondary" style="padding: 3px 8px; font-size: 11px;" title="Edit Video">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </a>
+                        <form method="POST" action="{{ url_for('admin_videos.delete', id=v.id) }}" onsubmit="return confirm('Delete video \'{{ v.title }}\'?');" style="margin: 0;">
+                            <button type="submit" class="btn-command-secondary" style="padding: 3px 8px; font-size: 11px; color: #f87171;" title="Delete Video">
                                 <i class="fa-regular fa-trash-can"></i>
                             </button>
                         </form>

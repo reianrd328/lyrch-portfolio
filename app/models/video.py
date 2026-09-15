@@ -10,7 +10,7 @@ class Video(db.Model):
     description = db.Column(db.Text, nullable=True)
     video_url = db.Column(db.String(255), nullable=True)
     thumbnail_url = db.Column(db.String(255), nullable=True)
-    
+    album = db.Column(db.String(100), nullable=True, index=True)  # Album / Series / Collection name (e.g. "Kung Fu Action", "Product Commercials")
     category = db.Column(db.String(50), default="AI Creative")  # Commercial, Reel, TikTok, Experiment
     tools_used = db.Column(db.String(255), default="Gemini, Video Editing")
     platforms = db.Column(db.String(255), default="Facebook Reels, TikTok")

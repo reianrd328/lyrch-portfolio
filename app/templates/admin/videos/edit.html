@@ -1,0 +1,127 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit AI Video — MY WORK CMS{% endblock %}
+
+{% block admin_content %}
+<div class="telemetry-card">
+    <div class="card-header-bar">
+        <div class="header-label">
+            <i class="fa-solid fa-pen-to-square"></i>
+            <span>EDIT AI VIDEO: {{ video.title }}</span>
+        </div>
+        <a href="{{ url_for('admin_videos.index') }}" class="header-link">&larr; Back to Videos</a>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin_videos.edit', id=video.id) }}" enctype="multipart/form-data" style="margin-top: 18px; display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+            <div>
+                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">TITLE *</label>
+                <input type="text" name="title" required value="{{ video.title }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+            </div>
+
+            <div>
+                <label style="font-size: 11px; color: var(--neon-cyan); display: block; margin-bottom: 4px; font-weight: 600;">
+                    <i class="fa-solid fa-layer-group"></i> ALBUM / SERIES NAME
+                </label>
+                <input type="text" name="album" list="albumList" value="{{ video.album or '' }}" placeholder="e.g. Kung Fu Action Series, Coffee Commercials (leave blank for single)" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(0,240,255,0.3); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+                <datalist id="albumList">
+                    {% for a in existing_albums %}
+                    <option value="{{ a }}"></option>
+                    {% endfor %}
+                </datalist>
+                <span style="font-size: 10.5px; color: var(--text-muted); margin-top: 3px; display: block;">
+                    Group related videos together into an album/series. Choose an existing album from the list or type a new one.
+                </span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div>
+                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">CATEGORY</label>
+                    <select name="category" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+                        <option value="AI Creative" {% if video.category == 'AI Creative' %}selected{% endif %}>AI Creative</option>
+                        <option value="Commercial" {% if video.category == 'Commercial' %}selected{% endif %}>Commercial / Ad</option>
+                        <option value="Reels & TikTok" {% if video.category == 'Reels & TikTok' %}selected{% endif %}>Reels &amp; TikTok</option>
+                        <option value="AI Experiments" {% if video.category == 'AI Experiments' %}selected{% endif %}>AI Experiment</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">DURATION</label>
+                    <input type="text" name="duration" value="{{ video.duration or '00:10' }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div>
+                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">TOOLS USED</label>
+                    <input type="text" name="tools_used" value="{{ video.tools_used or '' }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+                </div>
+
+                <div>
+                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">ASPECT RATIO</label>
+                    <select name="aspect_ratio" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+                        <option value="9:16" {% if video.aspect_ratio == '9:16' %}selected{% endif %}>9:16 (Vertical Reel / TikTok / Shorts)</option>
+                        <option value="16:9" {% if video.aspect_ratio == '16:9' %}selected{% endif %}>16:9 (Landscape Cinematic)</option>
+                        <option value="1:1" {% if video.aspect_ratio == '1:1' %}selected{% endif %}>1:1 (Square)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">DESCRIPTION</label>
+                <textarea name="description" rows="2" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">{{ video.description or '' }}</textarea>
+            </div>
+
+            <div>
+                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">AI GENERATION PROMPT &amp; WORKFLOW</label>
+                <textarea name="prompt_text" rows="3" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">{{ video.prompt_text or '' }}</textarea>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div style="background: rgba(15,23,42,0.6); padding: 16px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 12px;">
+                <h4 style="font-size: 12px; color: #ffffff;">VISIBILITY &amp; STATUS</h4>
+                <select name="visibility" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 8px 10px; color: #fff; font-size: 12px;">
+                    <option value="published" {% if video.visibility == 'published' %}selected{% endif %}>● Published</option>
+                    <option value="draft" {% if video.visibility == 'draft' %}selected{% endif %}>○ Draft</option>
+                    <option value="private" {% if video.visibility == 'private' %}selected{% endif %}>🔒 Private</option>
+                </select>
+
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #cbd5e1; cursor: pointer;">
+                    <input type="checkbox" name="featured" value="1" {% if video.featured %}checked{% endif %}>
+                    <span>⭐ Display on Homepage Studio Card</span>
+                </label>
+            </div>
+
+            <div style="background: rgba(15,23,42,0.6); padding: 16px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 12px;">
+                <h4 style="font-size: 12px; color: #ffffff;">MEDIA FILES</h4>
+
+                <div>
+                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">THUMBNAIL IMAGE</label>
+                    {% if video.thumbnail_url %}
+                    <div style="margin-bottom: 8px;">
+                        <img src="{{ video.thumbnail_url }}" alt="Current thumbnail" style="width: 100%; height: 90px; object-fit: cover; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
+                    </div>
+                    {% endif %}
+                    <input type="file" name="thumbnail" accept="image/*" style="font-size: 11px; color: #94a3b8;">
+                </div>
+
+                <div>
+                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">VIDEO FILE / EMBED</label>
+                    {% if video.video_url %}
+                    <div style="font-size: 11px; color: var(--neon-cyan); margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        Current: {{ video.video_url }}
+                    </div>
+                    {% endif %}
+                    <input type="file" name="video" accept="video/*" style="font-size: 11px; color: #94a3b8; margin-bottom: 8px;">
+                    <input type="text" name="video_external_url" value="{{ video.video_url if video.video_url and not video.video_url.startswith('/uploads/') else '' }}" placeholder="Or External Video URL (YouTube, Vimeo, Cloud)" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 7px 10px; color: #fff; font-size: 12px;">
+                </div>
+            </div>
+
+            <button type="submit" class="btn-command-primary" style="width: 100%; padding: 10px; font-size: 13px; font-weight: 700;">
+                <i class="fa-solid fa-floppy-disk"></i> Save Video Changes
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

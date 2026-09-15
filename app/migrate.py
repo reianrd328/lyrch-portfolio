@@ -53,6 +53,18 @@ def check_and_apply_migrations(app):
                         except Exception as err:
                             db.session.rollback()
                             app.logger.warning(f"Migration notice for users.{col_name}: {err}")
+
+            # Check and migrate videos table for album column
+            if "videos" in inspector.get_table_names():
+                video_cols = {c["name"] for c in inspector.get_columns("videos")}
+                if "album" not in video_cols:
+                    try:
+                        db.session.execute(text("ALTER TABLE videos ADD COLUMN album VARCHAR(100) NULL"))
+                        db.session.commit()
+                        app.logger.info("Added column album to videos table.")
+                    except Exception as err:
+                        db.session.rollback()
+                        app.logger.warning(f"Migration notice for videos.album: {err}")
         except Exception as e:
             app.logger.warning(f"Migration checker notice: {e}")
 

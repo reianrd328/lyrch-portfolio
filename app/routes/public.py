@@ -96,7 +96,9 @@ def ai_lab():
 @public_bp.route("/video-studio")
 def video_studio():
     videos = Video.query.filter(Video.visibility == "published").order_by(Video.id.desc()).all()
-    return render_template("public/video_studio.html", videos=videos)
+    albums = sorted(list({v.album for v in videos if v.album}))
+    has_standalone = any(not v.album for v in videos)
+    return render_template("public/video_studio.html", videos=videos, albums=albums, has_standalone=has_standalone)
 
 @public_bp.route("/gallery")
 def gallery():
@@ -240,7 +242,9 @@ def profile_video_studio(slug):
     data = profile.get_data()
     preview_settings = ProfileProxy(data.get("settings", {}))
     videos = [ProfileProxy(v) for v in data.get("videos", []) if v.get("visibility") == "published"]
-    return render_template("public/video_studio.html", videos=videos, preview_profile=profile, settings=preview_settings)
+    albums = sorted(list({v.album for v in videos if getattr(v, "album", None)}))
+    has_standalone = any(not getattr(v, "album", None) for v in videos)
+    return render_template("public/video_studio.html", videos=videos, albums=albums, has_standalone=has_standalone, preview_profile=profile, settings=preview_settings)
 
 @public_bp.route("/p/<slug>/gallery")
 def profile_gallery(slug):

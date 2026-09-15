@@ -19,6 +19,21 @@
                 <input type="text" name="title" required placeholder="AI Kung Fu Coffee Commercial" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
             </div>
 
+            <div>
+                <label style="font-size: 11px; color: var(--neon-cyan); display: block; margin-bottom: 4px; font-weight: 600;">
+                    <i class="fa-solid fa-layer-group"></i> ALBUM / SERIES NAME
+                </label>
+                <input type="text" name="album" list="albumList" placeholder="e.g. Kung Fu Action Series, Coffee Commercials (leave blank for single)" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(0,240,255,0.3); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+                <datalist id="albumList">
+                    {% for a in existing_albums %}
+                    <option value="{{ a }}"></option>
+                    {% endfor %}
+                </datalist>
+                <span style="font-size: 10.5px; color: var(--text-muted); margin-top: 3px; display: block;">
+                    Group related videos together into an album/series. Choose an existing album from the list or type a new one.
+                </span>
+            </div>
+
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
                 <div>
                     <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">CATEGORY</label>

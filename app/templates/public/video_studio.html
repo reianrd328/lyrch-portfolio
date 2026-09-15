@@ -1,50 +1,481 @@
 {% extends "base.html" %}
 
-{% block title %}AI Video Studio — LYRCH Command Center{% endblock %}
+{% block title %}AI Video Studio — {% if preview_profile %}{{ preview_profile.name }}{% else %}LYRCH Command Center{% endif %}{% endblock %}
 
 {% block content %}
 <main class="command-grid-layout" style="grid-template-columns: 1fr;">
     <div class="telemetry-card" style="max-width: 1200px; margin: 0 auto; width: 100%;">
+        <!-- Header Bar -->
         <div class="card-header-bar">
             <div class="header-label">
-                <i class="fa-solid fa-clapperboard"></i>
-                <span>AI CREATIVE VIDEO STUDIO</span>
+                <i class="fa-solid fa-clapperboard" style="color: var(--neon-cyan);"></i>
+                <span>AI CREATIVE VIDEO STUDIO &bull; CINEMA REELS</span>
             </div>
-            <a href="{{ url_for('public.home') }}" class="header-link">&larr; Return to Dashboard</a>
+            <a href="{{ url_for('public.profile_preview', slug=preview_profile.slug) if preview_profile else url_for('public.home') }}" class="header-link">
+                &larr; Return to Dashboard
+            </a>
         </div>
 
-        <div style="margin: 16px 0 24px;">
-            <p style="color: #cbd5e1; max-width: 700px; line-height: 1.5;">
-                Explore AI-generated commercials, viral reels, and creative video workflows designed with Gemini, prompt engineering, and cinematic post-production.
-            </p>
+        <!-- Studio Description & Album Intro -->
+        <div style="margin: 16px 0 20px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px;">
+            <div>
+                <h2 style="font-family: var(--font-display); font-size: 22px; color: #fff; margin: 0 0 6px;">
+                    GENERATIVE CINEMA &amp; SHORTS
+                </h2>
+                <p style="color: #94a3b8; max-width: 720px; line-height: 1.5; font-size: 13px; margin: 0;">
+                    Explore AI-generated commercials, cinematic scenes, and creative video workflows generated with Gemini, prompt engineering, and visual editing. Browse by album collection or watch full video reels.
+                </p>
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 12px; color: var(--neon-cyan); background: rgba(0, 240, 255, 0.08); border: 1px solid rgba(0, 240, 255, 0.25); padding: 6px 14px; border-radius: 20px;">
+                <i class="fa-solid fa-film"></i> <span id="visibleCount">{{ videos|length }}</span> Videos Available
+            </div>
         </div>
 
-        <div class="projects-command-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <!-- Album Filter Pills Navigation -->
+        <div class="video-album-filter-bar" style="margin-bottom: 24px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; border-top: 1px solid rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.06); padding: 14px 0;">
+            <span style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-right: 6px;">
+                <i class="fa-solid fa-layer-group" style="color: var(--neon-purple);"></i> ALBUMS:
+            </span>
+
+            <button type="button" class="album-filter-pill active" onclick="filterByAlbum('all')" data-album-filter="all">
+                <i class="fa-solid fa-border-all"></i> All Videos ({{ videos|length }})
+            </button>
+
+            {% for alb in albums %}
+                {% set album_count = namespace(count=0) %}
+                {% for v in videos %}
+                    {% if v.album == alb %}
+                        {% set album_count.count = album_count.count + 1 %}
+                    {% endif %}
+                {% endfor %}
+                <button type="button" class="album-filter-pill" onclick="filterByAlbum('{{ alb|replace("'", "\\'") }}')" data-album-filter="{{ alb }}">
+                    <i class="fa-solid fa-folder-open"></i> {{ alb }} ({{ album_count.count }})
+                </button>
+            {% endfor %}
+
+            {% if has_standalone %}
+                {% set stand_count = namespace(count=0) %}
+                {% for v in videos %}
+                    {% if not v.album %}
+                        {% set stand_count.count = stand_count.count + 1 %}
+                    {% endif %}
+                {% endfor %}
+                <button type="button" class="album-filter-pill" onclick="filterByAlbum('__standalone__')" data-album-filter="__standalone__">
+                    <i class="fa-solid fa-compact-disc"></i> Single Releases ({{ stand_count.count }})
+                </button>
+            {% endif %}
+        </div>
+
+        <!-- Videos Grid -->
+        {% if videos %}
+        <div class="projects-command-grid" id="videoGrid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
             {% for v in videos %}
-                <div class="telemetry-card" style="padding: 12px; background: rgba(15,23,42,0.8);">
-                    <div class="video-preview-wrapper" style="height: 180px;" onclick="openVideoModal()">
-                        {% if v.thumbnail_url %}
-                            <img src="{{ v.thumbnail_url }}" alt="{{ v.title }}" class="video-thumb-img">
-                        {% else %}
-                            <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="{{ v.title }}" class="video-thumb-img">
-                        {% endif %}
-                        <div class="video-play-overlay">
-                            <div class="play-btn-circle">
-                                <i class="fa-solid fa-play"></i>
+                <div class="video-grid-item telemetry-card" data-video-id="{{ v.id }}" data-album="{{ v.album or '__standalone__' }}" style="padding: 14px; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; justify-content: space-between; border-radius: 10px; transition: transform 0.25s ease, border-color 0.25s ease;">
+                    <div>
+                        <!-- Thumbnail & Play Overlay -->
+                        <div class="video-preview-wrapper" style="height: 190px; border-radius: 8px; overflow: hidden; cursor: pointer; position: relative;" onclick="openVideoPlayerModal({{ v.id }})">
+                            {% if v.thumbnail_url %}
+                                <img src="{{ v.thumbnail_url }}" alt="{{ v.title }}" class="video-thumb-img" style="width: 100%; height: 100%; object-fit: cover;">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="{{ v.title }}" class="video-thumb-img" style="width: 100%; height: 100%; object-fit: cover;">
+                            {% endif %}
+
+                            <div class="video-play-overlay">
+                                <div class="play-btn-circle">
+                                    <i class="fa-solid fa-play"></i>
+                                </div>
                             </div>
+
+                            <!-- Duration Badge -->
+                            <span class="video-duration-badge">{{ v.duration or '00:10' }}</span>
+
+                            <!-- Album Badge on top left -->
+                            {% if v.album %}
+                            <span style="position: absolute; top: 10px; left: 10px; background: rgba(11, 17, 44, 0.88); backdrop-filter: blur(6px); border: 1px solid rgba(168, 85, 247, 0.6); color: #e9d5ff; font-family: var(--font-mono); font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: 700; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.5);">
+                                <i class="fa-solid fa-layer-group" style="color: var(--neon-purple);"></i> {{ v.album }}
+                            </span>
+                            {% endif %}
                         </div>
-                        <span class="video-duration-badge">{{ v.duration }}</span>
+
+                        <!-- Video Metadata -->
+                        <div style="margin-top: 14px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                                <h4 style="color: #ffffff; font-size: 15px; font-weight: 700; margin: 0; line-height: 1.3;">
+                                    {{ v.title }}
+                                </h4>
+                                <span style="font-family: var(--font-mono); font-size: 10.5px; color: var(--neon-cyan); background: rgba(0,240,255,0.1); border: 1px solid rgba(0,240,255,0.2); padding: 2px 6px; border-radius: 3px; white-space: nowrap;">
+                                    {{ v.aspect_ratio or '9:16' }}
+                                </span>
+                            </div>
+
+                            <p style="color: var(--neon-cyan); font-size: 11.5px; margin: 6px 0 8px; font-family: var(--font-mono);">
+                                <i class="fa-solid fa-microchip"></i> {{ v.tools_used }}
+                            </p>
+
+                            {% if v.description %}
+                            <p style="color: #94a3b8; font-size: 12px; line-height: 1.45; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                {{ v.description }}
+                            </p>
+                            {% endif %}
+                        </div>
                     </div>
 
-                    <div style="margin-top: 10px;">
-                        <h4 style="color: #ffffff; font-size: 14px; font-weight: 700;">{{ v.title }}</h4>
-                        <p style="color: var(--neon-cyan); font-size: 11px; margin-top: 2px;">{{ v.category }} &bull; {{ v.tools_used }}</p>
-                        <p style="color: #94a3b8; font-size: 11px; margin-top: 6px; line-height: 1.4;">{{ v.description }}</p>
+                    <!-- Card Footer Action -->
+                    <div style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 11px; color: #64748b; font-family: var(--font-mono);">
+                            {{ v.category or 'AI Creative' }}
+                        </span>
+                        <button type="button" class="btn-command-secondary" style="font-size: 11.5px; padding: 4px 10px;" onclick="openVideoPlayerModal({{ v.id }})">
+                            <i class="fa-solid fa-play"></i> Watch Video
+                        </button>
                     </div>
                 </div>
             {% endfor %}
         </div>
+        {% else %}
+        <div style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
+            <i class="fa-solid fa-video-slash" style="font-size: 36px; color: #475569; margin-bottom: 12px;"></i>
+            <p>No AI videos published in this studio yet.</p>
+        </div>
+        {% endif %}
     </div>
 </main>
-{% endblock %}
 
+<!-- CINEMATIC VIDEO PLAYER & PLAYLIST MODAL -->
+<div class="command-modal-backdrop" id="cinemaVideoModal" style="display: none; position: fixed; inset: 0; background: rgba(2, 6, 23, 0.92); backdrop-filter: blur(10px); z-index: 99999; align-items: center; justify-content: center; padding: 20px;">
+    <div class="command-modal-box" style="background: #0b1120; border: 1px solid rgba(0, 240, 255, 0.4); border-radius: 14px; width: 100%; max-width: 960px; max-height: 92vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.9); padding: 22px;">
+        <!-- Modal Top Bar -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span id="modalAlbumBadge" style="display: none; background: rgba(168,85,247,0.2); border: 1px solid var(--neon-purple); color: #e9d5ff; font-family: var(--font-mono); font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 700;">
+                    <i class="fa-solid fa-layer-group"></i> <span id="modalAlbumName"></span>
+                </span>
+                <h3 class="modal-title" id="modalVideoTitle" style="font-family: var(--font-display); font-size: 18px; color: #fff; margin: 0;">
+                    Video Title
+                </h3>
+            </div>
+            <button class="alert-close" onclick="closeCinemaModal()" style="font-size: 24px; color: #94a3b8; background: none; border: none; cursor: pointer;">&times;</button>
+        </div>
+
+        <!-- Video Player Body Grid -->
+        <div style="display: grid; grid-template-columns: 3fr 2fr; gap: 20px;" id="modalContentGrid">
+            <!-- Left: Video Screen & Player -->
+            <div>
+                <div id="videoScreenContainer" style="background: #000; border-radius: 8px; overflow: hidden; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; position: relative; border: 1px solid rgba(255,255,255,0.1);">
+                    <!-- Dynamic video tag or iframe injected by JS -->
+                </div>
+
+                <!-- Playlist Navigation Controls (Next / Prev in Album) -->
+                <div id="modalPlaylistControls" style="display: none; margin-top: 12px; justify-content: space-between; align-items: center; background: rgba(15,23,42,0.6); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
+                    <button type="button" class="btn-command-secondary" id="btnPrevVideo" style="font-size: 11px; padding: 5px 12px;" onclick="navigateAlbumVideo(-1)">
+                        <i class="fa-solid fa-backward-step"></i> Previous in Album
+                    </button>
+                    <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);" id="playlistPositionText">
+                        Video 1 of 4
+                    </span>
+                    <button type="button" class="btn-command-primary" id="btnNextVideo" style="font-size: 11px; padding: 5px 12px;" onclick="navigateAlbumVideo(1)">
+                        Next in Album <i class="fa-solid fa-forward-step"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right: Video Telemetry & Album Playlist Queue -->
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+                <!-- Telemetry Specs -->
+                <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 12px;">
+                    <div style="font-family: var(--font-mono); font-size: 10.5px; color: var(--neon-cyan); text-transform: uppercase; margin-bottom: 6px; font-weight: 700;">
+                        <i class="fa-solid fa-sliders"></i> PRODUCTION TELEMETRY
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11.5px;">
+                        <div><span style="color: #64748b;">Duration:</span> <strong style="color: #f8fafc;" id="modalDuration">00:10</strong></div>
+                        <div><span style="color: #64748b;">Format:</span> <strong style="color: #f8fafc;" id="modalAspectRatio">9:16</strong></div>
+                        <div style="grid-column: span 2;"><span style="color: #64748b;">Tools:</span> <strong style="color: var(--neon-cyan);" id="modalTools">Gemini</strong></div>
+                    </div>
+                    <p id="modalDescription" style="font-size: 12px; color: #cbd5e1; margin-top: 10px; line-height: 1.4; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px; margin-bottom: 0;">
+                    </p>
+                </div>
+
+                <!-- Prompt & Workflow Notes -->
+                <div id="modalPromptBox" style="display: none; background: rgba(15,23,42,0.6); border: 1px solid rgba(0,240,255,0.15); border-radius: 8px; padding: 12px;">
+                    <div style="font-family: var(--font-mono); font-size: 10.5px; color: var(--neon-cyan); text-transform: uppercase; margin-bottom: 4px; font-weight: 700;">
+                        <i class="fa-solid fa-terminal"></i> AI WORKFLOW &amp; PROMPT
+                    </div>
+                    <pre id="modalPromptText" style="font-family: var(--font-mono); font-size: 11px; color: #94a3b8; white-space: pre-wrap; word-break: break-word; margin: 0; background: rgba(2,6,23,0.6); padding: 8px; border-radius: 4px; max-height: 100px; overflow-y: auto;"></pre>
+                </div>
+
+                <!-- Album Playlist Drawer -->
+                <div id="modalAlbumDrawer" style="display: none; background: rgba(15,23,42,0.75); border: 1px solid rgba(168,85,247,0.3); border-radius: 8px; padding: 12px; flex: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-family: var(--font-mono); font-size: 11px; color: #e9d5ff; font-weight: 700; text-transform: uppercase;">
+                            <i class="fa-solid fa-list-ul"></i> ALBUM PLAYLIST
+                        </span>
+                        <span id="drawerAlbumTitle" style="font-size: 11px; color: var(--neon-cyan);"></span>
+                    </div>
+                    <div id="drawerPlaylistList" style="display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto; padding-right: 4px;">
+                        <!-- Playlist items injected by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.album-filter-pill {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.album-filter-pill:hover {
+    border-color: var(--neon-cyan);
+    color: #fff;
+}
+.album-filter-pill.active {
+    background: rgba(0, 240, 255, 0.15);
+    border-color: var(--neon-cyan);
+    color: var(--neon-cyan);
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+    font-weight: 700;
+}
+.video-grid-item:hover {
+    transform: translateY(-3px);
+    border-color: rgba(0, 240, 255, 0.4) !important;
+}
+.playlist-row-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: rgba(2, 6, 23, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.playlist-row-item:hover {
+    background: rgba(168, 85, 247, 0.15);
+    border-color: rgba(168, 85, 247, 0.4);
+}
+.playlist-row-item.active-item {
+    background: rgba(0, 240, 255, 0.12);
+    border-color: var(--neon-cyan);
+}
+@media (max-width: 768px) {
+    #modalContentGrid {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
+
+<!-- Embedded Video Data for Client-Side Playback & Album Traversal -->
+<script id="videoDataStore" type="application/json">
+[
+    {% for v in videos %}
+    {
+        "id": {{ v.id }},
+        "title": {{ v.title|tojson }},
+        "album": {{ (v.album or '')|tojson }},
+        "category": {{ (v.category or '')|tojson }},
+        "tools_used": {{ (v.tools_used or '')|tojson }},
+        "duration": {{ (v.duration or '00:10')|tojson }},
+        "aspect_ratio": {{ (v.aspect_ratio or '9:16')|tojson }},
+        "description": {{ (v.description or '')|tojson }},
+        "prompt_text": {{ (v.prompt_text or '')|tojson }},
+        "thumbnail_url": {{ (v.thumbnail_url or '')|tojson }},
+        "video_url": {{ (v.video_url or '')|tojson }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+]
+</script>
+
+<script>
+let allVideos = [];
+try {
+    const raw = document.getElementById('videoDataStore').textContent;
+    allVideos = JSON.parse(raw);
+} catch (e) {
+    console.error("Failed to parse video database", e);
+}
+
+let currentVideo = null;
+let currentAlbumSiblings = [];
+let currentSiblingIndex = -1;
+
+function filterByAlbum(albumName) {
+    // Update active pill
+    document.querySelectorAll('.album-filter-pill').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-album-filter') === albumName) {
+            btn.classList.add('active');
+        }
+    });
+
+    // Filter cards
+    let visible = 0;
+    const cards = document.querySelectorAll('.video-grid-item');
+    cards.forEach(card => {
+        const itemAlbum = card.getAttribute('data-album');
+        if (albumName === 'all' || itemAlbum === albumName) {
+            card.style.display = 'flex';
+            visible++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    const countElem = document.getElementById('visibleCount');
+    if (countElem) countElem.textContent = visible;
+}
+
+function openVideoPlayerModal(videoId) {
+    const v = allVideos.find(item => item.id === videoId);
+    if (!v) return;
+
+    currentVideo = v;
+
+    // Header & Info
+    document.getElementById('modalVideoTitle').textContent = v.title;
+    document.getElementById('modalDuration').textContent = v.duration || '00:10';
+    document.getElementById('modalAspectRatio').textContent = v.aspect_ratio || '9:16';
+    document.getElementById('modalTools').textContent = v.tools_used || 'Gemini';
+    document.getElementById('modalDescription').textContent = v.description || 'No description provided.';
+
+    // Album Badge
+    const albumBadge = document.getElementById('modalAlbumBadge');
+    if (v.album && v.album.trim() !== '') {
+        albumBadge.style.display = 'inline-flex';
+        document.getElementById('modalAlbumName').textContent = v.album;
+    } else {
+        albumBadge.style.display = 'none';
+    }
+
+    // Prompt Box
+    const promptBox = document.getElementById('modalPromptBox');
+    if (v.prompt_text && v.prompt_text.trim() !== '') {
+        promptBox.style.display = 'block';
+        document.getElementById('modalPromptText').textContent = v.prompt_text;
+    } else {
+        promptBox.style.display = 'none';
+    }
+
+    // Video Screen Player rendering
+    const screen = document.getElementById('videoScreenContainer');
+    if (v.video_url && (v.video_url.endsWith('.mp4') || v.video_url.endsWith('.webm') || v.video_url.includes('/uploads/videos/'))) {
+        screen.innerHTML = `
+            <video controls autoplay style="width: 100%; height: 100%; object-fit: contain; background: #000;">
+                <source src="${v.video_url}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        `;
+    } else if (v.video_url && (v.video_url.includes('youtube') || v.video_url.includes('vimeo') || v.video_url.includes('drive.google.com'))) {
+        let embedUrl = v.video_url;
+        if (embedUrl.includes('watch?v='')) {
+            embedUrl = embedUrl.replace('watch?v=', 'embed/');
+        }
+        screen.innerHTML = `<iframe src="${embedUrl}" style="width: 100%; height: 100%; border: none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+    } else {
+        const thumb = v.thumbnail_url || '/static/images/projects/kungfu_thumb.jpg';
+        screen.innerHTML = `
+            <div style="position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+                <img src="${thumb}" alt="${v.title}" style="width: 100%; height: 100%; object-fit: cover;">
+                <div style="position: absolute; inset: 0; background: rgba(2,6,23,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
+                    <i class="fa-solid fa-clapperboard" style="font-size: 38px; color: var(--neon-cyan); margin-bottom: 10px;"></i>
+                    <h4 style="color: #fff; margin: 0 0 4px;">${v.title}</h4>
+                    <p style="font-size: 11px; color: #cbd5e1; margin: 0;">Aspect Ratio: ${v.aspect_ratio || '9:16'} &bull; ${v.duration || '00:10'}</p>
+                    ${v.video_url ? `<a href="${v.video_url}" target="_blank" class="btn-command-primary" style="margin-top: 12px; font-size: 11px; padding: 4px 12px;">Open External Video Link &rarr;</a>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    // Handle Album Playlist Queue
+    const playlistDrawer = document.getElementById('modalAlbumDrawer');
+    const playlistControls = document.getElementById('modalPlaylistControls');
+
+    if (v.album && v.album.trim() !== '') {
+        currentAlbumSiblings = allVideos.filter(item => item.album === v.album);
+    } else {
+        currentAlbumSiblings = [];
+    }
+
+    if (currentAlbumSiblings.length > 1) {
+        playlistDrawer.style.display = 'flex';
+        playlistDrawer.style.flexDirection = 'column';
+        playlistControls.style.display = 'flex';
+
+        currentSiblingIndex = currentAlbumSiblings.findIndex(item => item.id === v.id);
+
+        document.getElementById('drawerAlbumTitle').textContent = v.album;
+        document.getElementById('playlistPositionText').textContent = `Video ${currentSiblingIndex + 1} of ${currentAlbumSiblings.length}`;
+
+        // Next / Prev button disabled state
+        document.getElementById('btnPrevVideo').disabled = (currentSiblingIndex === 0);
+        document.getElementById('btnPrevVideo').style.opacity = (currentSiblingIndex === 0) ? '0.4' : '1';
+        document.getElementById('btnNextVideo').disabled = (currentSiblingIndex === currentAlbumSiblings.length - 1);
+        document.getElementById('btnNextVideo').style.opacity = (currentSiblingIndex === currentAlbumSiblings.length - 1) ? '0.4' : '1';
+
+        // Render playlist list
+        const listContainer = document.getElementById('drawerPlaylistList');
+        listContainer.innerHTML = '';
+        currentAlbumSiblings.forEach((sib, idx) => {
+            const isPlaying = (sib.id === v.id);
+            const thumb = sib.thumbnail_url || '/static/images/projects/kungfu_thumb.jpg';
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'playlist-row-item' + (isPlaying ? ' active-item' : '');
+            itemDiv.onclick = () => openVideoPlayerModal(sib.id);
+            itemDiv.innerHTML = `
+                <span style="font-family: var(--font-mono); font-size: 10px; color: ${isPlaying ? 'var(--neon-cyan)' : '#64748b'}; width: 14px;">${idx + 1}</span>
+                <img src="${thumb}" alt="" style="width: 38px; height: 26px; object-fit: cover; border-radius: 3px;">
+                <div style="flex: 1; overflow: hidden;">
+                    <div style="font-size: 11.5px; color: ${isPlaying ? '#fff' : '#cbd5e1'}; font-weight: ${isPlaying ? '700' : '500'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        ${isPlaying ? '<i class="fa-solid fa-play" style="font-size: 9px; color: var(--neon-cyan); margin-right: 4px;"></i>' : ''}${sib.title}
+                    </div>
+                </div>
+                <span style="font-family: var(--font-mono); font-size: 9.5px; color: #94a3b8;">${sib.duration || '0:10'}</span>
+            `;
+            listContainer.appendChild(itemDiv);
+        });
+    } else {
+        playlistDrawer.style.display = 'none';
+        playlistControls.style.display = 'none';
+    }
+
+    // Display modal
+    const modal = document.getElementById('cinemaVideoModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function navigateAlbumVideo(delta) {
+    if (!currentAlbumSiblings || currentAlbumSiblings.length === 0) return;
+    const targetIdx = currentSiblingIndex + delta;
+    if (targetIdx >= 0 && targetIdx < currentAlbumSiblings.length) {
+        openVideoPlayerModal(currentAlbumSiblings[targetIdx].id);
+    }
+}
+
+function closeCinemaModal() {
+    const modal = document.getElementById('cinemaVideoModal');
+    if (modal) {
+        modal.style.display = 'none';
+        const screen = document.getElementById('videoScreenContainer');
+        if (screen) screen.innerHTML = ''; // Stop video playback
+    }
+}
+
+// Close on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeCinemaModal();
+    }
+});
+</script>
+{% endblock %}

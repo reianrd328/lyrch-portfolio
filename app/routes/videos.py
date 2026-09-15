@@ -13,8 +13,16 @@ def slugify(text):
 @videos_bp.route("/")
 @login_required
 def index():
-    videos = Video.query.order_by(Video.id.desc()).all()
-    return render_template("admin/videos/index.html", videos=videos)
+    selected_album = request.args.get("album", "").strip()
+    query = Video.query
+    if selected_album:
+        query = query.filter_by(album=selected_album)
+    videos = query.order_by(Video.id.desc()).all()
+    
+    # Extract distinct non-empty albums
+    all_videos = Video.query.all()
+    albums = sorted(list({v.album for v in all_videos if v.album}))
+    return render_template("admin/videos/index.html", videos=videos, albums=albums, selected_album=selected_album)
 
 @videos_bp.route("/create", methods=["GET", "POST"])
 @login_required
@@ -30,6 +38,7 @@ def create():
         if existing:
             slug = f"{slug}-{Video.query.count() + 1}"
 
+        album = request.form.get("album", "").strip() or None
         category = request.form.get("category", "AI Creative")
         tools_used = request.form.get("tools_used", "Gemini, Video Edit")
         platforms = request.form.get("platforms", "Facebook Reels, TikTok")
@@ -61,6 +70,7 @@ def create():
         video = Video(
             title=title,
             slug=slug,
+            album=album,
             category=category,
             tools_used=tools_used,
             platforms=platforms,
@@ -77,7 +87,7 @@ def create():
         db.session.add(video)
 
         log = ActivityLog(
-            title=f"Published AI Video: {title}",
+            title=f"Published AI Video: {title}" + (f" (Album: {album})" if album else ""),
             activity_type="video",
             time_label="Just now"
         )
@@ -87,7 +97,56 @@ def create():
         flash(f"AI Video '{title}' created successfully!", "success")
         return redirect(url_for("admin_videos.index"))
 
-    return render_template("admin/videos/create.html")
+    existing_albums = sorted(list({v.album for v in Video.query.all() if v.album}))
+    return render_template("admin/videos/create.html", existing_albums=existing_albums)
+
+@videos_bp.route("/edit/<int:id>", methods=["GET", "POST"])
+@login_required
+def edit(id):
+    video = Video.query.get_or_404(id)
+    if request.method == "POST":
+        title = request.form.get("title", "").strip()
+        if not title:
+            flash("Video title is required", "danger")
+            return redirect(request.url)
+
+        video.title = title
+        video.album = request.form.get("album", "").strip() or None
+        video.category = request.form.get("category", "AI Creative")
+        video.tools_used = request.form.get("tools_used", "Gemini, Video Edit")
+        video.platforms = request.form.get("platforms", "Facebook Reels, TikTok")
+        video.duration = request.form.get("duration", "00:10")
+        video.aspect_ratio = request.form.get("aspect_ratio", "9:16")
+        video.prompt_text = request.form.get("prompt_text")
+        video.workflow_notes = request.form.get("workflow_notes")
+        video.description = request.form.get("description")
+        video.featured = bool(request.form.get("featured"))
+        video.visibility = request.form.get("visibility", "published")
+
+        thumbnail_file = request.files.get("thumbnail")
+        if thumbnail_file and thumbnail_file.filename:
+            success, res = save_upload_file(thumbnail_file, subfolder="videos", allowed_types="image")
+            if success:
+                if video.thumbnail_url:
+                    delete_file(video.thumbnail_url)
+                video.thumbnail_url = res
+
+        video_file = request.files.get("video")
+        if video_file and video_file.filename:
+            success, res = save_upload_file(video_file, subfolder="videos", allowed_types="video")
+            if success:
+                if video.video_url and video.video_url.startswith("/uploads/"):
+                    delete_file(video.video_url)
+                video.video_url = res
+        elif request.form.get("video_external_url"):
+            video.video_url = request.form.get("video_external_url")
+
+        db.session.commit()
+        flash(f"AI Video '{video.title}' updated successfully!", "success")
+        return redirect(url_for("admin_videos.index"))
+
+    existing_albums = sorted(list({v.album for v in Video.query.all() if v.album}))
+    return render_template("admin/videos/edit.html", video=video, existing_albums=existing_albums)
 
 @videos_bp.route("/delete/<int:id>", methods=["POST"])
 @login_required
