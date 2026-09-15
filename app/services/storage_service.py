@@ -56,3 +56,4 @@ def get_storage_stats() -> dict:
         "max_formatted": format_bytes(max_bytes),
         "used_pct": used_pct
     }
+

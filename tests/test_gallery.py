@@ -156,10 +156,35 @@ class GalleryTestCase(unittest.TestCase):
         self.assertTrue(json_data["success"])
 
         with self.app.app_context():
-            updated = GalleryItem.query.get(item_id)
+            updated = db.session.get(GalleryItem, item_id)
             self.assertEqual(updated.title, "Renamed Analytics UI")
             self.assertEqual(updated.category, "Branding")
             self.assertEqual(updated.visibility, "private")
+
+    def test_gallery_custom_project_creation(self):
+        self.login_admin()
+        with self.app.app_context():
+            item = GalleryItem.query.filter_by(title="Secret Neon Graphic Asset").first()
+            item_id = item.id
+
+        # Edit and assign to a brand new custom project
+        res = self.client.post(
+            f"/admin/gallery/edit/{item_id}",
+            json={
+                "project_id": "__new__",
+                "new_project_title": "Brand New Neon Universe"
+            }
+        )
+        self.assertEqual(res.status_code, 200)
+
+        with self.app.app_context():
+            created_proj = Project.query.filter_by(title="Brand New Neon Universe").first()
+            self.assertIsNotNone(created_proj)
+            self.assertEqual(created_proj.slug, "brand-new-neon-universe")
+
+            updated_item = db.session.get(GalleryItem, item_id)
+            self.assertEqual(updated_item.project_id, created_proj.id)
+            self.assertEqual(updated_item.project.title, "Brand New Neon Universe")
 
     def test_admin_gallery_bulk_actions(self):
         self.login_admin()
@@ -232,3 +257,4 @@ class GalleryTestCase(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

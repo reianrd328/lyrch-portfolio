@@ -4,6 +4,44 @@ from flask_login import login_required
 from app.models import db, GalleryItem, Project
 from app.services.upload_service import save_upload_file, delete_file
 
+import re
+
+def slugify(text):
+    text = (text or "").lower().strip()
+    slug = re.sub(r'[\s\W-]+', '-', text)
+    return slug.strip('-') or 'project'
+
+def resolve_or_create_project(project_id_raw, custom_project_title, default_category="UI / UX"):
+    """
+    Returns Project ID. If custom_project_title is provided or project_id_raw is '__new__',
+    finds an existing project with that title or creates a new one automatically.
+    """
+    custom_title = (custom_project_title or "").strip()
+    if (project_id_raw == "__new__" or not project_id_raw) and custom_title:
+        existing = Project.query.filter(Project.title.ilike(custom_title)).first()
+        if existing:
+            return existing.id
+        base_slug = slugify(custom_title)
+        slug = base_slug
+        counter = 1
+        while Project.query.filter_by(slug=slug).first():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+        new_proj = Project(
+            title=custom_title,
+            slug=slug,
+            category=default_category or "Project",
+            visibility="published",
+            status_badge="Live"
+        )
+        db.session.add(new_proj)
+        db.session.flush()
+        return new_proj.id
+
+    if project_id_raw and str(project_id_raw).isdigit():
+        return int(project_id_raw)
+    return None
+
 gallery_bp = Blueprint("admin_gallery", __name__)
 
 @gallery_bp.route("/")
@@ -87,7 +125,8 @@ def create():
         title = request.form.get("title", "").strip()
         category = request.form.get("category", "UI / UX")
         project_id_raw = request.form.get("project_id", "").strip()
-        project_id = int(project_id_raw) if project_id_raw and project_id_raw.isdigit() else None
+        new_project_title = request.form.get("new_project_title", "").strip()
+        project_id = resolve_or_create_project(project_id_raw, new_project_title, default_category=category)
         description = request.form.get("description", "").strip()
         tags = request.form.get("tags", "").strip()
         visibility = request.form.get("visibility", "published").strip()
@@ -155,7 +194,9 @@ def edit(id):
         data = request.get_json() or {}
         title = data.get("title", "").strip()
         category = data.get("category", item.category)
-        project_id = data.get("project_id")
+        project_id_raw = data.get("project_id")
+        new_project_title = data.get("new_project_title", "")
+        project_id = resolve_or_create_project(project_id_raw, new_project_title, default_category=category)
         description = data.get("description", item.description)
         tags = data.get("tags", item.tags)
         visibility = data.get("visibility", item.visibility)
@@ -164,7 +205,8 @@ def edit(id):
         title = request.form.get("title", "").strip()
         category = request.form.get("category", item.category)
         project_id_raw = request.form.get("project_id", "").strip()
-        project_id = int(project_id_raw) if project_id_raw and project_id_raw.isdigit() else None
+        new_project_title = request.form.get("new_project_title", "").strip()
+        project_id = resolve_or_create_project(project_id_raw, new_project_title, default_category=category)
         description = request.form.get("description", item.description)
         tags = request.form.get("tags", item.tags)
         visibility = request.form.get("visibility", item.visibility)

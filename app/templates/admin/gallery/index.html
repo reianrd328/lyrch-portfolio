@@ -1131,12 +1131,20 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                 <div>
                     <label class="inspector-label" style="display: block; margin-bottom: 4px;">BELONGS TO PROJECT</label>
-                    <select name="project_id" class="filter-select" style="width: 100%;">
+                    <select name="project_id" id="uploadProjectSelect" class="filter-select" style="width: 100%;" onchange="toggleNewProjectField('upload')">
                         <option value="">None / Standalone Asset</option>
-                        {% for p in projects %}
-                            <option value="{{ p.id }}">{{ p.title }}</option>
-                        {% endfor %}
+                        <option value="__new__" style="color: var(--neon-cyan); font-weight: 600;">+ Enter Custom / New Project...</option>
+                        {% if projects %}
+                        <optgroup label="Existing Projects">
+                            {% for p in projects %}
+                                <option value="{{ p.id }}">{{ p.title }}</option>
+                            {% endfor %}
+                        </optgroup>
+                        {% endif %}
                     </select>
+                    <div id="uploadNewProjectContainer" style="display: none; margin-top: 6px;">
+                        <input type="text" name="new_project_title" id="uploadNewProjectInput" placeholder="Enter custom project name..." class="search-input-field" style="padding-left: 12px; border-color: var(--neon-cyan); box-shadow: 0 0 8px rgba(0,240,255,0.2);">
+                    </div>
                 </div>
                 <div>
                     <label class="inspector-label" style="display: block; margin-bottom: 4px;">VISIBILITY STATUS</label>
@@ -1224,12 +1232,20 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                 <div>
                     <label class="inspector-label" style="display: block; margin-bottom: 4px;">BELONGS TO PROJECT</label>
-                    <select name="project_id" id="editProjectSelect" class="filter-select" style="width: 100%;">
+                    <select name="project_id" id="editProjectSelect" class="filter-select" style="width: 100%;" onchange="toggleNewProjectField('edit')">
                         <option value="">None / Standalone Asset</option>
-                        {% for p in projects %}
-                            <option value="{{ p.id }}">{{ p.title }}</option>
-                        {% endfor %}
+                        <option value="__new__" style="color: var(--neon-cyan); font-weight: 600;">+ Enter Custom / New Project...</option>
+                        {% if projects %}
+                        <optgroup label="Existing Projects">
+                            {% for p in projects %}
+                                <option value="{{ p.id }}">{{ p.title }}</option>
+                            {% endfor %}
+                        </optgroup>
+                        {% endif %}
                     </select>
+                    <div id="editNewProjectContainer" style="display: none; margin-top: 6px;">
+                        <input type="text" name="new_project_title" id="editNewProjectInput" placeholder="Enter custom project name..." class="search-input-field" style="padding-left: 12px; border-color: var(--neon-cyan); box-shadow: 0 0 8px rgba(0,240,255,0.2);">
+                    </div>
                 </div>
                 <div>
                     <label class="inspector-label" style="display: block; margin-bottom: 4px;">VISIBILITY STATUS</label>
@@ -1439,13 +1455,39 @@ function copyInspectUrl() {
     });
 }
 
+// Custom Project toggle handler
+function toggleNewProjectField(mode) {
+    const select = document.getElementById(mode + 'ProjectSelect');
+    const container = document.getElementById(mode + 'NewProjectContainer');
+    const input = document.getElementById(mode + 'NewProjectInput');
+    if (select && container) {
+        if (select.value === '__new__') {
+            container.style.display = 'block';
+            if (input) input.focus();
+        } else {
+            container.style.display = 'none';
+            if (input) input.value = '';
+        }
+    }
+}
+
 // Upload Modal
 function openUploadModal() {
+    const uploadSelect = document.getElementById('uploadProjectSelect');
+    if (uploadSelect) uploadSelect.value = '';
+    const container = document.getElementById('uploadNewProjectContainer');
+    if (container) container.style.display = 'none';
+    const input = document.getElementById('uploadNewProjectInput');
+    if (input) input.value = '';
     document.getElementById('uploadModal').classList.add('active');
 }
 
 function closeUploadModal() {
     document.getElementById('uploadModal').classList.remove('active');
+    const container = document.getElementById('uploadNewProjectContainer');
+    if (container) container.style.display = 'none';
+    const input = document.getElementById('uploadNewProjectInput');
+    if (input) input.value = '';
 }
 
 function previewUploadFile(input) {
@@ -1511,6 +1553,12 @@ function openEditModal(id) {
     document.getElementById('editFeaturedCheck').checked = featured;
     document.getElementById('editThumbPreview').src = url;
 
+    // Reset custom project input for edit modal
+    const editContainer = document.getElementById('editNewProjectContainer');
+    if (editContainer) editContainer.style.display = 'none';
+    const editInput = document.getElementById('editNewProjectInput');
+    if (editInput) editInput.value = '';
+
     document.getElementById('editAssetForm').action = "{{ url_for('admin_gallery.edit', id=0) }}".replace('/0', '/' + id);
 
     document.getElementById('editModal').classList.add('active');
@@ -1518,6 +1566,10 @@ function openEditModal(id) {
 
 function closeEditModal() {
     document.getElementById('editModal').classList.remove('active');
+    const editContainer = document.getElementById('editNewProjectContainer');
+    if (editContainer) editContainer.style.display = 'none';
+    const editInput = document.getElementById('editNewProjectInput');
+    if (editInput) editInput.value = '';
 }
 
 // Keyboard shortcuts (Escape key closes open modal)

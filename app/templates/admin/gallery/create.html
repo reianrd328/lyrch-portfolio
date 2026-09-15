@@ -41,12 +41,20 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
             <div>
                 <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px; font-family: var(--font-mono);">BELONGS TO PROJECT</label>
-                <select name="project_id" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+                <select name="project_id" id="createProjectSelect" onchange="const c = document.getElementById('createNewProjWrap'); if(this.value==='__new__'){c.style.display='block';document.getElementById('createNewProjInp').focus();}else{c.style.display='none';}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
                     <option value="">None / Standalone Asset</option>
-                    {% for p in projects %}
-                        <option value="{{ p.id }}">{{ p.title }}</option>
-                    {% endfor %}
+                    <option value="__new__" style="color: var(--neon-cyan); font-weight: 600;">+ Enter Custom / New Project...</option>
+                    {% if projects %}
+                    <optgroup label="Existing Projects">
+                        {% for p in projects %}
+                            <option value="{{ p.id }}">{{ p.title }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    {% endif %}
                 </select>
+                <div id="createNewProjWrap" style="display: none; margin-top: 6px;">
+                    <input type="text" name="new_project_title" id="createNewProjInp" placeholder="Enter custom project name..." style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid var(--neon-cyan); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px; box-shadow: 0 0 8px rgba(0,240,255,0.2);">
+                </div>
             </div>
 
             <div>
