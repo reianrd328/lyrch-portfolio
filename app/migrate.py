@@ -94,12 +94,20 @@ def check_and_apply_migrations(app):
                 setting_cols = {c["name"] for c in inspector.get_columns("site_settings")}
                 if "gallery_categories" not in setting_cols:
                     try:
-                        db.session.execute(text("ALTER TABLE site_settings ADD COLUMN gallery_categories TEXT DEFAULT 'UI / UX, Projects, AI, Branding, Screenshots, Graphics, Other'"))
+                        # Add column without server DEFAULT to support MySQL / TiDB / SQLite / PostgreSQL
+                        db.session.execute(text("ALTER TABLE site_settings ADD COLUMN gallery_categories TEXT NULL"))
                         db.session.commit()
                         app.logger.info("Added column gallery_categories to site_settings table.")
                     except Exception as err:
                         db.session.rollback()
                         app.logger.warning(f"Migration notice for site_settings.gallery_categories: {err}")
+
+                # Populate default categories if NULL or empty
+                try:
+                    db.session.execute(text("UPDATE site_settings SET gallery_categories = 'UI / UX, Projects, AI, Branding, Screenshots, Graphics, Other' WHERE gallery_categories IS NULL OR gallery_categories = ''"))
+                    db.session.commit()
+                except Exception as err:
+                    db.session.rollback()
         except Exception as e:
             app.logger.warning(f"Site settings migration notice: {e}")
 
