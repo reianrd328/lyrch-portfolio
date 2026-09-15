@@ -60,6 +60,10 @@ def create():
         return redirect(url_for("admin_profiles.index"))
 
     slug = get_unique_slug(slugify(slug_raw if slug_raw else name))
+    if "submitted_from_form" in request.form:
+        is_published = bool(request.form.get("is_published") in ("1", "true", "True", True))
+    else:
+        is_published = request.form.get("is_published", "1") in ("1", "true", "True", True)
 
     if template_type == "clone":
         # Clone current active portfolio
@@ -77,20 +81,21 @@ def create():
         client_name=client_name,
         description=description,
         theme_preset=theme_preset,
-        is_active=False
+        is_active=False,
+        is_published=is_published
     )
     new_profile.set_data(data)
     db.session.add(new_profile)
 
     log = ActivityLog(
-        title=f"Created new portfolio profile '{name}'",
+        title=f"Created new portfolio profile '{name}' ({'ONLINE' if is_published else 'DRAFT'})",
         activity_type="system",
         time_label="Just now"
     )
     db.session.add(log)
     db.session.commit()
 
-    flash(f"Profile '{name}' created! Dedicated public preview URL: /p/{slug}", "success")
+    flash(f"Profile '{name}' created! Dedicated public URL: /p/{slug}", "success")
     return redirect(url_for("admin_profiles.index"))
 
 @profiles_bp.route("/<int:profile_id>/activate", methods=["POST"])
@@ -101,6 +106,17 @@ def activate(profile_id):
         flash(message, "success")
     else:
         flash(message, "danger")
+    return redirect(url_for("admin_profiles.index"))
+
+@profiles_bp.route("/<int:profile_id>/toggle-status", methods=["POST"])
+@login_required
+def toggle_status(profile_id):
+    profile = PortfolioProfile.query.get_or_404(profile_id)
+    profile.is_published = not profile.is_published
+    profile.updated_at = datetime.utcnow()
+    db.session.commit()
+    status_label = "ONLINE & LIVE" if profile.is_published else "OFFLINE (DRAFT)"
+    flash(f"Profile '{profile.name}' is now {status_label}.", "success" if profile.is_published else "info")
     return redirect(url_for("admin_profiles.index"))
 
 @profiles_bp.route("/<int:profile_id>/save-current", methods=["POST"])
@@ -124,6 +140,10 @@ def edit(profile_id):
     slug_raw = request.form.get("slug", "").strip()
     description = request.form.get("description", "").strip()
     theme_preset = request.form.get("theme_preset", profile.theme_preset).strip()
+    if "submitted_from_form" in request.form:
+        is_published = bool(request.form.get("is_published") in ("1", "true", "True", True))
+    else:
+        is_published = request.form.get("is_published", "1" if profile.is_published else "0") in ("1", "true", "True", True)
 
     if not name:
         flash("Profile Name cannot be empty.", "danger")
@@ -136,6 +156,7 @@ def edit(profile_id):
     profile.slug = slug
     profile.description = description
     profile.theme_preset = theme_preset
+    profile.is_published = is_published
     profile.updated_at = datetime.utcnow()
 
     # Also update theme in internal snapshot settings
@@ -182,6 +203,7 @@ def export(profile_id):
             "client_name": profile.client_name,
             "description": profile.description,
             "theme_preset": profile.theme_preset,
+            "is_published": profile.is_published,
         },
         "content": profile.get_data()
     }
@@ -209,6 +231,7 @@ def import_profile():
             client_name = prof_meta.get("client_name", "")
             description = prof_meta.get("description", "Imported from JSON")
             theme_preset = prof_meta.get("theme_preset", "cyber")
+            is_published = prof_meta.get("is_published", True)
             data = content_dict.get("content", {})
         elif "tables" in content_dict:
             # Full database backup format
@@ -216,6 +239,7 @@ def import_profile():
             client_name = ""
             description = "Imported from full database backup archive"
             theme_preset = "cyber"
+            is_published = True
             # Format into portfolio dict
             tables = content_dict.get("tables", {})
             data = {
@@ -240,7 +264,8 @@ def import_profile():
             client_name=client_name,
             description=description,
             theme_preset=theme_preset,
-            is_active=False
+            is_active=False,
+            is_published=is_published
         )
         new_profile.set_data(data)
         db.session.add(new_profile)

@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, abort
+from flask_login import current_user
 from app.models import Project, Video, GalleryItem, Document, Skill, Experience, BlogPost, ActivityLog, PortfolioProfile
 
 public_bp = Blueprint("public", __name__)
@@ -127,11 +128,14 @@ def contact():
         return redirect(url_for("public.contact"))
     return render_template("public/contact.html")
 
-# --- STANDALONE CLIENT PROFILE PREVIEW ROUTES (/p/<slug>) ---
+# --- STANDALONE CLIENT PROFILE DEDICATED ROUTES (/p/<slug>) ---
 
 @public_bp.route("/p/<slug>")
 def profile_preview(slug):
     profile = PortfolioProfile.query.filter_by(slug=slug).first_or_404()
+    if not profile.is_published and not current_user.is_authenticated:
+        abort(404)
+
     if profile.is_active:
         return home()
 
@@ -167,6 +171,9 @@ def profile_preview(slug):
 @public_bp.route("/p/<slug>/about")
 def profile_about(slug):
     profile = PortfolioProfile.query.filter_by(slug=slug).first_or_404()
+    if not profile.is_published and not current_user.is_authenticated:
+        abort(404)
+
     if profile.is_active:
         return about()
     data = profile.get_data()
@@ -177,6 +184,9 @@ def profile_about(slug):
 @public_bp.route("/p/<slug>/experience")
 def profile_experience(slug):
     profile = PortfolioProfile.query.filter_by(slug=slug).first_or_404()
+    if not profile.is_published and not current_user.is_authenticated:
+        abort(404)
+
     if profile.is_active:
         return experience()
     data = profile.get_data()
@@ -187,6 +197,9 @@ def profile_experience(slug):
 @public_bp.route("/p/<slug>/projects")
 def profile_projects(slug):
     profile = PortfolioProfile.query.filter_by(slug=slug).first_or_404()
+    if not profile.is_published and not current_user.is_authenticated:
+        abort(404)
+
     if profile.is_active:
         return projects()
     data = profile.get_data()
@@ -196,5 +209,63 @@ def profile_projects(slug):
     if category:
         projects_list = [p for p in projects_list if getattr(p, "category", "") == category]
     return render_template("public/projects.html", projects=projects_list, selected_category=category, preview_profile=profile, settings=preview_settings)
+
+@public_bp.route("/p/<slug>/projects/<project_slug>")
+def profile_project_detail(slug, project_slug):
+    profile = PortfolioProfile.query.filter_by(slug=slug).first_or_404()
+    if not profile.is_published and not current_user.is_authenticated:
+        abort(404)
+
+    if profile.is_active:
+        return project_detail(project_slug)
+    data = profile.get_data()
+    preview_settings = ProfileProxy(data.get("settings", {}))
+    match = None
+    for p in data.get("projects", []):
+        if p.get("slug") == project_slug:
+            match = ProfileProxy(p)
+            break
+    if not match:
+        abort(404)
+    return render_template("public/project_detail.html", project=match, preview_profile=profile, settings=preview_settings)
+
+@public_bp.route("/p/<slug>/video-studio")
+def profile_video_studio(slug):
+    profile = PortfolioProfile.query.filter_by(slug=slug).first_or_404()
+    if not profile.is_published and not current_user.is_authenticated:
+        abort(404)
+
+    if profile.is_active:
+        return video_studio()
+    data = profile.get_data()
+    preview_settings = ProfileProxy(data.get("settings", {}))
+    videos = [ProfileProxy(v) for v in data.get("videos", []) if v.get("visibility") == "published"]
+    return render_template("public/video_studio.html", videos=videos, preview_profile=profile, settings=preview_settings)
+
+@public_bp.route("/p/<slug>/gallery")
+def profile_gallery(slug):
+    profile = PortfolioProfile.query.filter_by(slug=slug).first_or_404()
+    if not profile.is_published and not current_user.is_authenticated:
+        abort(404)
+
+    if profile.is_active:
+        return gallery()
+    data = profile.get_data()
+    preview_settings = ProfileProxy(data.get("settings", {}))
+    items = [ProfileProxy(g) for g in data.get("gallery", [])]
+    return render_template("public/gallery.html", items=items, preview_profile=profile, settings=preview_settings)
+
+@public_bp.route("/p/<slug>/contact", methods=["GET", "POST"])
+def profile_contact(slug):
+    profile = PortfolioProfile.query.filter_by(slug=slug).first_or_404()
+    if not profile.is_published and not current_user.is_authenticated:
+        abort(404)
+
+    data = profile.get_data()
+    preview_settings = ProfileProxy(data.get("settings", {}))
+    if request.method == "POST":
+        flash("Signal received! Your transmission has reached the Command Center.", "success")
+        return redirect(url_for("public.profile_contact", slug=slug))
+    return render_template("public/contact.html", preview_profile=profile, settings=preview_settings)
 
 

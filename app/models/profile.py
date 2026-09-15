@@ -12,6 +12,7 @@ class PortfolioProfile(db.Model):
     description = db.Column(db.Text, default="")
     theme_preset = db.Column(db.String(50), default="cyber")
     is_active = db.Column(db.Boolean, default=False, index=True)
+    is_published = db.Column(db.Boolean, default=True, index=True)  # True = LIVE & ONLINE, False = DRAFT & OFFLINE
     data_json = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -39,3 +40,4 @@ class PortfolioProfile(db.Model):
 
     def __repr__(self):
         return f"<PortfolioProfile {self.name} (slug={self.slug}, active={self.is_active})>"
+

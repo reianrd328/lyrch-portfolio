@@ -62,6 +62,20 @@ def check_and_apply_migrations(app):
             from app.services.profile_service import bootstrap_default_profile_if_needed
 
             PortfolioProfile.__table__.create(db.engine, checkfirst=True)
+
+            # Ensure is_published column exists
+            inspector = inspect(db.engine)
+            if "portfolio_profiles" in inspector.get_table_names():
+                prof_cols = {c["name"] for c in inspector.get_columns("portfolio_profiles")}
+                if "is_published" not in prof_cols:
+                    try:
+                        db.session.execute(text("ALTER TABLE portfolio_profiles ADD COLUMN is_published BOOLEAN DEFAULT 1"))
+                        db.session.commit()
+                        app.logger.info("Added column is_published to portfolio_profiles.")
+                    except Exception as err:
+                        db.session.rollback()
+                        app.logger.warning(f"Migration notice for is_published: {err}")
+
             bootstrap_default_profile_if_needed()
         except Exception as e:
             app.logger.warning(f"Portfolio profiles migration notice: {e}")

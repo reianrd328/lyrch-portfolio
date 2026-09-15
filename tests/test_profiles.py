@@ -187,18 +187,90 @@ class PortfolioProfilesTestCase(unittest.TestCase):
         # Standalone dedicated link /p/nexus-robotics renders Nexus Robotics
         preview_res = self.client.get("/p/nexus-robotics")
         self.assertEqual(preview_res.status_code, 200)
-        self.assertIn(b"DEDICATED CLIENT PREVIEW", preview_res.data)
+        self.assertIn(b"ONLINE &amp; LIVE", preview_res.data)
         self.assertIn(b"Nexus Robotics", preview_res.data)
         self.assertIn(b"Nexus Corp", preview_res.data)
 
-        # Check sub-pages
-        about_res = self.client.get("/p/nexus-robotics/about")
-        self.assertEqual(about_res.status_code, 200)
-        self.assertIn(b"DEDICATED CLIENT PREVIEW", about_res.data)
+        # Logout to test public visitor view
+        self.client.get("/auth/logout")
+        guest_res = self.client.get("/p/nexus-robotics")
+        self.assertEqual(guest_res.status_code, 200)
+        # Public visitor should see the live site WITHOUT the admin preview ribbon
+        self.assertNotIn(b"client-preview-ribbon", guest_res.data)
+        self.assertIn(b"NEXUS CORP", guest_res.data)
 
-        projects_res = self.client.get("/p/nexus-robotics/projects")
-        self.assertEqual(projects_res.status_code, 200)
-        self.assertIn(b"DEDICATED CLIENT PREVIEW", projects_res.data)
+    def test_online_offline_status_toggle_and_guest_404(self):
+        self.login_admin()
+        # Create a profile
+        self.client.post("/admin/profiles/create", data={
+            "name": "Stealth Startup",
+            "client_name": "Stealth Inc",
+            "slug": "stealth-startup",
+            "theme_preset": "cyber",
+            "template_type": "starter"
+        })
+
+        with self.app.app_context():
+            p = PortfolioProfile.query.filter_by(slug="stealth-startup").first()
+            p_id = p.id
+            self.assertTrue(p.is_published)
+
+        # Toggle to OFFLINE (Draft)
+        toggle_res = self.client.post(f"/admin/profiles/{p_id}/toggle-status", follow_redirects=True)
+        self.assertEqual(toggle_res.status_code, 200)
+        self.assertIn(b"OFFLINE (DRAFT)", toggle_res.data)
+
+        with self.app.app_context():
+            p = db.session.get(PortfolioProfile, p_id)
+            self.assertFalse(p.is_published)
+
+        # Authenticated admin CAN view draft profile
+        admin_view = self.client.get("/p/stealth-startup")
+        self.assertEqual(admin_view.status_code, 200)
+        self.assertIn(b"OFFLINE (DRAFT)", admin_view.data)
+
+        # Unauthenticated public guest CANNOT view draft profile (gets 404)
+        self.client.get("/auth/logout")
+        guest_view = self.client.get("/p/stealth-startup")
+        self.assertEqual(guest_view.status_code, 404)
+
+        # Log back in and toggle back to ONLINE (Live)
+        self.login_admin()
+        toggle_res2 = self.client.post(f"/admin/profiles/{p_id}/toggle-status", follow_redirects=True)
+        self.assertEqual(toggle_res2.status_code, 200)
+        self.assertIn(b"ONLINE &amp; LIVE", toggle_res2.data)
+
+        # Now unauthenticated public guest CAN view it
+        self.client.get("/auth/logout")
+        guest_view2 = self.client.get("/p/stealth-startup")
+        self.assertEqual(guest_view2.status_code, 200)
+
+    def test_client_scoped_sub_routes(self):
+        self.login_admin()
+        self.client.post("/admin/profiles/create", data={
+            "name": "Creative Agency",
+            "client_name": "Studio Zenith",
+            "slug": "studio-zenith",
+            "theme_preset": "synthwave",
+            "template_type": "starter"
+        })
+
+        # Test each scoped client sub-page
+        sub_routes = [
+            "/p/studio-zenith/about",
+            "/p/studio-zenith/experience",
+            "/p/studio-zenith/projects",
+            "/p/studio-zenith/video-studio",
+            "/p/studio-zenith/gallery",
+            "/p/studio-zenith/contact"
+        ]
+        for route in sub_routes:
+            res = self.client.get(route)
+            self.assertEqual(res.status_code, 200, f"Route {route} failed with status {res.status_code}")
+            # Header brand should be scoped to Studio Zenith
+            self.assertIn(b"STUDIO ZENITH", res.data)
+            # Navbar link to /p/studio-zenith should exist
+            self.assertIn(b"/p/studio-zenith", res.data)
 
     def test_export_and_import_profile(self):
         self.login_admin()
@@ -249,3 +321,4 @@ class PortfolioProfilesTestCase(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

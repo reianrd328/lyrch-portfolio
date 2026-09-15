@@ -34,14 +34,14 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body class="command-center-body">
-    <!-- Dedicated Client Profile Preview Ribbon -->
-    {% if preview_profile %}
-    <div class="client-preview-ribbon" style="background: linear-gradient(90deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%); border-bottom: 2px solid var(--neon-cyan); padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; z-index: 10000; position: sticky; top: 0; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+    <!-- Dedicated Client Profile Preview Ribbon (Visible only to Admin) -->
+    {% if preview_profile and current_user.is_authenticated %}
+    <div class="client-preview-ribbon" style="background: linear-gradient(90deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%); border-bottom: 2px solid var(--neon-cyan); padding: 8px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; z-index: 10000; position: sticky; top: 0; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-            <span style="background: var(--neon-cyan); color: #020617; font-family: var(--font-mono); font-weight: 800; font-size: 10.5px; padding: 3px 9px; border-radius: 4px; letter-spacing: 0.8px;">
-                <i class="fa-solid fa-eye"></i> DEDICATED CLIENT PREVIEW
+            <span style="background: {% if preview_profile.is_published %}#16a34a{% else %}#dc2626{% endif %}; color: #ffffff; font-family: var(--font-mono); font-weight: 800; font-size: 10.5px; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.8px;">
+                <i class="fa-solid fa-signal"></i> {% if preview_profile.is_published %}ONLINE &amp; LIVE{% else %}OFFLINE (DRAFT){% endif %}
             </span>
-            <span style="color: #f8fafc; font-size: 13px; font-weight: 600;">
+            <span style="color: #f8fafc; font-size: 12.5px; font-weight: 600;">
                 {{ preview_profile.name }}
             </span>
             {% if preview_profile.client_name %}
@@ -50,24 +50,18 @@
             </span>
             {% endif %}
             <span style="color: #94a3b8; font-size: 11px; font-family: var(--font-mono);">
-                Link: <code>/p/{{ preview_profile.slug }}</code>
+                Dedicated Link: <code>/p/{{ preview_profile.slug }}</code>
             </span>
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
-            {% if current_user.is_authenticated %}
-            <a href="{{ url_for('admin_profiles.index') }}" class="btn-command-secondary" style="font-size: 11px; padding: 5px 12px;">
+            <a href="{{ url_for('admin_profiles.index') }}" class="btn-command-secondary" style="font-size: 11px; padding: 4px 10px;">
                 <i class="fa-solid fa-arrow-left"></i> Profiles Hub
             </a>
             <form action="{{ url_for('admin_profiles.activate', profile_id=preview_profile.id) }}" method="POST" style="margin: 0;">
-                <button type="submit" class="btn-command-primary" style="font-size: 11px; padding: 5px 14px;">
-                    <i class="fa-solid fa-bolt"></i> 1-Click Activate as Main Site
+                <button type="submit" class="btn-command-primary" style="font-size: 11px; padding: 4px 12px;">
+                    <i class="fa-solid fa-bolt"></i> Set as Main Website (/)
                 </button>
             </form>
-            {% else %}
-            <span style="font-size: 11px; color: #a5b4fc; font-family: var(--font-mono);">
-                <i class="fa-solid fa-circle-check" style="color: #4ade80;"></i> Dedicated Portfolio Active
-            </span>
-            {% endif %}
         </div>
     </div>
     {% endif %}
@@ -93,41 +87,35 @@
         <header class="command-header">
             <!-- Brand Logo -->
             <div class="header-brand">
-                <a href="{{ url_for('public.home') }}" class="brand-link">
+                <a href="{% if preview_profile %}{{ url_for('public.profile_preview', slug=preview_profile.slug) }}{% else %}{{ url_for('public.home') }}{% endif %}" class="brand-link">
                     <div class="brand-symbol">
-                        <span class="symbol-inner">L</span>
+                        <span class="symbol-inner">{{ (settings.display_name[0] if settings and settings.display_name else 'L')|upper }}</span>
                     </div>
                     <div class="brand-text">
-                        <div class="brand-title">LYRCH <span>/ DEV</span></div>
-                        <div class="brand-tagline">THINK CLEARLY. CREATE CONFIDENTLY.</div>
+                        <div class="brand-title">{{ settings.display_name|upper if settings and settings.display_name else 'LYRCH / DEV' }}</div>
+                        <div class="brand-tagline">{{ settings.job_title if settings and settings.job_title else 'THINK CLEARLY. CREATE CONFIDENTLY.' }}</div>
                     </div>
                 </a>
             </div>
 
             <!-- Capsule Navbar -->
             <nav class="capsule-nav">
-                <a href="{{ url_for('public.home') }}" class="nav-pill {% if request.endpoint == 'public.home' %}active{% endif %}">
+                <a href="{% if preview_profile %}{{ url_for('public.profile_preview', slug=preview_profile.slug) }}{% else %}{{ url_for('public.home') }}{% endif %}" class="nav-pill {% if request.endpoint in ['public.home', 'public.profile_preview'] %}active{% endif %}">
                     <i class="fa-solid fa-house"></i> Home
                 </a>
-                <a href="{{ url_for('public.about') }}" class="nav-pill {% if request.endpoint == 'public.about' %}active{% endif %}">
+                <a href="{% if preview_profile %}{{ url_for('public.profile_about', slug=preview_profile.slug) }}{% else %}{{ url_for('public.about') }}{% endif %}" class="nav-pill {% if request.endpoint in ['public.about', 'public.profile_about'] %}active{% endif %}">
                     About
                 </a>
-                <a href="{{ url_for('public.experience') }}" class="nav-pill {% if request.endpoint == 'public.experience' %}active{% endif %}">
+                <a href="{% if preview_profile %}{{ url_for('public.profile_experience', slug=preview_profile.slug) }}{% else %}{{ url_for('public.experience') }}{% endif %}" class="nav-pill {% if request.endpoint in ['public.experience', 'public.profile_experience'] %}active{% endif %}">
                     Experience
                 </a>
-                <a href="{{ url_for('public.projects') }}" class="nav-pill {% if request.endpoint == 'public.projects' %}active{% endif %}">
+                <a href="{% if preview_profile %}{{ url_for('public.profile_projects', slug=preview_profile.slug) }}{% else %}{{ url_for('public.projects') }}{% endif %}" class="nav-pill {% if request.endpoint in ['public.projects', 'public.profile_projects', 'public.profile_project_detail'] %}active{% endif %}">
                     Projects
                 </a>
-                <a href="{{ url_for('public.ai_lab') }}" class="nav-pill {% if request.endpoint == 'public.ai_lab' %}active{% endif %}">
-                    AI Lab
-                </a>
-                <a href="{{ url_for('public.video_studio') }}" class="nav-pill {% if request.endpoint == 'public.video_studio' %}active{% endif %}">
+                <a href="{% if preview_profile %}{{ url_for('public.profile_video_studio', slug=preview_profile.slug) }}{% else %}{{ url_for('public.video_studio') }}{% endif %}" class="nav-pill {% if request.endpoint in ['public.video_studio', 'public.profile_video_studio'] %}active{% endif %}">
                     Video Studio
                 </a>
-                <a href="{{ url_for('public.blog') }}" class="nav-pill {% if request.endpoint == 'public.blog' %}active{% endif %}">
-                    Blog
-                </a>
-                <a href="{{ url_for('public.contact') }}" class="nav-pill {% if request.endpoint == 'public.contact' %}active{% endif %}">
+                <a href="{% if preview_profile %}{{ url_for('public.profile_contact', slug=preview_profile.slug) }}{% else %}{{ url_for('public.contact') }}{% endif %}" class="nav-pill {% if request.endpoint in ['public.contact', 'public.profile_contact'] %}active{% endif %}">
                     Contact
                 </a>
             </nav>

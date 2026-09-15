@@ -333,7 +333,8 @@ def bootstrap_default_profile_if_needed():
                 client_name=settings.display_name or "Lyrch",
                 description="Primary master portfolio containing all personal IT technical support, systems, and AI creator showcases.",
                 theme_preset=settings.default_theme or "cyber",
-                is_active=True
+                is_active=True,
+                is_published=True
             )
             master.set_data(current_dict)
             db.session.add(master)
