@@ -14,15 +14,46 @@ def slugify(text):
 @login_required
 def index():
     selected_album = request.args.get("album", "").strip()
-    query = Video.query
-    if selected_album:
-        query = query.filter_by(album=selected_album)
-    videos = query.order_by(Video.id.desc()).all()
+    view_mode = request.args.get("view", "").strip()
+    all_videos = Video.query.order_by(Video.id.desc()).all()
     
-    # Extract distinct non-empty albums
-    all_videos = Video.query.all()
     albums = sorted(list({v.album for v in all_videos if v.album}))
-    return render_template("admin/videos/index.html", videos=videos, albums=albums, selected_album=selected_album)
+    
+    # Calculate stats for each album
+    album_stats = []
+    for alb in albums:
+        alb_videos = [v for v in all_videos if v.album == alb]
+        cover_thumb = next((v.thumbnail_url for v in alb_videos if v.thumbnail_url), None)
+        tools = sorted(list({t for v in alb_videos for t in v.tools_list}))
+        album_stats.append({
+            "name": alb,
+            "count": len(alb_videos),
+            "cover_url": cover_thumb,
+            "tools_label": ", ".join(tools[:2]) if tools else "AI Studio",
+            "latest_video": alb_videos[0] if alb_videos else None
+        })
+
+    standalone_videos = [v for v in all_videos if not v.album]
+    
+    # Filter videos if an album is selected
+    if selected_album:
+        if selected_album == "__standalone__":
+            videos = standalone_videos
+        else:
+            videos = [v for v in all_videos if v.album == selected_album]
+    else:
+        videos = all_videos
+
+    return render_template(
+        "admin/videos/index.html",
+        videos=videos,
+        albums=albums,
+        album_stats=album_stats,
+        standalone_count=len(standalone_videos),
+        total_videos_count=len(all_videos),
+        selected_album=selected_album,
+        view_mode=view_mode
+    )
 
 @videos_bp.route("/create", methods=["GET", "POST"])
 @login_required
@@ -107,8 +138,9 @@ def create():
         flash(f"AI Video '{title}' created successfully!", "success")
         return redirect(url_for("admin_videos.index"))
 
+    preselected_album = request.args.get("album", "").strip()
     existing_albums = sorted(list({v.album for v in Video.query.all() if v.album}))
-    return render_template("admin/videos/create.html", existing_albums=existing_albums)
+    return render_template("admin/videos/create.html", existing_albums=existing_albums, preselected_album=preselected_album)
 
 @videos_bp.route("/edit/<int:id>", methods=["GET", "POST"])
 @login_required

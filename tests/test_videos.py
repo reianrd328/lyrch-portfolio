@@ -154,5 +154,31 @@ class VideoTestCase(unittest.TestCase):
             self.assertIsNotNone(v2)
             self.assertEqual(v2.album, "Mecha Cinematic Series")
 
+    def test_admin_album_hub_and_inside_view(self):
+        self.login_admin()
+        # 1. Outside Album Hub View
+        hub_res = self.client.get("/admin/videos/")
+        self.assertEqual(hub_res.status_code, 200)
+        self.assertIn(b"VIDEO ALBUMS &amp; SERIES HUB", hub_res.data)
+        self.assertIn(b"Kung Fu Chronicles", hub_res.data)
+        self.assertIn(b"Commercials 2026", hub_res.data)
+        self.assertIn(b"All Videos (3)", hub_res.data)
+
+        # 2. Inside Album View (Click into Kung Fu Chronicles)
+        inside_res = self.client.get("/admin/videos/?album=Kung Fu Chronicles")
+        self.assertEqual(inside_res.status_code, 200)
+        self.assertIn(b"Back to Albums", inside_res.data)
+        self.assertIn(b"Kung Fu Chronicles", inside_res.data)
+        self.assertIn(b"AI Kung Fu Scene", inside_res.data)
+        self.assertIn(b"AI Kung Fu Finale", inside_res.data)
+        self.assertNotIn(b"Coffee Commercial Ad", inside_res.data)
+
+        # 3. View All Videos Mode
+        all_res = self.client.get("/admin/videos/?view=all")
+        self.assertEqual(all_res.status_code, 200)
+        self.assertIn(b"Back to Albums", all_res.data)
+        self.assertIn(b"All Production Videos", all_res.data)
+        self.assertIn(b"Coffee Commercial Ad", all_res.data)
+
 if __name__ == "__main__":
     unittest.main()

@@ -26,20 +26,20 @@
 
                 <div style="display: flex; flex-direction: column; gap: 8px;">
                     <select name="album_select" id="albumSelect" style="width: 100%; background: #0f172a; border: 1px solid rgba(0,240,255,0.4); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px; cursor: pointer;" onchange="handleAlbumDropdownChange(this.value)">
-                        <option value="">-- No Album (Single Video) --</option>
+                        <option value="" {% if not preselected_album %}selected{% endif %}>-- No Album (Single Video) --</option>
                         {% if existing_albums %}
                             <optgroup label="Created Albums">
                                 {% for a in existing_albums %}
-                                <option value="{{ a }}">{{ a }}</option>
+                                <option value="{{ a }}" {% if preselected_album == a %}selected{% endif %}>{{ a }}</option>
                                 {% endfor %}
                             </optgroup>
                         {% endif %}
-                        <option value="__new__" style="color: var(--neon-cyan); font-weight: 700;">+ Create New Album...</option>
+                        <option value="__new__" {% if preselected_album and preselected_album not in existing_albums %}selected{% endif %} style="color: var(--neon-cyan); font-weight: 700;">+ Create New Album...</option>
                     </select>
 
-                    <div id="newAlbumContainer" style="{% if existing_albums %}display: none;{% else %}display: block;{% endif %}">
+                    <div id="newAlbumContainer" style="{% if (preselected_album and preselected_album not in existing_albums) or not existing_albums %}display: block;{% else %}display: none;{% endif %}">
                         <div style="display: flex; gap: 8px; align-items: center;">
-                            <input type="text" name="album_custom" id="albumCustomInput" placeholder="Type new album name (e.g. Kung Fu Action Series)" style="flex: 1; background: rgba(15,23,42,0.95); border: 1px solid rgba(168,85,247,0.5); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+                            <input type="text" name="album_custom" id="albumCustomInput" value="{{ preselected_album if preselected_album and preselected_album not in existing_albums else '' }}" placeholder="Type new album name (e.g. Kung Fu Action Series)" style="flex: 1; background: rgba(15,23,42,0.95); border: 1px solid rgba(168,85,247,0.5); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
                             {% if existing_albums %}
                             <button type="button" class="btn-command-secondary" onclick="resetToAlbumDropdown()" style="font-size: 11px; padding: 8px 12px; white-space: nowrap;">
                                 <i class="fa-solid fa-xmark"></i> Cancel
