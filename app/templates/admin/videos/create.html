@@ -20,18 +20,41 @@
             </div>
 
             <div>
-                <label style="font-size: 11px; color: var(--neon-cyan); display: block; margin-bottom: 4px; font-weight: 600;">
+                <label style="font-size: 11px; color: var(--neon-cyan); display: block; margin-bottom: 5px; font-weight: 700; letter-spacing: 0.5px;">
                     <i class="fa-solid fa-layer-group"></i> ALBUM / SERIES NAME
                 </label>
-                <input type="text" name="album" list="albumList" placeholder="e.g. Kung Fu Action Series, Coffee Commercials (leave blank for single)" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(0,240,255,0.3); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
-                <datalist id="albumList">
-                    {% for a in existing_albums %}
-                    <option value="{{ a }}"></option>
-                    {% endfor %}
-                </datalist>
-                <span style="font-size: 10.5px; color: var(--text-muted); margin-top: 3px; display: block;">
-                    Group related videos together into an album/series. Choose an existing album from the list or type a new one.
-                </span>
+
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <select name="album_select" id="albumSelect" style="width: 100%; background: #0f172a; border: 1px solid rgba(0,240,255,0.4); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px; cursor: pointer;" onchange="handleAlbumDropdownChange(this.value)">
+                        <option value="">-- No Album (Single Video) --</option>
+                        {% if existing_albums %}
+                            <optgroup label="Created Albums">
+                                {% for a in existing_albums %}
+                                <option value="{{ a }}">{{ a }}</option>
+                                {% endfor %}
+                            </optgroup>
+                        {% endif %}
+                        <option value="__new__" style="color: var(--neon-cyan); font-weight: 700;">+ Create New Album...</option>
+                    </select>
+
+                    <div id="newAlbumContainer" style="{% if existing_albums %}display: none;{% else %}display: block;{% endif %}">
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="text" name="album_custom" id="albumCustomInput" placeholder="Type new album name (e.g. Kung Fu Action Series)" style="flex: 1; background: rgba(15,23,42,0.95); border: 1px solid rgba(168,85,247,0.5); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
+                            {% if existing_albums %}
+                            <button type="button" class="btn-command-secondary" onclick="resetToAlbumDropdown()" style="font-size: 11px; padding: 8px 12px; white-space: nowrap;">
+                                <i class="fa-solid fa-xmark"></i> Cancel
+                            </button>
+                            {% endif %}
+                        </div>
+                        <span style="font-size: 10.5px; color: #c084fc; margin-top: 4px; display: block;">
+                            <i class="fa-solid fa-circle-info"></i> Enter a new album name to group multiple videos together.
+                        </span>
+                    </div>
+
+                    <span style="font-size: 10.5px; color: var(--text-muted);">
+                        Select an existing created album from the dropdown, or choose "+ Create New Album" to start a new series.
+                    </span>
+                </div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
@@ -110,5 +133,27 @@
         </div>
     </form>
 </div>
+
+<script>
+function handleAlbumDropdownChange(val) {
+    const container = document.getElementById('newAlbumContainer');
+    const customInput = document.getElementById('albumCustomInput');
+    if (val === '__new__') {
+        container.style.display = 'block';
+        if (customInput) customInput.focus();
+    } else {
+        container.style.display = 'none';
+        if (customInput) customInput.value = '';
+    }
+}
+
+function resetToAlbumDropdown() {
+    const select = document.getElementById('albumSelect');
+    if (select) {
+        select.value = '';
+        handleAlbumDropdownChange('');
+    }
+}
+</script>
 {% endblock %}
 

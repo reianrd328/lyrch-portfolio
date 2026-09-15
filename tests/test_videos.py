@@ -118,5 +118,41 @@ class VideoTestCase(unittest.TestCase):
         self.assertIn(b"AI Kung Fu Finale", res.data)
         self.assertNotIn(b"Coffee Commercial Ad", res.data)
 
+    def test_admin_create_and_edit_page_dropdown(self):
+        self.login_admin()
+        create_page = self.client.get("/admin/videos/create")
+        self.assertEqual(create_page.status_code, 200)
+        self.assertIn(b"id=\"albumSelect\"", create_page.data)
+        self.assertIn(b"Kung Fu Chronicles", create_page.data)
+        self.assertIn(b"Commercials 2026", create_page.data)
+        self.assertIn(b"+ Create New Album...", create_page.data)
+
+        # Test creating by selecting existing album from dropdown
+        res_select = self.client.post("/admin/videos/create", data={
+            "title": "Kung Fu Ep 3",
+            "album_select": "Kung Fu Chronicles",
+            "category": "AI Creative",
+            "duration": "0:12"
+        }, follow_redirects=True)
+        self.assertEqual(res_select.status_code, 200)
+        with self.app.app_context():
+            v = Video.query.filter_by(title="Kung Fu Ep 3").first()
+            self.assertIsNotNone(v)
+            self.assertEqual(v.album, "Kung Fu Chronicles")
+
+        # Test creating new album via __new__ and album_custom
+        res_custom = self.client.post("/admin/videos/create", data={
+            "title": "Mecha Titan Battle",
+            "album_select": "__new__",
+            "album_custom": "Mecha Cinematic Series",
+            "category": "AI Creative",
+            "duration": "0:18"
+        }, follow_redirects=True)
+        self.assertEqual(res_custom.status_code, 200)
+        with self.app.app_context():
+            v2 = Video.query.filter_by(title="Mecha Titan Battle").first()
+            self.assertIsNotNone(v2)
+            self.assertEqual(v2.album, "Mecha Cinematic Series")
+
 if __name__ == "__main__":
     unittest.main()

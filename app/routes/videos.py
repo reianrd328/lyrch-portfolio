@@ -38,7 +38,17 @@ def create():
         if existing:
             slug = f"{slug}-{Video.query.count() + 1}"
 
-        album = request.form.get("album", "").strip() or None
+        album_select = request.form.get("album_select", "").strip()
+        album_custom = request.form.get("album_custom", "").strip()
+        album_raw = request.form.get("album", "").strip()
+
+        if album_select == "__new__":
+            album = album_custom or None
+        elif album_select:
+            album = album_select
+        else:
+            album = album_custom or album_raw or None
+
         category = request.form.get("category", "AI Creative")
         tools_used = request.form.get("tools_used", "Gemini, Video Edit")
         platforms = request.form.get("platforms", "Facebook Reels, TikTok")
@@ -111,7 +121,18 @@ def edit(id):
             return redirect(request.url)
 
         video.title = title
-        video.album = request.form.get("album", "").strip() or None
+        album_select = request.form.get("album_select", "").strip()
+        album_custom = request.form.get("album_custom", "").strip()
+        album_raw = request.form.get("album", "").strip()
+
+        if album_select == "__new__":
+            album = album_custom or None
+        elif album_select:
+            album = album_select
+        else:
+            album = album_custom or album_raw or None
+
+        video.album = album
         video.category = request.form.get("category", "AI Creative")
         video.tools_used = request.form.get("tools_used", "Gemini, Video Edit")
         video.platforms = request.form.get("platforms", "Facebook Reels, TikTok")
