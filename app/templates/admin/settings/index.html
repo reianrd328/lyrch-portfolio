@@ -80,6 +80,67 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Resume Document (PDF / DOCX) Integration -->
+            <div style="margin-top: 18px; padding-top: 16px; border-top: 1px dashed rgba(0,240,255,0.2);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-file-pdf" style="color: #f87171; font-size: 17px;"></i>
+                        <span style="font-size: 12.5px; font-weight: 600; color: #ffffff; letter-spacing: 0.5px;">RESUME &amp; CV DOCUMENT (PDF / DOCX)</span>
+                    </div>
+                    <span style="font-size: 10.5px; color: var(--text-muted);">Powers the "Download Resume" button on your public homepage hero &amp; files page</span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start;">
+                    <!-- Upload File Box -->
+                    <div style="background: rgba(15,23,42,0.9); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 12px 14px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                            <label style="font-size: 10.5px; color: var(--text-muted); margin: 0; font-weight: 600;">UPLOAD RESUME FILE</label>
+                            <span style="font-size: 9.5px; color: var(--neon-cyan);">PDF, DOCX, DOC, ZIP</span>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="file" id="resumeInput" name="resume" accept=".pdf,.docx,.doc,.zip" style="display: none;" onchange="document.getElementById('resumeFileName').innerText = this.files[0] ? this.files[0].name : 'No file chosen'; document.getElementById('resumeFileName').style.color = '#00f0ff';">
+                            <button type="button" class="btn-command-secondary" onclick="document.getElementById('resumeInput').click()" style="font-size: 11px; padding: 6px 14px; border-color: rgba(0,240,255,0.4); white-space: nowrap;">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> Choose Resume File
+                            </button>
+                            <span id="resumeFileName" style="font-size: 11px; color: #94a3b8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;">No file chosen</span>
+                        </div>
+                    </div>
+
+                    <!-- Direct URL / External Link Box -->
+                    <div style="background: rgba(15,23,42,0.9); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 12px 14px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                            <label style="font-size: 10.5px; color: var(--text-muted); margin: 0; font-weight: 600;">DIRECT RESUME URL / CLOUD LINK</label>
+                            <span style="font-size: 9.5px; color: #94a3b8;">Google Drive, LinkedIn, etc.</span>
+                        </div>
+                        <input type="text" name="resume_url_text" value="{{ s.resume_url or '' }}" placeholder="e.g. /uploads/documents/resume.pdf or https://drive.google.com/..." style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 7px 12px; color: #fff; font-size: 11.5px;">
+                    </div>
+                </div>
+
+                <!-- Active Resume Status & Actions -->
+                <div style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; background: rgba(0,240,255,0.04); border: 1px solid rgba(0,240,255,0.12); border-radius: var(--radius-sm); padding: 8px 14px; flex-wrap: wrap; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 11.5px;">
+                        {% if s.resume_url %}
+                            <i class="fa-solid fa-circle-check" style="color: #22c55e;"></i>
+                            <span style="color: #cbd5e1; font-weight: 500;">Active Resume:</span>
+                            <code style="color: var(--neon-cyan); background: rgba(15,23,42,0.8); padding: 2px 8px; border-radius: 4px; font-size: 11px; max-width: 380px; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: middle;">{{ s.resume_url }}</code>
+                        {% else %}
+                            <i class="fa-solid fa-circle-exclamation" style="color: #eab308;"></i>
+                            <span style="color: #94a3b8;">No resume uploaded or linked yet.</span>
+                        {% endif %}
+                    </div>
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        {% if s.resume_url %}
+                            <a href="{{ url_for('public.download_resume') }}" target="_blank" class="btn-command-secondary" style="font-size: 10.5px; padding: 4px 10px; border-color: rgba(0,240,255,0.3);">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> Test Download
+                            </a>
+                            <label style="font-size: 11px; color: #f87171; display: flex; align-items: center; gap: 5px; cursor: pointer; margin: 0;">
+                                <input type="checkbox" name="clear_resume" value="1"> Remove Resume
+                            </label>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- 2. THEME ENGINE & CUSTOMIZED COLOR SELECTION -->

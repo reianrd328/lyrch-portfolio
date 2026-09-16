@@ -105,6 +105,34 @@ def settings():
                 if hasattr(current_user, "avatar_url"):
                     current_user.avatar_url = avatar_url_custom
 
+        # Resume Document Upload / Direct URL
+        if request.form.get("clear_resume") == "1":
+            if site_settings.resume_url and site_settings.resume_url.startswith("/uploads/"):
+                delete_file(site_settings.resume_url)
+            site_settings.resume_url = ""
+        else:
+            resume_file = request.files.get("resume")
+            if resume_file and resume_file.filename:
+                success, res = save_upload_file(resume_file, subfolder="documents", allowed_types="doc")
+                if success:
+                    if site_settings.resume_url and site_settings.resume_url.startswith("/uploads/"):
+                        delete_file(site_settings.resume_url)
+                    site_settings.resume_url = res
+                else:
+                    flash(f"Resume upload error: {res}", "danger")
+            else:
+                resume_url_custom = request.form.get("resume_url_text")
+                if resume_url_custom is not None:
+                    site_settings.resume_url = resume_url_custom.strip()
+
+        # Synchronize resume with active profile snapshot if present
+        active_prof = PortfolioProfile.query.filter_by(is_active=True).first()
+        if active_prof:
+            prof_data = active_prof.get_data()
+            if "settings" in prof_data:
+                prof_data["settings"]["resume_url"] = site_settings.resume_url
+                active_prof.set_data(prof_data)
+
         # 2. Hero & Mission
         site_settings.hero_pretitle = request.form.get("hero_pretitle", site_settings.hero_pretitle).strip()
         site_settings.hero_title = request.form.get("hero_title", site_settings.hero_title).strip()

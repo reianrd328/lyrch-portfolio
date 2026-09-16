@@ -8,7 +8,7 @@ from app.models import (
 # Attributes of SiteSetting that belong to the portfolio presentation
 # (strictly excluding server-wide secrets like resend_api_key, gdrive tokens, backup cron, etc.)
 PRESENTATION_SETTING_KEYS = [
-    "display_name", "job_title", "location", "avatar_url",
+    "display_name", "job_title", "location", "avatar_url", "resume_url",
     "hero_pretitle", "hero_title", "hero_tags", "hero_bio",
     "metric1_num", "metric1_title", "metric1_desc",
     "metric2_num", "metric2_title", "metric2_desc",

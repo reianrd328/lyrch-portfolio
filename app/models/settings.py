@@ -10,6 +10,7 @@ class SiteSetting(db.Model):
     job_title = db.Column(db.String(150), default="IT SUPPORT SPECIALIST & DEVELOPER")
     location = db.Column(db.String(100), default="Philippines")
     avatar_url = db.Column(db.String(255), default="/static/images/profile/avatar.jpg")
+    resume_url = db.Column(db.String(255), default="")
 
     # 2. Hero & Mission
     hero_pretitle = db.Column(db.String(100), default="WELCOME TO MY")

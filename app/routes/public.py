@@ -1,6 +1,6 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, abort
+from flask import Blueprint, render_template, request, flash, redirect, url_for, abort, send_from_directory, current_app
 from flask_login import current_user
-from app.models import Project, Video, GalleryItem, Document, Skill, Experience, BlogPost, ActivityLog, PortfolioProfile
+from app.models import Project, Video, GalleryItem, Document, Skill, Experience, BlogPost, ActivityLog, PortfolioProfile, SiteSetting
 
 public_bp = Blueprint("public", __name__)
 
@@ -109,6 +109,21 @@ def gallery():
 def files():
     documents = Document.query.filter_by(is_public=True).order_by(Document.id.desc()).all()
     return render_template("public/files.html", documents=documents)
+
+@public_bp.route("/download-resume")
+@public_bp.route("/resume")
+def download_resume():
+    settings = SiteSetting.get_settings()
+    if settings and settings.resume_url:
+        target = settings.resume_url.strip()
+        if target.startswith("http://") or target.startswith("https://"):
+            return redirect(target)
+        if target.startswith("/uploads/"):
+            rel_path = target.replace("/uploads/", "")
+            return send_from_directory(current_app.config["UPLOAD_FOLDER"], rel_path, as_attachment=True)
+        return redirect(target)
+    flash("Resume document is currently being updated. Please explore our documentation repository below!", "info")
+    return redirect(url_for("public.files"))
 
 @public_bp.route("/blog")
 def blog():

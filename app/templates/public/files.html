@@ -27,7 +27,7 @@
                             <span style="color: var(--text-muted); font-size: 11px;">PDF &bull; 2.4 MB &bull; Updated 2026</span>
                         </div>
                     </div>
-                    <a href="#" class="btn-command-secondary" onclick="alert('Resume download initialized.'); return false;">
+                    <a href="{{ url_for('public.download_resume') }}" class="btn-command-secondary" {% if settings and settings.resume_url %}target="_blank"{% endif %}>
                         <i class="fa-solid fa-download"></i> Download
                     </a>
                 </div>

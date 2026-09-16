@@ -105,7 +105,7 @@
                     <a href="{{ url_for('public.projects') }}" class="btn-command-primary">
                         <span>Explore My Work &rarr;</span>
                     </a>
-                    <a href="{{ url_for('public.files') }}" class="btn-command-secondary">
+                    <a href="{{ url_for('public.download_resume') }}" class="btn-command-secondary" {% if settings and settings.resume_url %}target="_blank"{% endif %}>
                         <i class="fa-solid fa-download"></i> <span>Download Resume</span>
                     </a>
                 </div>
