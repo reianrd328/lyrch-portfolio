@@ -24,13 +24,17 @@ instance/
 *.sqlite3
 *.db
 
-# Uploaded media (keep folder structure with .gitkeep)
+# Uploaded media (keep folder structure; track published video & thumbnail assets for production)
 uploads/profile/*
 !uploads/profile/.gitkeep
 uploads/projects/*
 !uploads/projects/.gitkeep
 uploads/videos/*
 !uploads/videos/.gitkeep
+!uploads/videos/6812963f0930_Initial_Scene_-_2026-07-11_202607120521.mp4
+!uploads/videos/c144a1e2e94d_boy_in_the_forest.png
+!uploads/videos/d16a6eea39a0_Create_me_prompt_ah_filipino_c.mp4
+!uploads/videos/38d104997125_coke_kuala.png
 uploads/gallery/*
 !uploads/gallery/.gitkeep
 uploads/documents/*

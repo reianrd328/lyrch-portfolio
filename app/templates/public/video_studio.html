@@ -369,17 +369,62 @@ function openVideoPlayerModal(videoId) {
 
     // Video Screen Player rendering
     const screen = document.getElementById('videoScreenContainer');
-    if (v.video_url && (v.video_url.endsWith('.mp4') || v.video_url.endsWith('.webm') || v.video_url.includes('/uploads/videos/'))) {
+    const isDirectVideo = v.video_url && (
+        v.video_url.endsWith('.mp4') ||
+        v.video_url.endsWith('.webm') ||
+        v.video_url.endsWith('.mov') ||
+        v.video_url.endsWith('.mkv') ||
+        v.video_url.includes('/uploads/videos/') ||
+        v.video_url.includes('.mp4?') ||
+        v.video_url.includes('.webm?')
+    );
+
+    if (isDirectVideo) {
         screen.innerHTML = `
-            <video controls autoplay style="width: 100%; height: 100%; object-fit: contain; background: #000;">
-                <source src="${v.video_url}" type="video/mp4">
-                Your browser does not support the video tag.
+            <video id="cinemaActiveVideo" controls autoplay playsinline preload="auto" style="width: 100%; height: 100%; object-fit: contain; background: #000;" src="${v.video_url}">
+                <source src="${v.video_url}">
+                Your browser does not support HTML5 video playback.
             </video>
         `;
-    } else if (v.video_url && (v.video_url.includes('youtube') || v.video_url.includes('vimeo') || v.video_url.includes('drive.google.com'))) {
+        const vid = document.getElementById('cinemaActiveVideo');
+        if (vid) {
+            vid.addEventListener('error', function(e) {
+                console.warn("Direct video stream error for URL:", v.video_url, e);
+                screen.innerHTML = `
+                    <div style="padding: 24px; text-align: center; color: #f87171; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size: 32px; margin-bottom: 12px; color: #f87171;"></i>
+                        <h4 style="color: #fff; margin: 0 0 6px; font-size: 14px; font-family: var(--font-display);">VIDEO STREAM UNAVAILABLE</h4>
+                        <p style="font-size: 11.5px; color: #cbd5e1; max-width: 360px; margin: 0 0 14px; line-height: 1.4;">
+                            The video stream could not be loaded or the media file is currently unavailable.
+                        </p>
+                        <div style="display: flex; gap: 8px;">
+                            <a href="${v.video_url}" target="_blank" class="btn-command-secondary" style="font-size: 11px; padding: 6px 14px;">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Direct File
+                            </a>
+                            <button type="button" onclick="openVideoPlayerModal(${v.id})" class="btn-command-primary" style="font-size: 11px; padding: 6px 14px;">
+                                <i class="fa-solid fa-rotate-right"></i> Retry
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            const p = vid.play();
+            if (p !== undefined) {
+                p.catch(err => {
+                    console.log("Autoplay paused waiting for user gesture:", err);
+                });
+            }
+        }
+    } else if (v.video_url && (v.video_url.includes('youtube.com') || v.video_url.includes('youtu.be') || v.video_url.includes('vimeo') || v.video_url.includes('drive.google.com'))) {
         let embedUrl = v.video_url;
-        if (embedUrl.includes('watch?v='')) {
-            embedUrl = embedUrl.replace('watch?v=', 'embed/');
+        if (embedUrl.includes('youtube.com/watch?v=')) {
+            const vidId = embedUrl.split('watch?v=')[1].split('&')[0];
+            embedUrl = `https://www.youtube.com/embed/${vidId}?autoplay=1`;
+        } else if (embedUrl.includes('youtu.be/')) {
+            const vidId = embedUrl.split('youtu.be/')[1].split('?')[0];
+            embedUrl = `https://www.youtube.com/embed/${vidId}?autoplay=1`;
+        } else if (embedUrl.includes('drive.google.com/file/d/')) {
+            embedUrl = embedUrl.replace(/\/view(\?.*)?$/, '/preview');
         }
         screen.innerHTML = `<iframe src="${embedUrl}" style="width: 100%; height: 100%; border: none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
     } else {
@@ -471,9 +516,15 @@ function closeCinemaModal() {
     }
 }
 
-// Close on escape key
+// Close on escape key or clicking backdrop
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
+        closeCinemaModal();
+    }
+});
+
+document.getElementById('cinemaVideoModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
         closeCinemaModal();
     }
 });
