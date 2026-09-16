@@ -118,6 +118,11 @@ def create_app(config_name="default"):
         settings = None
         try:
             settings = SiteSetting.get_settings()
+            active_prof = PortfolioProfile.query.filter_by(is_active=True).first()
+            if active_prof:
+                expected_name = active_prof.client_name or active_prof.name
+                if expected_name and settings.display_name != expected_name:
+                    settings.display_name = expected_name
         except Exception:
             pass
 

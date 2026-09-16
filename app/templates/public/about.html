@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}About — DROP FARMD | LYRCH Command Center{% endblock %}
+{% block title %}About — {{ settings.display_name if settings and settings.display_name else 'DROP FARMD' }} | LYRCH Command Center{% endblock %}
 
 {% block content %}
 <main class="command-grid-layout" style="grid-template-columns: 1fr;">
@@ -8,7 +8,7 @@
         <div class="card-header-bar">
             <div class="header-label">
                 <i class="fa-solid fa-user-astronaut"></i>
-                <span>COMMANDER PROFILE // DROP FARMD</span>
+                <span>COMMANDER PROFILE // {{ settings.display_name|upper if settings and settings.display_name else 'DROP FARMD' }}</span>
             </div>
             <a href="{{ url_for('public.home') }}" class="header-link">&larr; Return to Dashboard</a>
         </div>
@@ -17,11 +17,11 @@
             <div style="text-align: center;">
                 <div class="avatar-glow-ring" style="margin: 0 auto 16px;">
                     <div class="ring-gradient-anim"></div>
-                    <img src="{{ url_for('static', filename='images/profile/avatar.jpg') }}" alt="DROP FARMD" class="avatar-photo" style="width: 140px; height: 140px;">
+                    <img src="{{ settings.avatar_url if settings and settings.avatar_url else url_for('static', filename='images/profile/avatar.jpg') }}" alt="{{ settings.display_name if settings and settings.display_name else 'Avatar' }}" class="avatar-photo" style="width: 140px; height: 140px;">
                 </div>
-                <h2 style="font-family: var(--font-display); font-size: 20px;">DROP FARMD</h2>
-                <p style="color: var(--neon-cyan); font-size: 12px; margin-top: 4px;">IT Support Specialist &amp; Developer</p>
-                <p style="color: var(--text-muted); font-size: 11px;"><i class="fa-solid fa-location-dot"></i> Philippines</p>
+                <h2 style="font-family: var(--font-display); font-size: 20px;">{{ settings.display_name if settings and settings.display_name else 'DROP FARMD' }}</h2>
+                <p style="color: var(--neon-cyan); font-size: 12px; margin-top: 4px;">{{ settings.job_title if settings and settings.job_title else 'IT Support Specialist & Developer' }}</p>
+                <p style="color: var(--text-muted); font-size: 11px;"><i class="fa-solid fa-location-dot"></i> {{ settings.location if settings and settings.location else 'Philippines' }}</p>
             </div>
 
             <div>

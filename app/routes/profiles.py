@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 from flask import Blueprint, render_template, request, flash, redirect, url_for, Response, jsonify
 from flask_login import login_required
-from app.models import db, PortfolioProfile, ActivityLog, SiteSetting
+from app.models import db, PortfolioProfile, ActivityLog, SiteSetting, User
 from app.services.profile_service import (
     capture_current_portfolio_dict,
     apply_portfolio_dict_to_database,
@@ -159,13 +159,26 @@ def edit(profile_id):
     profile.is_published = is_published
     profile.updated_at = datetime.utcnow()
 
-    # Also update theme in internal snapshot settings
+    # Also update theme & display name in internal snapshot settings
     data = profile.get_data()
     if "settings" in data:
         data["settings"]["default_theme"] = theme_preset
-        if client_name:
-            data["settings"]["display_name"] = client_name
+        display = client_name or name
+        if display:
+            data["settings"]["display_name"] = display
         profile.set_data(data)
+
+    # If this profile is currently active on the main website, immediately apply to live SiteSetting
+    if profile.is_active:
+        site_settings = SiteSetting.get_settings()
+        display = client_name or name
+        if display:
+            site_settings.display_name = display
+            user = User.query.first()
+            if user:
+                user.display_name = display
+        if theme_preset:
+            site_settings.default_theme = theme_preset
 
     db.session.commit()
     flash(f"Profile '{profile.name}' settings updated successfully.", "success")

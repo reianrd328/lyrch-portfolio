@@ -305,6 +305,18 @@ def switch_active_profile(target_profile_id: int) -> tuple[bool, str]:
     target.is_active = True
     target.updated_at = datetime.utcnow()
 
+    # Ensure live SiteSetting and User display_name match the activated profile
+    site_settings = SiteSetting.get_settings()
+    display = target.client_name or target.name
+    if display:
+        site_settings.display_name = display
+        from app.models import User
+        user = User.query.first()
+        if user:
+            user.display_name = display
+    if target.theme_preset:
+        site_settings.default_theme = target.theme_preset
+
     # 4. Log activity
     log = ActivityLog(
         title=f"Switched active portfolio to '{target.name}'",
