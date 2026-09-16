@@ -127,7 +127,38 @@ def seed_initial_data():
         for idx, s in enumerate(skills):
             db.session.add(Skill(order_index=idx, **s))
 
-    # 6. Default Site Settings
+    # 6. Experiences
+    if Experience.query.count() == 0:
+        default_experiences = [
+            {
+                "role_title": "Senior IT Support Specialist & Systems Administrator",
+                "company": "Nationwide Multi-Branch Support",
+                "location": "Philippines",
+                "period": "2018 — Present",
+                "description": "Orchestrating hardware, networking, and software systems across 100+ branches. Engineered custom helpdesk ticketing tools, automated triage scripts, and centralized remote desktop support infrastructure.",
+                "order_index": 1
+            },
+            {
+                "role_title": "IT Infrastructure & Technical Support Engineer",
+                "company": "Corporate IT Operations",
+                "location": "Philippines",
+                "period": "2012 — 2018",
+                "description": "Delivered Level 2/3 technical diagnostics, network routing, point-of-sale integrations, and database migrations. Reduced mean time to resolution (MTTR) by 45% through custom automated diagnostic routines.",
+                "order_index": 2
+            },
+            {
+                "role_title": "IT Systems Support Technician",
+                "company": "Hardware & Network Field Operations",
+                "location": "Philippines",
+                "period": "2008 — 2012",
+                "description": "Frontline diagnostics, workstation rollout, server maintenance, and remote user support. Established the foundational discipline of 24/7 problem solving and customer-first technical triage.",
+                "order_index": 3
+            }
+        ]
+        for exp_item in default_experiences:
+            db.session.add(Experience(**exp_item))
+
+    # 7. Default Site Settings
     SiteSetting.get_settings()
 
     db.session.commit()

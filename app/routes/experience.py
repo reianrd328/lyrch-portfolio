@@ -40,6 +40,41 @@ def create():
 
     return render_template("admin/experience/create.html")
 
+@experience_bp.route("/edit/<int:id>", methods=["GET", "POST"])
+@login_required
+def edit(id):
+    exp = Experience.query.get_or_404(id)
+    if request.method == "POST":
+        role_title = request.form.get("role_title", "").strip()
+        company = request.form.get("company", "").strip()
+        location = request.form.get("location", "Philippines").strip()
+        period = request.form.get("period", "").strip()
+        description = request.form.get("description", "").strip()
+        highlights = request.form.get("highlights", "").strip()
+        order_index = request.form.get("order_index", exp.order_index)
+        try:
+            order_index = int(order_index)
+        except (ValueError, TypeError):
+            order_index = 0
+
+        if not role_title or not company:
+            flash("Role and Company are required", "danger")
+            return redirect(request.url)
+
+        exp.role_title = role_title
+        exp.company = company
+        exp.location = location
+        exp.period = period
+        exp.description = description
+        exp.highlights = highlights
+        exp.order_index = order_index
+
+        db.session.commit()
+        flash(f"Experience '{exp.role_title}' updated successfully.", "success")
+        return redirect(url_for("admin_experience.index"))
+
+    return render_template("admin/experience/edit.html", exp=exp)
+
 @experience_bp.route("/delete/<int:id>", methods=["POST"])
 @login_required
 def delete(id):
