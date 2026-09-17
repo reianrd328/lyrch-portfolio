@@ -12,7 +12,7 @@
         <a href="{{ url_for('admin_projects.index') }}" class="header-link">&larr; Back to Projects</a>
     </div>
 
-    <form method="POST" action="{{ url_for('admin_projects.create') }}" enctype="multipart/form-data" style="margin-top: 18px; display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+    <form method="POST" action="{{ url_for('admin_projects.create') }}" enctype="multipart/form-data" class="admin-form-grid" style="margin-top: 18px;">
         <!-- Left column of form -->
         <div style="display: flex; flex-direction: column; gap: 14px;">
             <div>
@@ -25,7 +25,7 @@
                 <input type="text" name="subtitle" placeholder="IT Helpdesk &amp; Ticketing System" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="admin-form-row">
                 <div>
                     <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">CATEGORY</label>
                     <select name="category" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">

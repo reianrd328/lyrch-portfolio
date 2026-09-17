@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initSearch();
     initThemeEngine();
     initSettingsCustomizer();
+    initMobileNav();
 });
 
 // Unified Theme Engine
@@ -54,6 +55,15 @@ function updateActiveThemeIndicators(activeTheme) {
         } else {
             card.classList.remove("active");
             if (input) input.checked = false;
+        }
+    });
+
+    // 3. Mobile drawer theme chips
+    document.querySelectorAll(".mobile-theme-chip").forEach(chip => {
+        if (chip.getAttribute("data-theme-name") === activeTheme) {
+            chip.classList.add("active");
+        } else {
+            chip.classList.remove("active");
         }
     });
 }
@@ -332,4 +342,150 @@ window.addEventListener("click", (e) => {
         closeVideoModal();
     }
 });
+
+// Mobile and Tablet Responsive Navigation & Drawers
+function initMobileNav() {
+    // 1. Public Portfolio Mobile Navigation Drawer
+    const mobileNavToggle = document.getElementById("mobileNavToggle");
+    const mobileNavDrawer = document.getElementById("mobileNavDrawer");
+    const mobileNavOverlay = document.getElementById("mobileNavOverlay");
+    const mobileDrawerClose = document.getElementById("mobileDrawerClose");
+
+    function openMobileNav() {
+        if (mobileNavDrawer) {
+            mobileNavDrawer.classList.add("open");
+            mobileNavDrawer.setAttribute("aria-hidden", "false");
+        }
+        if (mobileNavOverlay) mobileNavOverlay.classList.add("open");
+        if (mobileNavToggle) {
+            mobileNavToggle.classList.add("active");
+            mobileNavToggle.setAttribute("aria-expanded", "true");
+        }
+        document.body.style.overflow = "hidden";
+    }
+
+    function closeMobileNav() {
+        if (mobileNavDrawer) {
+            mobileNavDrawer.classList.remove("open");
+            mobileNavDrawer.setAttribute("aria-hidden", "true");
+        }
+        if (mobileNavOverlay) mobileNavOverlay.classList.remove("open");
+        if (mobileNavToggle) {
+            mobileNavToggle.classList.remove("active");
+            mobileNavToggle.setAttribute("aria-expanded", "false");
+        }
+        document.body.style.overflow = "";
+    }
+
+    if (mobileNavToggle) {
+        mobileNavToggle.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (mobileNavDrawer && mobileNavDrawer.classList.contains("open")) {
+                closeMobileNav();
+            } else {
+                openMobileNav();
+            }
+        });
+    }
+
+    if (mobileDrawerClose) {
+        mobileDrawerClose.addEventListener("click", closeMobileNav);
+    }
+
+    if (mobileNavOverlay) {
+        mobileNavOverlay.addEventListener("click", closeMobileNav);
+    }
+
+    // Close on navigation link click
+    document.querySelectorAll(".mobile-nav-item").forEach(item => {
+        item.addEventListener("click", () => {
+            closeMobileNav();
+        });
+    });
+
+    // Mobile drawer theme chips
+    document.querySelectorAll(".mobile-theme-chip").forEach(chip => {
+        chip.addEventListener("click", () => {
+            const theme = chip.getAttribute("data-theme-name");
+            applyTheme(theme);
+        });
+    });
+
+    // Mobile drawer project search sync
+    const mobileSearch = document.getElementById("mobileCommandSearch");
+    if (mobileSearch) {
+        mobileSearch.addEventListener("input", (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            const mainSearch = document.getElementById("commandSearch");
+            if (mainSearch) mainSearch.value = query;
+
+            const cards = document.querySelectorAll(".project-holo-card");
+            cards.forEach(card => {
+                const title = card.querySelector(".project-name")?.textContent.toLowerCase() || "";
+                const desc = card.querySelector(".project-summary")?.textContent.toLowerCase() || "";
+                const pills = Array.from(card.querySelectorAll(".tech-pill")).map(p => p.textContent.toLowerCase()).join(" ");
+
+                if (title.includes(query) || desc.includes(query) || pills.includes(query)) {
+                    card.style.display = "flex";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        });
+    }
+
+    // 2. Admin Panel Responsive Sidebar Off-Canvas Drawer
+    const adminSidebarToggle = document.getElementById("adminSidebarToggle");
+    const adminSidebar = document.getElementById("adminSidebar");
+    const adminSidebarOverlay = document.getElementById("adminSidebarOverlay");
+
+    function openAdminSidebar() {
+        if (adminSidebar) adminSidebar.classList.add("open");
+        if (adminSidebarOverlay) adminSidebarOverlay.classList.add("open");
+        if (adminSidebarToggle) adminSidebarToggle.classList.add("active");
+        document.body.style.overflow = "hidden";
+    }
+
+    function closeAdminSidebar() {
+        if (adminSidebar) adminSidebar.classList.remove("open");
+        if (adminSidebarOverlay) adminSidebarOverlay.classList.remove("open");
+        if (adminSidebarToggle) adminSidebarToggle.classList.remove("active");
+        document.body.style.overflow = "";
+    }
+
+    if (adminSidebarToggle) {
+        adminSidebarToggle.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (adminSidebar && adminSidebar.classList.contains("open")) {
+                closeAdminSidebar();
+            } else {
+                openAdminSidebar();
+            }
+        });
+    }
+
+    if (adminSidebarOverlay) {
+        adminSidebarOverlay.addEventListener("click", closeAdminSidebar);
+    }
+
+    // Close admin sidebar on navigation link click if on mobile/tablet
+    if (adminSidebar) {
+        adminSidebar.querySelectorAll("a").forEach(link => {
+            link.addEventListener("click", () => {
+                if (window.innerWidth <= 1024) {
+                    closeAdminSidebar();
+                }
+            });
+        });
+    }
+
+    // 3. Global Escape key closes any open drawer/overlay
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            closeMobileNav();
+            closeAdminSidebar();
+        }
+    });
+}
+
 

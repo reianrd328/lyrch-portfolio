@@ -32,7 +32,7 @@
                 <span style="font-size: 10.5px; color: var(--neon-cyan);"><i class="fa-solid fa-shield-halved"></i> Live Synchronization Active</span>
             </div>
 
-            <div style="display: grid; grid-template-columns: 170px 1fr 1fr; gap: 20px; align-items: center;">
+            <div class="settings-profile-grid">
                 <!-- Avatar Live Customizer -->
                 <div style="text-align: center; display: flex; flex-direction: column; align-items: center;">
                     <div class="avatar-customizer-wrap" id="avatarCustomizerWrap" title="Click or drop an image here to change photo">
@@ -91,7 +91,7 @@
                     <span style="font-size: 10.5px; color: var(--text-muted);">Powers the "Download Resume" button on your public homepage hero &amp; files page</span>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start;">
+                <div class="admin-form-row" style="align-items: start;">
                     <!-- Upload File Box -->
                     <div style="background: rgba(15,23,42,0.9); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 12px 14px;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
@@ -159,7 +159,7 @@
                 Choose one of the 5 signature cyberpunk presets, or choose <strong>Custom Palette</strong> to pick any customized colors:
             </p>
 
-            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px;">
+            <div class="theme-select-grid">
                 <!-- Theme 1: Cyber Neon -->
                 <div class="theme-select-card {% if s.default_theme == 'cyber' %}active{% endif %}" data-theme-val="cyber">
                     <input type="radio" name="default_theme" value="cyber" {% if s.default_theme == 'cyber' %}checked{% endif %} style="display: none;">
@@ -238,7 +238,7 @@
                 <div style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
                     <i class="fa-solid fa-eye-dropper" style="color: var(--neon-cyan);"></i> CUSTOMIZED COLOR PALETTE PICKER
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="admin-form-row" style="gap: 16px;">
                     <div style="display: flex; align-items: center; gap: 12px; background: rgba(15,23,42,0.8); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08);">
                         <input type="color" id="customPrimaryPicker" name="custom_primary_color" value="{{ s.custom_primary_color if s.custom_primary_color else '#00f0ff' }}" style="width: 44px; height: 44px; border: none; border-radius: 6px; cursor: pointer; background: transparent;">
                         <div>
@@ -270,7 +270,7 @@
                 </h3>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="admin-form-row" style="margin-bottom: 14px;">
                 <div>
                     <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">HERO PRETITLE</label>
                     <input type="text" name="hero_pretitle" value="{{ s.hero_pretitle }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 8px 12px; color: #fff; font-size: 13px;">
@@ -301,7 +301,7 @@
                 </h3>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
+            <div class="admin-metrics-edit-grid">
                 <!-- Metric 1 -->
                 <div style="background: rgba(8,14,36,0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 10px;">
                     <label style="font-size: 10px; color: var(--neon-cyan);">CARD 1 (Years)</label>
@@ -345,7 +345,7 @@
         </div>
 
         <!-- 5. INSPIRATION QUOTE & SOCIAL LINKS -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="admin-form-row" style="gap: 20px;">
             <!-- Inspiration -->
             <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); padding: 18px;">
                 <h4 style="color: #fff; font-size: 13px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px;">
@@ -368,7 +368,7 @@
                 <h4 style="color: #fff; font-size: 13px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px;">
                     SOCIAL LINKS &amp; DIRECT DISPATCH
                 </h4>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="admin-form-row" style="gap: 10px;">
                     <div>
                         <label style="font-size: 10px; color: var(--text-muted); display: block;">GITHUB URL</label>
                         <input type="url" name="github_url" value="{{ s.github_url }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 8px; color: #fff; font-size: 11px;">
@@ -429,7 +429,7 @@
                 Protect your portfolio data across SQLite, MySQL, and TiDB Cloud. Automated archives can upload straight to your personal Google Drive folder (with 15 GB quota) or be dispatched via email.
             </p>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start;">
+            <div class="admin-form-row" style="gap: 20px; align-items: start;">
                 <!-- 1. GOOGLE DRIVE BACKUP CARD -->
                 <div style="background: rgba(2,6,23,0.6); border: 1px solid rgba(0,240,255,0.2); border-radius: 8px; padding: 16px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
@@ -575,7 +575,7 @@
 
             <!-- 3. INSTANT ACTIONS, TELEMETRY & RESTORATION (FULL WIDTH) -->
             <div style="margin-top: 20px; background: rgba(2,6,23,0.6); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 16px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: center;">
+                <div class="admin-form-row" style="gap: 20px; align-items: center;">
                     <div>
                         <div style="font-size: 13px; font-weight: 700; color: #ffffff; letter-spacing: 0.5px; margin-bottom: 4px;">
                             <i class="fa-solid fa-clock-rotate-left" style="color: var(--neon-cyan);"></i> BACKUP TELEMETRY &amp; INSTANT ARCHIVE
@@ -617,7 +617,7 @@
                 If you are customizing this portfolio for another person, you can update the administrative login credentials right here:
             </p>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="admin-form-row">
                 <div>
                     <label style="font-size: 10.5px; color: var(--text-muted); display: block; margin-bottom: 2px;">LOGIN USERNAME</label>
                     <input type="text" name="account_username" value="{{ current_user.username }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 7px 10px; color: #fff; font-size: 12px;">

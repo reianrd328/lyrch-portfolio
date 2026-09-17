@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/command-center.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
     {% block extra_css %}{% endblock %}
 </head>
 <body class="command-center-body admin-body">
@@ -70,13 +71,21 @@
                 <a href="{{ url_for('auth.logout') }}" class="telemetry-btn" title="Logout" style="color: #f87171;">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </a>
+                <button class="mobile-nav-toggle admin-mobile-toggle" id="adminSidebarToggle" aria-label="Toggle Admin Menu">
+                    <span class="hamburger-bar"></span>
+                    <span class="hamburger-bar"></span>
+                    <span class="hamburger-bar"></span>
+                </button>
             </div>
         </header>
 
+        <!-- Admin Sidebar Backdrop Overlay -->
+        <div class="admin-sidebar-overlay" id="adminSidebarOverlay"></div>
+
         <!-- Main Layout with Admin Sidebar -->
-        <div class="command-grid-layout" style="grid-template-columns: 210px 1fr;">
+        <div class="command-grid-layout admin-grid-layout">
             <!-- Admin Nav Sidebar -->
-            <aside class="command-left-sidebar">
+            <aside class="command-left-sidebar admin-sidebar" id="adminSidebar">
                 <div class="sidebar-nav-container">
                     <ul class="sidebar-menu">
                         <!-- WORKSPACE -->
