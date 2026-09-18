@@ -18,8 +18,13 @@ def create():
         company = request.form.get("company", "").strip()
         location = request.form.get("location", "Philippines")
         period = request.form.get("period", "").strip()
-        description = request.form.get("description")
-        highlights = request.form.get("highlights")
+        description = request.form.get("description", "").strip()
+        highlights = request.form.get("highlights", "").strip()
+        order_index = request.form.get("order_index", 0)
+        try:
+            order_index = int(order_index)
+        except (ValueError, TypeError):
+            order_index = 0
 
         if not role_title or not company:
             flash("Role and Company are required", "danger")
@@ -31,7 +36,8 @@ def create():
             location=location,
             period=period,
             description=description,
-            highlights=highlights
+            highlights=highlights,
+            order_index=order_index
         )
         db.session.add(exp)
         db.session.commit()

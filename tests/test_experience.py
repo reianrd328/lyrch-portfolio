@@ -100,18 +100,29 @@ class ExperienceTestCase(unittest.TestCase):
 
     def test_admin_create_and_delete_experience(self):
         self._login()
+        # Verify GET create page has the new fields
+        get_res = self.client.get("/admin/experience/create")
+        self.assertEqual(get_res.status_code, 200)
+        self.assertIn(b"KEY HIGHLIGHTS &amp; BULLET POINTS", get_res.data)
+        self.assertIn(b"DISPLAY ORDER PRIORITY", get_res.data)
+
         create_res = self.client.post("/admin/experience/create", data={
             "role_title": "Junior IT Technician",
             "company": "Local Tech Solutions",
             "location": "Cebu, Philippines",
             "period": "2006 — 2008",
-            "description": "Hardware repair and workstation deployment."
+            "description": "Hardware repair and workstation deployment.",
+            "highlights": "Assembled 50+ desktop units\nAssisted senior engineers on site",
+            "order_index": "3"
         }, follow_redirects=True)
         self.assertEqual(create_res.status_code, 200)
 
         with self.app.app_context():
             new_exp = Experience.query.filter_by(role_title="Junior IT Technician").first()
             self.assertIsNotNone(new_exp)
+            self.assertEqual(new_exp.order_index, 3)
+            self.assertEqual(len(new_exp.highlights_list), 2)
+            self.assertIn("Assembled 50+ desktop units", new_exp.highlights)
             new_id = new_exp.id
 
         # Delete it
