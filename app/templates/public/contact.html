@@ -10,33 +10,44 @@
                 <i class="fa-solid fa-satellite"></i>
                 <span>DIRECT TRANSMISSION // CONTACT COMMAND</span>
             </div>
-            <a href="{{ url_for('public.home') }}" class="header-link">&larr; Return to Dashboard</a>
+            <a href="{{ url_for('public.profile_preview', slug=preview_profile.slug) if preview_profile else url_for('public.home') }}" class="header-link">&larr; Return to Dashboard</a>
         </div>
 
         <div class="contact-grid" style="margin-top: 16px;">
             <div>
                 <h3 style="color: #ffffff; font-family: var(--font-display); font-size: 20px; margin-bottom: 8px;">
-                    Initiate Connection
+                    {{ settings.contact_title if settings and settings.contact_title else 'Initiate Connection' }}
                 </h3>
                 <p style="color: #94a3b8; font-size: 12.5px; line-height: 1.5; margin-bottom: 16px;">
-                    Have an IT challenge to solve, need a custom business management software, or looking to collaborate on generative AI productions? Dispatch your transmission below.
+                    {{ settings.contact_description if settings and settings.contact_description else 'Have an IT challenge to solve, need a custom business management software, or looking to collaborate on generative AI productions? Dispatch your transmission below.' }}
                 </p>
 
                 <div style="display: flex; flex-direction: column; gap: 10px; font-size: 12px; color: #cbd5e1;">
-                    <div><strong style="color: var(--neon-cyan);">Location:</strong> Philippines</div>
-                    <div><strong style="color: var(--neon-purple);">Direct Email:</strong> contact@lyrch.dev</div>
-                    <div><strong style="color: var(--neon-blue);">Status:</strong> Available for Select Contracts</div>
+                    <div><strong style="color: var(--neon-cyan);">Location:</strong> {{ settings.location if settings and settings.location else 'Philippines' }}</div>
+                    <div><strong style="color: var(--neon-purple);">Direct Email:</strong> {{ settings.contact_email if settings and settings.contact_email else 'contact@lyrch.dev' }}</div>
+                    <div><strong style="color: var(--neon-blue);">Status:</strong> {{ settings.contact_status if settings and settings.contact_status else 'Available for Select Contracts' }}</div>
                 </div>
 
                 <div class="cta-social-bar" style="justify-content: flex-start; gap: 10px; margin-top: 20px;">
-                    <a href="https://github.com" target="_blank" rel="noopener" class="social-icon"><i class="fa-brands fa-github"></i></a>
-                    <a href="https://linkedin.com" target="_blank" rel="noopener" class="social-icon"><i class="fa-brands fa-linkedin-in"></i></a>
-                    <a href="https://youtube.com" target="_blank" rel="noopener" class="social-icon"><i class="fa-brands fa-youtube"></i></a>
-                    <a href="https://facebook.com" target="_blank" rel="noopener" class="social-icon"><i class="fa-brands fa-facebook-f"></i></a>
+                    {% if settings and settings.github_url %}
+                    <a href="{{ settings.github_url }}" target="_blank" rel="noopener" class="social-icon" title="GitHub"><i class="fa-brands fa-github"></i></a>
+                    {% endif %}
+                    {% if settings and settings.linkedin_url %}
+                    <a href="{{ settings.linkedin_url }}" target="_blank" rel="noopener" class="social-icon" title="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                    {% endif %}
+                    {% if settings and settings.youtube_url %}
+                    <a href="{{ settings.youtube_url }}" target="_blank" rel="noopener" class="social-icon" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    {% endif %}
+                    {% if settings and settings.facebook_url %}
+                    <a href="{{ settings.facebook_url }}" target="_blank" rel="noopener" class="social-icon" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    {% endif %}
+                    {% if settings and settings.contact_email %}
+                    <a href="mailto:{{ settings.contact_email }}" class="social-icon" title="Direct Email"><i class="fa-regular fa-envelope"></i></a>
+                    {% endif %}
                 </div>
             </div>
 
-            <form method="POST" action="{{ url_for('public.contact') }}" style="display: flex; flex-direction: column; gap: 12px;">
+            <form method="POST" action="{{ url_for('public.profile_contact', slug=preview_profile.slug) if preview_profile else url_for('public.contact') }}" style="display: flex; flex-direction: column; gap: 12px;">
                 <div>
                     <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">YOUR CALLSIGN / NAME</label>
                     <input type="text" name="name" required style="width: 100%; background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 8px 12px; color: #fff; font-size: 12px;">

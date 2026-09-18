@@ -61,6 +61,9 @@ class SiteSetting(db.Model):
     youtube_url = db.Column(db.String(255), default="https://youtube.com")
     facebook_url = db.Column(db.String(255), default="https://facebook.com")
     contact_email = db.Column(db.String(120), default="contact@lyrch.dev")
+    contact_title = db.Column(db.String(150), default="Initiate Connection")
+    contact_description = db.Column(db.Text, default="Have an IT challenge to solve, need a custom business management software, or looking to collaborate on generative AI productions? Dispatch your transmission below.")
+    contact_status = db.Column(db.String(100), default="Available for Select Contracts")
 
     # 7. Theme Engine Default ("cyber", "matrix", "synthwave", "cobalt", "crimson", "custom")
     default_theme = db.Column(db.String(30), default="cyber")

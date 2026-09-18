@@ -25,7 +25,10 @@ def check_and_apply_migrations(app):
                     ("gdrive_refresh_token", "TEXT NULL"),
                     ("gdrive_user_email", "VARCHAR(120) NULL"),
                     ("resend_api_key", "VARCHAR(255) DEFAULT ''"),
-                    ("resume_url", "VARCHAR(255) NULL")
+                    ("resume_url", "VARCHAR(255) NULL"),
+                    ("contact_title", "VARCHAR(150) DEFAULT 'Initiate Connection'"),
+                    ("contact_status", "VARCHAR(100) DEFAULT 'Available for Select Contracts'"),
+                    ("contact_description", "TEXT NULL")
                 ]
                 for col_name, col_def in new_cols:
                     if col_name not in existing_cols:
@@ -36,6 +39,14 @@ def check_and_apply_migrations(app):
                         except Exception as err:
                             db.session.rollback()
                             app.logger.warning(f"Migration notice for {col_name}: {err}")
+
+                try:
+                    db.session.execute(text("UPDATE site_settings SET contact_title = 'Initiate Connection' WHERE contact_title IS NULL OR contact_title = ''"))
+                    db.session.execute(text("UPDATE site_settings SET contact_status = 'Available for Select Contracts' WHERE contact_status IS NULL OR contact_status = ''"))
+                    db.session.execute(text("UPDATE site_settings SET contact_description = 'Have an IT challenge to solve, need a custom business management software, or looking to collaborate on generative AI productions? Dispatch your transmission below.' WHERE contact_description IS NULL OR contact_description = ''"))
+                    db.session.commit()
+                except Exception as err:
+                    db.session.rollback()
 
             if "users" in inspector.get_table_names():
                 existing_user_cols = {c["name"] for c in inspector.get_columns("users")}

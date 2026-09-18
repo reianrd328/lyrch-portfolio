@@ -179,6 +179,9 @@ def settings():
         site_settings.youtube_url = request.form.get("youtube_url", site_settings.youtube_url).strip()
         site_settings.facebook_url = request.form.get("facebook_url", site_settings.facebook_url).strip()
         site_settings.contact_email = request.form.get("contact_email", site_settings.contact_email).strip()
+        site_settings.contact_title = request.form.get("contact_title", site_settings.contact_title or "Initiate Connection").strip()
+        site_settings.contact_status = request.form.get("contact_status", site_settings.contact_status or "Available for Select Contracts").strip()
+        site_settings.contact_description = request.form.get("contact_description", site_settings.contact_description or "").strip()
 
         # 7. Default Theme Choice & Custom Colors
         theme = request.form.get("default_theme", "cyber")

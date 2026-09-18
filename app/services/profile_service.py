@@ -22,6 +22,7 @@ PRESENTATION_SETTING_KEYS = [
     "quote_text", "quote_signature",
     "footer_motto", "footer_sub", "copyright_text",
     "github_url", "linkedin_url", "youtube_url", "facebook_url", "contact_email",
+    "contact_title", "contact_description", "contact_status",
     "default_theme", "custom_primary_color", "custom_secondary_color"
 ]
 

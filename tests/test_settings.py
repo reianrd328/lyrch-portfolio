@@ -136,5 +136,40 @@ class SettingsTestCase(unittest.TestCase):
         self.assertIn(b"#00ffcc", home_res.data)
         self.assertIn(b"/uploads/profile/", home_res.data)
 
+    def test_contact_page_dynamic_settings(self):
+        # 1. Check default values on /contact
+        res = self.client.get("/contact")
+        self.assertEqual(res.status_code, 200)
+        self.assertIn(b"Initiate Connection", res.data)
+        self.assertIn(b"Available for Select Contracts", res.data)
+        self.assertIn(b"Philippines", res.data)
+
+        # 2. Login as admin and update contact settings
+        self.client.post("/auth/login", data={
+            "username": "admin",
+            "password": "adminpass"
+        }, follow_redirects=True)
+
+        self.client.post("/admin/settings", data={
+            "contact_title": "Get In Touch With Chad",
+            "contact_status": "Accepting High-Impact Projects",
+            "contact_description": "Direct communications line for custom AI and enterprise architecture.",
+            "contact_email": "chad@customdomain.io",
+            "location": "Metro Manila, PH",
+            "github_url": "https://github.com/chadofficial",
+            "facebook_url": "https://facebook.com/chadofficial"
+        }, follow_redirects=True)
+
+        # 3. Check updated values on /contact
+        res2 = self.client.get("/contact")
+        self.assertEqual(res2.status_code, 200)
+        self.assertIn(b"Get In Touch With Chad", res2.data)
+        self.assertIn(b"Accepting High-Impact Projects", res2.data)
+        self.assertIn(b"Direct communications line for custom AI and enterprise architecture.", res2.data)
+        self.assertIn(b"chad@customdomain.io", res2.data)
+        self.assertIn(b"Metro Manila, PH", res2.data)
+        self.assertIn(b"https://github.com/chadofficial", res2.data)
+        self.assertIn(b"https://facebook.com/chadofficial", res2.data)
+
 if __name__ == "__main__":
     unittest.main()

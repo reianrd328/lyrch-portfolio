@@ -363,27 +363,54 @@
                 </div>
             </div>
 
-            <!-- Social Links -->
+            <!-- Contact Page Content & Social Links -->
             <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); padding: 18px;">
-                <h4 style="color: #fff; font-size: 13px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px;">
-                    SOCIAL LINKS &amp; DIRECT DISPATCH
-                </h4>
-                <div class="admin-form-row" style="gap: 10px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px;">
+                    <h4 style="color: #fff; font-size: 13px; margin: 0;">
+                        <i class="fa-solid fa-satellite" style="color: var(--neon-cyan); margin-right: 6px;"></i> CONTACT PAGE &amp; SOCIAL DISPATCH
+                    </h4>
+                    <a href="{{ url_for('public.contact') }}" target="_blank" style="font-size: 11px; color: var(--neon-cyan); text-decoration: none;">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Preview Live Contact Page
+                    </a>
+                </div>
+
+                <div class="admin-form-row" style="margin-bottom: 12px;">
                     <div>
-                        <label style="font-size: 10px; color: var(--text-muted); display: block;">GITHUB URL</label>
+                        <label style="font-size: 10.5px; color: var(--text-muted); display: block; margin-bottom: 3px;">CONTACT HEADLINE</label>
+                        <input type="text" name="contact_title" value="{{ s.contact_title or 'Initiate Connection' }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 10px; color: #fff; font-size: 12px;">
+                    </div>
+                    <div>
+                        <label style="font-size: 10.5px; color: var(--text-muted); display: block; margin-bottom: 3px;">AVAILABILITY STATUS</label>
+                        <input type="text" name="contact_status" value="{{ s.contact_status or 'Available for Select Contracts' }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 10px; color: #fff; font-size: 12px;">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="font-size: 10.5px; color: var(--text-muted); display: block; margin-bottom: 3px;">CONTACT INTRO DESCRIPTION</label>
+                    <textarea name="contact_description" rows="2" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 10px; color: #fff; font-size: 12px; resize: vertical;">{{ s.contact_description or '' }}</textarea>
+                </div>
+
+                <h5 style="color: #cbd5e1; font-size: 11.5px; margin-bottom: 10px; letter-spacing: 0.5px;">SOCIAL &amp; EMAIL ENDPOINTS</h5>
+                <div class="admin-form-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                    <div>
+                        <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;"><i class="fa-regular fa-envelope"></i> DIRECT EMAIL</label>
+                        <input type="email" name="contact_email" value="{{ s.contact_email }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 8px; color: #fff; font-size: 11px;">
+                    </div>
+                    <div>
+                        <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;"><i class="fa-brands fa-github"></i> GITHUB URL</label>
                         <input type="url" name="github_url" value="{{ s.github_url }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 8px; color: #fff; font-size: 11px;">
                     </div>
                     <div>
-                        <label style="font-size: 10px; color: var(--text-muted); display: block;">LINKEDIN URL</label>
+                        <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;"><i class="fa-brands fa-linkedin"></i> LINKEDIN URL</label>
                         <input type="url" name="linkedin_url" value="{{ s.linkedin_url }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 8px; color: #fff; font-size: 11px;">
                     </div>
                     <div>
-                        <label style="font-size: 10px; color: var(--text-muted); display: block;">YOUTUBE URL</label>
+                        <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;"><i class="fa-brands fa-youtube"></i> YOUTUBE URL</label>
                         <input type="url" name="youtube_url" value="{{ s.youtube_url }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 8px; color: #fff; font-size: 11px;">
                     </div>
                     <div>
-                        <label style="font-size: 10px; color: var(--text-muted); display: block;">CONTACT EMAIL</label>
-                        <input type="email" name="contact_email" value="{{ s.contact_email }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 8px; color: #fff; font-size: 11px;">
+                        <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;"><i class="fa-brands fa-facebook"></i> FACEBOOK URL</label>
+                        <input type="url" name="facebook_url" value="{{ s.facebook_url or '' }}" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px 8px; color: #fff; font-size: 11px;">
                     </div>
                 </div>
             </div>
