@@ -512,7 +512,16 @@ function closeCinemaModal() {
     if (modal) {
         modal.style.display = 'none';
         const screen = document.getElementById('videoScreenContainer');
-        if (screen) screen.innerHTML = ''; // Stop video playback
+        if (screen) {
+            const vid = screen.querySelector('video');
+            if (vid) {
+                vid.pause();
+                vid.currentTime = 0;
+                vid.removeAttribute('src');
+                vid.load();
+            }
+            screen.innerHTML = ''; // Stop video playback & audio
+        }
     }
 }
 

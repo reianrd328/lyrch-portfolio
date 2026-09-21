@@ -381,20 +381,15 @@
 </main>
 
 <!-- Video Play Modal -->
-<div class="command-modal-backdrop" id="videoModal" style="display: none;">
+<div class="command-modal-backdrop" id="videoModal" data-video-url="{{ featured_video.video_url if featured_video and featured_video.video_url else '' }}" style="display: none;">
     <div class="command-modal-box">
         <div class="modal-header">
             <h3 class="modal-title">{{ featured_video.title if featured_video else 'AI Kung Fu Scene' }}</h3>
             <button class="modal-close-btn" onclick="closeVideoModal()">&times;</button>
         </div>
         <div class="modal-body">
-            <div class="video-container">
-                {% if featured_video and featured_video.video_url %}
-                    <video controls autoplay class="modal-video-player">
-                        <source src="{{ featured_video.video_url }}" type="video/mp4">
-                        Your browser does not support HTML video.
-                    </video>
-                {% else %}
+            <div class="video-container" id="homeVideoContainer">
+                {% if not featured_video or not featured_video.video_url %}
                     <div class="demo-video-screen">
                         <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="Kung Fu Scene" class="modal-preview-img">
                         <div class="demo-overlay">

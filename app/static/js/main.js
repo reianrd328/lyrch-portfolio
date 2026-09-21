@@ -318,20 +318,51 @@ function initSearch() {
     });
 }
 
-// Video Modal Control
+// Video Modal Control - On-Demand Playback & Clean Stop
 function openVideoModal() {
     const modal = document.getElementById("videoModal");
-    if (modal) {
-        modal.style.display = "flex";
+    if (!modal) return;
+
+    const container = document.getElementById("homeVideoContainer");
+    const videoUrl = modal.getAttribute("data-video-url");
+
+    if (container && videoUrl) {
+        container.innerHTML = `
+            <video controls autoplay playsinline class="modal-video-player" style="width: 100%; height: 100%; border-radius: 6px; background: #000;">
+                <source src="${videoUrl}" type="video/mp4">
+                Your browser does not support HTML video.
+            </video>
+        `;
+        const vid = container.querySelector("video");
+        if (vid) {
+            vid.play().catch(function(err) {
+                console.log("Playback start note:", err);
+            });
+        }
     }
+
+    modal.style.display = "flex";
 }
 
 function closeVideoModal() {
     const modal = document.getElementById("videoModal");
-    if (modal) {
-        modal.style.display = "none";
-        const video = modal.querySelector("video");
-        if (video) video.pause();
+    if (!modal) return;
+
+    modal.style.display = "none";
+    const container = document.getElementById("homeVideoContainer");
+    if (container) {
+        const video = container.querySelector("video");
+        if (video) {
+            video.pause();
+            video.currentTime = 0;
+            video.removeAttribute("src");
+            video.load();
+        }
+        // If there is no custom video URL, keep the demo screen; otherwise clear the video player
+        const videoUrl = modal.getAttribute("data-video-url");
+        if (videoUrl) {
+            container.innerHTML = "";
+        }
     }
 }
 
@@ -339,6 +370,13 @@ function closeVideoModal() {
 window.addEventListener("click", (e) => {
     const modal = document.getElementById("videoModal");
     if (modal && e.target === modal) {
+        closeVideoModal();
+    }
+});
+
+// Close modal when pressing Escape key
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
         closeVideoModal();
     }
 });

@@ -181,12 +181,17 @@
             {% for v in standalone_videos %}
             <div style="background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 12px; display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
-                    <div style="height: 140px; border-radius: 6px; overflow: hidden; position: relative;">
+                    <div style="height: 140px; border-radius: 6px; overflow: hidden; position: relative; cursor: pointer;" onclick="openAdminVideoPreview('{{ v.title|escape }}', '{{ v.video_url|escape }}')">
                         {% if v.thumbnail_url %}
                             <img src="{{ v.thumbnail_url }}" alt="" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}';">
                         {% else %}
                             <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
                         {% endif %}
+                        <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.2s ease;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0'">
+                            <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--neon-cyan); display: flex; align-items: center; justify-content: center; color: #020617; font-size: 14px; box-shadow: 0 0 12px var(--neon-cyan);">
+                                <i class="fa-solid fa-play" style="margin-left: 2px;"></i>
+                            </div>
+                        </div>
                         <span class="video-duration-badge">{{ v.duration }}</span>
                         <span style="position: absolute; top: 8px; left: 8px; background: rgba(15,23,42,0.85); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-family: var(--font-mono);">
                             STANDALONE
@@ -204,6 +209,9 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px;">
                     <span class="badge-status badge-{{ 'live' if v.visibility == 'published' else 'draft' }}">&bull; {{ v.visibility|upper }}</span>
                     <div style="display: flex; gap: 6px;">
+                        <button type="button" class="btn-command-secondary" onclick="openAdminVideoPreview('{{ v.title|escape }}', '{{ v.video_url|escape }}')" style="padding: 3px 8px; font-size: 11px; color: var(--neon-cyan); border-color: rgba(0,240,255,0.3);" title="Play Video">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
                         <a href="{{ url_for('admin_videos.edit', id=v.id) }}" class="btn-command-secondary" style="padding: 3px 8px; font-size: 11px;" title="Edit Video">
                             <i class="fa-solid fa-pen-to-square"></i>
                         </a>
@@ -253,12 +261,17 @@
             {% for v in videos %}
             <div style="background: rgba(15,23,42,0.7); border: 1px solid rgba(245,158,11,0.3); border-radius: var(--radius-sm); padding: 12px; display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
-                    <div style="height: 140px; border-radius: 6px; overflow: hidden; position: relative;">
+                    <div style="height: 140px; border-radius: 6px; overflow: hidden; position: relative; cursor: pointer;" onclick="openAdminVideoPreview('{{ v.title|escape }}', '{{ v.video_url|escape }}')">
                         {% if v.thumbnail_url %}
                             <img src="{{ v.thumbnail_url }}" alt="" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}';">
                         {% else %}
                             <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
                         {% endif %}
+                        <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.2s ease;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0'">
+                            <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--neon-cyan); display: flex; align-items: center; justify-content: center; color: #020617; font-size: 14px; box-shadow: 0 0 12px var(--neon-cyan);">
+                                <i class="fa-solid fa-play" style="margin-left: 2px;"></i>
+                            </div>
+                        </div>
                         <span class="video-duration-badge">{{ v.duration }}</span>
                         {% if v.album %}
                         <span style="position: absolute; top: 8px; left: 8px; background: rgba(11,17,44,0.85); backdrop-filter: blur(4px); border: 1px solid rgba(168,85,247,0.6); color: #e9d5ff; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-family: var(--font-mono);">
@@ -275,6 +288,9 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px;">
                     <span class="badge-status badge-draft">&bull; DRAFT</span>
                     <div style="display: flex; gap: 6px;">
+                        <button type="button" class="btn-command-secondary" onclick="openAdminVideoPreview('{{ v.title|escape }}', '{{ v.video_url|escape }}')" style="padding: 3px 8px; font-size: 11px; color: var(--neon-cyan); border-color: rgba(0,240,255,0.3);" title="Play Video">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
                         <a href="{{ url_for('admin_videos.edit', id=v.id) }}" class="btn-command-secondary" style="padding: 3px 8px; font-size: 11px;" title="Publish / Edit">
                             <i class="fa-solid fa-pen-to-square"></i>
                         </a>
@@ -339,12 +355,17 @@
             {% for v in videos %}
             <div style="background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 12px; display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
-                    <div style="height: 150px; border-radius: 6px; overflow: hidden; position: relative;">
+                    <div style="height: 150px; border-radius: 6px; overflow: hidden; position: relative; cursor: pointer;" onclick="openAdminVideoPreview('{{ v.title|escape }}', '{{ v.video_url|escape }}')">
                         {% if v.thumbnail_url %}
                             <img src="{{ v.thumbnail_url }}" alt="" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}';">
                         {% else %}
                             <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
                         {% endif %}
+                        <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.2s ease;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0'">
+                            <div style="width: 38px; height: 38px; border-radius: 50%; background: var(--neon-cyan); display: flex; align-items: center; justify-content: center; color: #020617; font-size: 15px; box-shadow: 0 0 14px var(--neon-cyan);">
+                                <i class="fa-solid fa-play" style="margin-left: 2px;"></i>
+                            </div>
+                        </div>
                         <span class="video-duration-badge">{{ v.duration }}</span>
                     </div>
                     <div style="margin-top: 10px;">
@@ -364,6 +385,9 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px;">
                     <span class="badge-status badge-{{ 'live' if v.visibility == 'published' else 'draft' }}">&bull; {{ v.visibility|upper }}</span>
                     <div style="display: flex; gap: 6px;">
+                        <button type="button" class="btn-command-secondary" onclick="openAdminVideoPreview('{{ v.title|escape }}', '{{ v.video_url|escape }}')" style="padding: 3px 8px; font-size: 11px; color: var(--neon-cyan); border-color: rgba(0,240,255,0.3);" title="Play Video">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
                         <a href="{{ url_for('admin_videos.edit', id=v.id) }}" class="btn-command-secondary" style="padding: 3px 8px; font-size: 11px;" title="Edit Video">
                             <i class="fa-solid fa-pen-to-square"></i>
                         </a>
@@ -456,9 +480,75 @@ function submitCreateAlbumModal() {
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         closeCreateAlbumModal();
+        closeAdminVideoPreview();
     }
 });
+
+// Admin Video Player Modal Controls
+function openAdminVideoPreview(title, videoUrl) {
+    if (!videoUrl) return;
+    const modal = document.getElementById('adminVideoPreviewModal');
+    const container = document.getElementById('adminVideoPlayerContainer');
+    const titleEl = document.getElementById('adminPreviewTitle');
+    if (titleEl) titleEl.textContent = title;
+    if (container) {
+        container.innerHTML = `
+            <video controls autoplay playsinline style="width: 100%; height: 100%; object-fit: contain; background: #000; border-radius: 6px;">
+                <source src="${videoUrl}" type="video/mp4">
+                Your browser does not support HTML video.
+            </video>
+        `;
+        const v = container.querySelector('video');
+        if (v) {
+            v.play().catch(function(e) { console.log('Video preview notice:', e); });
+        }
+    }
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeAdminVideoPreview() {
+    const modal = document.getElementById('adminVideoPreviewModal');
+    if (modal) modal.style.display = 'none';
+    const container = document.getElementById('adminVideoPlayerContainer');
+    if (container) {
+        const v = container.querySelector('video');
+        if (v) {
+            v.pause();
+            v.currentTime = 0;
+            v.removeAttribute('src');
+            v.load();
+        }
+        container.innerHTML = ''; // Fully stop video & audio
+    }
+}
+
+document.getElementById('adminVideoPreviewModal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeAdminVideoPreview();
+});
 </script>
+
+<!-- Admin Video Player Preview Modal -->
+<div id="adminVideoPreviewModal" class="command-modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(2,6,23,0.85); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center;">
+    <div class="command-modal-box" style="background: #0b112c; border: 1px solid var(--neon-cyan); border-radius: 12px; max-width: 720px; width: 92%; overflow: hidden; box-shadow: 0 0 30px rgba(0,240,255,0.25);">
+        <div class="modal-header" style="padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-circle-play" style="color: var(--neon-cyan);"></i>
+                <h3 id="adminPreviewTitle" style="margin: 0; font-size: 15px; color: #fff; font-family: var(--font-display); letter-spacing: 0.5px;">Preview Video</h3>
+            </div>
+            <button type="button" onclick="closeAdminVideoPreview()" style="background: none; border: none; color: #94a3b8; font-size: 24px; cursor: pointer; line-height: 1;">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 16px;">
+            <div id="adminVideoPlayerContainer" style="width: 100%; height: 380px; background: #000; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                <!-- Video injected dynamically on demand -->
+            </div>
+        </div>
+        <div style="padding: 10px 18px 14px; display: flex; justify-content: flex-end; border-top: 1px solid rgba(255,255,255,0.06);">
+            <button type="button" onclick="closeAdminVideoPreview()" class="btn-command-secondary" style="font-size: 11px; padding: 6px 14px;">
+                Close Preview
+            </button>
+        </div>
+    </div>
+</div>
 
 <style>
 /* Pill filter styling matching user design */
