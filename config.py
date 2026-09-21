@@ -9,7 +9,7 @@ load_dotenv(BASE_DIR / ".env")
 class Config:
     """Base Configuration"""
     SECRET_KEY = os.getenv("SECRET_KEY", "lyrch-command-center-default-key-3026")
-    SESSION_PERMANENT = True
+    SESSION_PERMANENT = False
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
     REMEMBER_COOKIE_DURATION = timedelta(days=7)
     SESSION_COOKIE_HTTPONLY = True

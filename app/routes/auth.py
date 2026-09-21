@@ -32,6 +32,10 @@ def login():
             logout_user()
         flash("Admin session closed: Your session was terminated or opened on another device.", "warning")
 
+    # When already authenticated and not in conflict, direct straight to admin dashboard!
+    if current_user.is_authenticated:
+        return redirect(url_for("admin.dashboard"))
+
     active_conflict = False
     conflicting_device = ""
     prefill_username = ""

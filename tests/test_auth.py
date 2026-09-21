@@ -102,19 +102,17 @@ class AuthTestCase(unittest.TestCase):
         self.assertEqual(res2.status_code, 200)
         self.assertNotIn(b"SECURITY LOCK", res2.data)
 
-    def test_login_page_shows_form_when_already_authenticated(self):
+    def test_authenticated_user_redirects_to_admin(self):
         client = self.app.test_client()
         client.post("/auth/login", data={
             "username": "testadmin",
             "password": "secretpass"
         }, follow_redirects=True)
 
-        # Visiting /auth/login does NOT silently bounce; it displays the login page
+        # When already logged in, visiting /auth/login redirects directly to admin dashboard
         res = client.get("/auth/login")
-        self.assertEqual(res.status_code, 200)
-        self.assertIn(b"COMMAND ACCESS TERMINAL", res.data)
-        self.assertIn(b"PREVIOUS SESSION ACTIVE", res.data)
-        self.assertIn(b"Log Out", res.data)
+        self.assertEqual(res.status_code, 302)
+        self.assertIn("/admin", res.headers["Location"])
 
     def test_conflict_reason_clears_session_and_shows_warning(self):
         client = self.app.test_client()
