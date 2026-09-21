@@ -183,7 +183,7 @@
                 <div>
                     <div style="height: 140px; border-radius: 6px; overflow: hidden; position: relative;">
                         {% if v.thumbnail_url %}
-                            <img src="{{ v.thumbnail_url }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                            <img src="{{ v.thumbnail_url }}" alt="" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}';">
                         {% else %}
                             <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
                         {% endif %}
@@ -255,7 +255,7 @@
                 <div>
                     <div style="height: 140px; border-radius: 6px; overflow: hidden; position: relative;">
                         {% if v.thumbnail_url %}
-                            <img src="{{ v.thumbnail_url }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                            <img src="{{ v.thumbnail_url }}" alt="" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}';">
                         {% else %}
                             <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
                         {% endif %}
@@ -341,7 +341,7 @@
                 <div>
                     <div style="height: 150px; border-radius: 6px; overflow: hidden; position: relative;">
                         {% if v.thumbnail_url %}
-                            <img src="{{ v.thumbnail_url }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                            <img src="{{ v.thumbnail_url }}" alt="" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}';">
                         {% else %}
                             <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
                         {% endif %}

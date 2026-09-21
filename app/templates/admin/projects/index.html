@@ -32,10 +32,13 @@
                         <td style="padding: 12px;">
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 {% if p.thumbnail_url %}
-                                    <img src="{{ p.thumbnail_url }}" alt="" style="width: 42px; height: 42px; border-radius: 6px; object-fit: cover;">
+                                    <img src="{{ p.thumbnail_url }}" alt="" style="width: 42px; height: 42px; border-radius: 6px; object-fit: cover;" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+                                    <div style="width: 42px; height: 42px; border-radius: 6px; background: #1e293b; display: none; align-items: center; justify-content: center;">
+                                        <i class="fa-solid fa-code" style="color: var(--neon-cyan);"></i>
+                                    </div>
                                 {% else %}
                                     <div style="width: 42px; height: 42px; border-radius: 6px; background: #1e293b; display: flex; align-items: center; justify-content: center;">
-                                        <i class="fa-solid fa-code"></i>
+                                        <i class="fa-solid fa-code" style="color: var(--neon-cyan);"></i>
                                     </div>
                                 {% endif %}
                                 <div>

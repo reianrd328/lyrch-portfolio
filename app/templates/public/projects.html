@@ -18,7 +18,10 @@
                 <div class="project-holo-card">
                     <div class="project-preview-wrap">
                         {% if p.thumbnail_url %}
-                            <img src="{{ p.thumbnail_url }}" alt="{{ p.title }}" class="project-preview-img">
+                            <img src="{{ p.thumbnail_url }}" alt="{{ p.title }}" class="project-preview-img" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+                            <div class="project-placeholder-preview" style="display: none;">
+                                <i class="fa-solid fa-laptop-code"></i>
+                            </div>
                         {% else %}
                             <div class="project-placeholder-preview">
                                 <i class="fa-solid fa-laptop-code"></i>

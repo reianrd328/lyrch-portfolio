@@ -214,7 +214,10 @@
                         <!-- Card Header Preview -->
                         <div class="project-preview-wrap">
                             {% if p.thumbnail_url %}
-                                <img src="{{ p.thumbnail_url }}" alt="{{ p.title }}" class="project-preview-img">
+                                <img src="{{ p.thumbnail_url }}" alt="{{ p.title }}" class="project-preview-img" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+                                <div class="project-placeholder-preview" style="display: none;">
+                                    <i class="fa-solid fa-laptop-code"></i>
+                                </div>
                             {% else %}
                                 <div class="project-placeholder-preview">
                                     <i class="fa-solid fa-laptop-code"></i>
@@ -292,7 +295,7 @@
             
             <div class="video-preview-wrapper" onclick="openVideoModal()">
                 {% if featured_video and featured_video.thumbnail_url %}
-                    <img src="{{ featured_video.thumbnail_url }}" alt="{{ featured_video.title }}" class="video-thumb-img">
+                    <img src="{{ featured_video.thumbnail_url }}" alt="{{ featured_video.title }}" class="video-thumb-img" onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}';">
                 {% else %}
                     <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="AI Kung Fu Scene" class="video-thumb-img" onerror="this.src='https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&auto=format&fit=crop&q=80'">
                 {% endif %}

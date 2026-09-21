@@ -75,7 +75,7 @@
                         <!-- Thumbnail & Play Overlay -->
                         <div class="video-preview-wrapper" style="height: 190px; border-radius: 8px; overflow: hidden; cursor: pointer; position: relative;" onclick="openVideoPlayerModal({{ v.id }})">
                             {% if v.thumbnail_url %}
-                                <img src="{{ v.thumbnail_url }}" alt="{{ v.title }}" class="video-thumb-img" style="width: 100%; height: 100%; object-fit: cover;">
+                                <img src="{{ v.thumbnail_url }}" alt="{{ v.title }}" class="video-thumb-img" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}';">
                             {% else %}
                                 <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="{{ v.title }}" class="video-thumb-img" style="width: 100%; height: 100%; object-fit: cover;">
                             {% endif %}
