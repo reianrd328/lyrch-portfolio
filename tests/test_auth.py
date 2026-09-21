@@ -102,6 +102,31 @@ class AuthTestCase(unittest.TestCase):
         self.assertEqual(res2.status_code, 200)
         self.assertNotIn(b"SECURITY LOCK", res2.data)
 
+    def test_login_page_shows_form_when_already_authenticated(self):
+        client = self.app.test_client()
+        client.post("/auth/login", data={
+            "username": "testadmin",
+            "password": "secretpass"
+        }, follow_redirects=True)
+
+        # Visiting /auth/login does NOT silently bounce; it displays the login page
+        res = client.get("/auth/login")
+        self.assertEqual(res.status_code, 200)
+        self.assertIn(b"COMMAND ACCESS TERMINAL", res.data)
+        self.assertIn(b"PREVIOUS SESSION ACTIVE", res.data)
+        self.assertIn(b"Log Out", res.data)
+
+    def test_conflict_reason_clears_session_and_shows_warning(self):
+        client = self.app.test_client()
+        client.post("/auth/login", data={
+            "username": "testadmin",
+            "password": "secretpass"
+        }, follow_redirects=True)
+
+        res = client.get("/auth/login?reason=conflict")
+        self.assertEqual(res.status_code, 200)
+        self.assertIn(b"Your session was terminated or opened on another device", res.data)
+
 if __name__ == "__main__":
     unittest.main()
 

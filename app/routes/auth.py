@@ -17,8 +17,20 @@ def _get_device_description(req) -> str:
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
-    if current_user.is_authenticated:
-        return redirect(url_for("admin.dashboard"))
+    # If arriving with a conflict flag, terminate active user session cleanly
+    if request.args.get("reason") == "conflict":
+        if current_user.is_authenticated:
+            sess_token = session.get("admin_session_token")
+            if sess_token and sess_token == current_user.active_session_token:
+                current_user.active_session_token = None
+                current_user.active_session_heartbeat = None
+                try:
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+            session.pop("admin_session_token", None)
+            logout_user()
+        flash("Admin session closed: Your session was terminated or opened on another device.", "warning")
 
     active_conflict = False
     conflicting_device = ""
@@ -70,9 +82,10 @@ def login():
             user.last_login = now
             db.session.commit()
 
+            remember = bool(request.form.get("remember_me"))
             session["admin_session_token"] = new_token
-            session.permanent = True
-            login_user(user, remember=True)
+            session.permanent = remember
+            login_user(user, remember=remember)
 
             log = ActivityLog(
                 title=f"Admin session opened on {device_desc}",

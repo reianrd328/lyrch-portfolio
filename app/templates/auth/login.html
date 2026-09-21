@@ -17,20 +17,37 @@
             </p>
         </div>
 
-        {% if active_conflict %}
-        <div style="background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4); border-radius: 6px; padding: 12px; margin-bottom: 14px; font-size: 11.5px; color: #fca5a5; line-height: 1.5;">
-            <div style="font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 4px; color: #f87171;">
-                <i class="fa-solid fa-triangle-exclamation"></i> ACTIVE SESSION DETECTED
-            </div>
-            <div>Admin is currently open on: <strong style="color: #ffffff;">{{ conflicting_device }}</strong></div>
-            <label style="display: flex; align-items: center; gap: 6px; margin-top: 8px; color: #ffffff; cursor: pointer; font-weight: 600; font-size: 11px; background: rgba(0,0,0,0.3); padding: 6px 8px; border-radius: 4px;">
-                <input type="checkbox" name="force_takeover" value="1" checked>
-                <span>Force disconnect other device and log in here</span>
-            </label>
-        </div>
-        {% endif %}
-
         <form method="POST" action="{{ url_for('auth.login') }}" style="display: flex; flex-direction: column; gap: 14px;">
+            {% if active_conflict %}
+            <div style="background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4); border-radius: 6px; padding: 12px; font-size: 11.5px; color: #fca5a5; line-height: 1.5;">
+                <div style="font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 4px; color: #f87171;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> ACTIVE SESSION DETECTED
+                </div>
+                <div>Admin is currently open on: <strong style="color: #ffffff;">{{ conflicting_device }}</strong></div>
+                <label style="display: flex; align-items: center; gap: 6px; margin-top: 8px; color: #ffffff; cursor: pointer; font-weight: 600; font-size: 11px; background: rgba(0,0,0,0.3); padding: 6px 8px; border-radius: 4px;">
+                    <input type="checkbox" name="force_takeover" value="1" checked>
+                    <span>Force disconnect other device and log in here</span>
+                </label>
+            </div>
+            {% endif %}
+
+            {% if current_user.is_authenticated %}
+            <div style="background: rgba(0,240,255,0.08); border: 1px solid rgba(0,240,255,0.3); border-radius: 6px; padding: 12px; font-size: 11.5px; color: #cbd5e1; line-height: 1.5;">
+                <div style="font-weight: 700; display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; color: var(--neon-cyan);">
+                    <span><i class="fa-solid fa-user-check"></i> PREVIOUS SESSION ACTIVE</span>
+                    <a href="{{ url_for('auth.logout') }}" style="color: #f87171; font-size: 11px; text-decoration: underline;">
+                        Log Out
+                    </a>
+                </div>
+                <div>Authenticated as Commander <strong style="color: #ffffff;">{{ current_user.display_name }}</strong>.</div>
+                <div style="margin-top: 8px;">
+                    <a href="{{ url_for('admin.dashboard') }}" class="btn-command-primary" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; font-size: 11px; text-decoration: none;">
+                        Direct to Admin Dashboard &rarr;
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
             <div>
                 <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">CALLSIGN / USERNAME</label>
                 <div style="position: relative;">
@@ -48,13 +65,16 @@
             </div>
 
             <div style="display: flex; align-items: center; justify-content: space-between; font-size: 10.5px; color: var(--text-muted);">
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: #94a3b8;">
+                    <input type="checkbox" name="remember_me" value="1">
+                    <span>Keep me logged in</span>
+                </label>
                 <span style="display: flex; align-items: center; gap: 5px; color: var(--neon-cyan);">
                     <i class="fa-solid fa-shield-check"></i> Single-Device Lock
                 </span>
-                <span>Auto-logout on window close</span>
             </div>
 
-            <button type="submit" class="btn-command-primary" style="padding: 11px; font-size: 13px; margin-top: 8px;">
+            <button type="submit" class="btn-command-primary" style="padding: 11px; font-size: 13px; margin-top: 4px;">
                 Authenticate Clearance &rarr;
             </button>
         </form>

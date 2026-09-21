@@ -105,6 +105,28 @@ def create_app(config_name="default"):
                     db.session.commit()
                 except Exception:
                     db.session.rollback()
+            elif not sess_token and current_user.active_session_token:
+                now = datetime.utcnow()
+                is_stale = True
+                if current_user.active_session_heartbeat:
+                    elapsed = (now - current_user.active_session_heartbeat).total_seconds()
+                    if elapsed < 40:
+                        is_stale = False
+                if is_stale:
+                    import secrets
+                    new_token = secrets.token_hex(24)
+                    session["admin_session_token"] = new_token
+                    current_user.active_session_token = new_token
+                    current_user.active_session_heartbeat = now
+                    try:
+                        db.session.commit()
+                    except Exception:
+                        db.session.rollback()
+                else:
+                    session.pop("admin_session_token", None)
+                    logout_user()
+                    flash("Admin session closed: Your session was terminated or opened on another device.", "warning")
+                    return redirect(url_for("auth.login"))
             elif sess_token and current_user.active_session_token == sess_token:
                 current_user.active_session_heartbeat = datetime.utcnow()
                 try:

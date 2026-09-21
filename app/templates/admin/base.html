@@ -252,6 +252,13 @@
                     sendHeartbeat();
                 }
             });
+
+            // Release active device lock cleanly when window/tab is closed
+            window.addEventListener('pagehide', function() {
+                if (navigator.sendBeacon) {
+                    navigator.sendBeacon("{{ url_for('auth.close_session') }}");
+                }
+            });
         })();
     </script>
     {% block extra_js %}{% endblock %}
