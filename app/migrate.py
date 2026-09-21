@@ -184,4 +184,11 @@ def check_and_apply_migrations(app):
         except Exception as e:
             app.logger.warning(f"Experience bootstrap notice: {e}")
 
+        # Check and ensure contact_messages table exists
+        try:
+            from app.models.message import ContactMessage
+            ContactMessage.__table__.create(db.engine, checkfirst=True)
+        except Exception as e:
+            app.logger.warning(f"ContactMessage table migration notice: {e}")
+
 

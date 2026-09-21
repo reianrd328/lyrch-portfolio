@@ -155,7 +155,14 @@ def create_app(config_name="default"):
         except Exception:
             pass
 
-        return {"settings": settings, "storage": storage}
+        unread_messages_count = 0
+        try:
+            from app.models.message import ContactMessage
+            unread_messages_count = ContactMessage.query.filter_by(is_read=False).count()
+        except Exception:
+            pass
+
+        return {"settings": settings, "storage": storage, "unread_messages_count": unread_messages_count}
 
     # Static uploads route
     @app.route("/uploads/<path:filename>")

@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, Response
 from flask_login import login_required, current_user
-from app.models import db, Project, Video, GalleryItem, Document, Skill, Experience, BlogPost, ActivityLog, SiteSetting, PortfolioProfile
+from app.models import db, Project, Video, GalleryItem, Document, Skill, Experience, BlogPost, ActivityLog, SiteSetting, PortfolioProfile, ContactMessage
 from app.services.upload_service import save_upload_file, delete_file
 from app.services.backup_service import export_database_to_dict, export_database_to_json_str, restore_database_from_dict
 from app.services.email_service import send_backup_email, is_smtp_configured
@@ -58,12 +58,15 @@ def dashboard():
         "gallery": GalleryItem.query.count(),
         "documents": Document.query.count(),
         "skills": Skill.query.count(),
-        "blog_posts": BlogPost.query.count()
+        "blog_posts": BlogPost.query.count(),
+        "messages": ContactMessage.query.count(),
+        "unread_messages": ContactMessage.query.filter_by(is_read=False).count()
     }
 
     recent_projects = Project.query.order_by(Project.id.desc()).limit(5).all()
     recent_videos = Video.query.order_by(Video.id.desc()).limit(5).all()
     recent_activities = ActivityLog.query.order_by(ActivityLog.id.desc()).limit(8).all()
+    recent_messages = ContactMessage.query.order_by(ContactMessage.id.desc()).limit(5).all()
     active_profile = PortfolioProfile.query.filter_by(is_active=True).first()
 
     return render_template(
@@ -72,6 +75,7 @@ def dashboard():
         recent_projects=recent_projects,
         recent_videos=recent_videos,
         recent_activities=recent_activities,
+        recent_messages=recent_messages,
         active_profile=active_profile,
         user=current_user
     )
@@ -488,4 +492,59 @@ def backup_gdrive_disconnect():
     db.session.commit()
     flash("Google Drive personal account disconnected.", "info")
     return redirect(url_for("admin.settings"))
+
+@admin_bp.route("/messages")
+@login_required
+def messages():
+    """Admin Inbox to view, search, and manage incoming contact form transmissions."""
+    status_filter = request.args.get("filter", "all")
+    query = ContactMessage.query.order_by(ContactMessage.id.desc())
+
+    if status_filter == "unread":
+        query = query.filter_by(is_read=False)
+    elif status_filter == "read":
+        query = query.filter_by(is_read=True)
+
+    search_query = request.args.get("q", "").strip()
+    if search_query:
+        query = query.filter(
+            (ContactMessage.name.ilike(f"%{search_query}%")) |
+            (ContactMessage.email.ilike(f"%{search_query}%")) |
+            (ContactMessage.message.ilike(f"%{search_query}%"))
+        )
+
+    all_messages = query.all()
+    unread_count = ContactMessage.query.filter_by(is_read=False).count()
+    total_count = ContactMessage.query.count()
+
+    return render_template(
+        "admin/messages/index.html",
+        messages=all_messages,
+        current_filter=status_filter,
+        search_query=search_query,
+        unread_count=unread_count,
+        total_count=total_count
+    )
+
+@admin_bp.route("/messages/<int:message_id>/toggle-read", methods=["POST"])
+@login_required
+def toggle_message_read(message_id):
+    """Toggles read/unread status for a message."""
+    msg = ContactMessage.query.get_or_404(message_id)
+    msg.is_read = not msg.is_read
+    db.session.commit()
+    status_str = "read" if msg.is_read else "unread"
+    flash(f"Transmission from {msg.name} marked as {status_str}.", "info")
+    return redirect(request.referrer or url_for("admin.messages"))
+
+@admin_bp.route("/messages/<int:message_id>/delete", methods=["POST"])
+@login_required
+def delete_message(message_id):
+    """Deletes a contact message."""
+    msg = ContactMessage.query.get_or_404(message_id)
+    sender = msg.name
+    db.session.delete(msg)
+    db.session.commit()
+    flash(f"Transmission from {sender} deleted.", "success")
+    return redirect(request.referrer or url_for("admin.messages"))
 

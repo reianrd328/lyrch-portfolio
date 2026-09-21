@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, abort, send_from_directory, current_app
 from flask_login import current_user
-from app.models import Project, Video, GalleryItem, Document, Skill, Experience, BlogPost, ActivityLog, PortfolioProfile, SiteSetting
+from app.models import db, Project, Video, GalleryItem, Document, Skill, Experience, BlogPost, ActivityLog, PortfolioProfile, SiteSetting, ContactMessage
+from app.services.email_service import send_contact_message_email
 
 public_bp = Blueprint("public", __name__)
 
@@ -141,6 +142,41 @@ def blog_detail(slug):
 @public_bp.route("/contact", methods=["GET", "POST"])
 def contact():
     if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip()
+        message = request.form.get("message", "").strip()
+
+        if name and email and message:
+            msg_record = ContactMessage(
+                name=name,
+                email=email,
+                message=message
+            )
+            db.session.add(msg_record)
+
+            activity = ActivityLog(
+                title=f"Incoming transmission from {name} ({email})",
+                activity_type="network",
+                time_label="Just now"
+            )
+            db.session.add(activity)
+            db.session.commit()
+
+            # Dispatch notification email to portfolio owner's contact email
+            try:
+                settings = SiteSetting.get_settings()
+                target_email = (getattr(settings, "contact_email", "") or "").strip()
+                if target_email:
+                    send_contact_message_email(
+                        sender_name=name,
+                        sender_email=email,
+                        message_content=message,
+                        recipient_email=target_email,
+                        settings=settings
+                    )
+            except Exception as err:
+                current_app.logger.warning(f"Email transmission notice: {err}")
+
         flash("Signal received! Your transmission has reached the Command Center.", "success")
         return redirect(url_for("public.contact"))
     return render_template("public/contact.html")
@@ -283,6 +319,45 @@ def profile_contact(slug):
     data = profile.get_data()
     preview_settings = ProfileProxy(data.get("settings", {}))
     if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip()
+        message = request.form.get("message", "").strip()
+
+        if name and email and message:
+            msg_record = ContactMessage(
+                name=name,
+                email=email,
+                message=message
+            )
+            db.session.add(msg_record)
+
+            activity = ActivityLog(
+                title=f"Incoming transmission from {name} ({email}) via profile '{profile.name}'",
+                activity_type="network",
+                time_label="Just now"
+            )
+            db.session.add(activity)
+            db.session.commit()
+
+            # Target email from profile or site settings
+            target_email = getattr(preview_settings, "contact_email", "") or ""
+            if not target_email:
+                settings = SiteSetting.get_settings()
+                target_email = (getattr(settings, "contact_email", "") or "").strip()
+
+            if target_email:
+                try:
+                    settings = SiteSetting.get_settings()
+                    send_contact_message_email(
+                        sender_name=name,
+                        sender_email=email,
+                        message_content=message,
+                        recipient_email=target_email,
+                        settings=settings
+                    )
+                except Exception as err:
+                    current_app.logger.warning(f"Profile email transmission notice: {err}")
+
         flash("Signal received! Your transmission has reached the Command Center.", "success")
         return redirect(url_for("public.profile_contact", slug=slug))
     return render_template("public/contact.html", preview_profile=profile, settings=preview_settings)

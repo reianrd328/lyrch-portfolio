@@ -156,3 +156,115 @@ def send_backup_email(recipient_email: str, backup_json_str: str, metadata: dict
             return False, "Render blocks outbound SMTP ports (587/465) on free instances. Please use your Google Drive Backup (which works over HTTPS) or set RESEND_API_KEY in Render."
         return False, f"Email sending failed: {err_str}"
 
+def send_contact_message_email(sender_name: str, sender_email: str, message_content: str, recipient_email: str, settings=None) -> tuple[bool, str]:
+    """
+    Dispatches an incoming contact form transmission to the portfolio owner's registered email.
+    Supports Resend HTTPS API (recommended) or SMTP.
+    Sets Reply-To directly to the visitor's email address.
+    """
+    if not recipient_email or "@" not in recipient_email:
+        return False, "Recipient email address is invalid."
+
+    now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+    subject = f"[TRANSMISSION RECEIVED] Message from {sender_name} via Portfolio"
+
+    resend_key = (getattr(settings, "resend_api_key", "") or "").strip() or os.getenv("RESEND_API_KEY", "").strip()
+
+    smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    smtp_port = int(os.getenv("SMTP_PORT", 587))
+    smtp_user = os.getenv("SMTP_USER", "")
+    smtp_password = os.getenv("SMTP_PASSWORD", "")
+    smtp_from = os.getenv("SMTP_FROM", f"LYRCH Command Center <{smtp_user}>" if smtp_user else "command@lyrch.dev")
+    use_tls = os.getenv("SMTP_USE_TLS", "true").lower() in ("true", "1")
+
+    escaped_message = message_content.replace("\n", "<br>")
+
+    body_html = f"""
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0b112c; color: #f1f5f9; padding: 25px; border-radius: 8px; max-width: 600px; margin: 0 auto;">
+        <div style="border-bottom: 2px solid #00f0ff; padding-bottom: 12px; margin-bottom: 20px;">
+            <h2 style="color: #00f0ff; margin: 0; font-size: 20px; letter-spacing: 1.5px;">LYRCH DIGITAL COMMAND CENTER</h2>
+            <p style="color: #a855f7; margin: 4px 0 0; font-size: 13px;">DIRECT TRANSMISSION // INCOMING CONTACT INQUIRY</p>
+        </div>
+
+        <p style="font-size: 14px; line-height: 1.6; color: #cbd5e1;">
+            Commander, a new transmission has been received through your portfolio contact terminal:
+        </p>
+
+        <div style="background: rgba(15,23,42,0.85); border: 1px solid rgba(0,240,255,0.25); border-radius: 6px; padding: 15px; margin: 18px 0;">
+            <div style="color: #00f0ff; font-weight: bold; font-size: 13px; margin-bottom: 10px;">TRANSMISSION METADATA</div>
+            <div style="font-size: 13px; color: #94a3b8; line-height: 1.8;">
+                <strong style="color: #ffffff;">Callsign / Name:</strong> {sender_name}<br>
+                <strong style="color: #ffffff;">Sender Email:</strong> <a href="mailto:{sender_email}" style="color: #00f0ff; text-decoration: underline;">{sender_email}</a><br>
+                <strong style="color: #ffffff;">Timestamp:</strong> {now_str}
+            </div>
+            <div style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px;">
+                <strong style="color: #a855f7; font-size: 12px; display: block; margin-bottom: 6px;">TRANSMISSION CONTENT:</strong>
+                <div style="background: #020617; padding: 12px; border-radius: 6px; color: #f1f5f9; font-size: 13px; line-height: 1.6; border-left: 3px solid #00f0ff;">
+                    {escaped_message}
+                </div>
+            </div>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <a href="mailto:{sender_email}?subject=Re: Your Transmission to LYRCH Dev" style="display: inline-block; background: #00f0ff; color: #020617; padding: 10px 20px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px;">
+                Reply Directly to {sender_name} &rarr;
+            </a>
+        </div>
+
+        <div style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; font-size: 11px; color: #64748b;">
+            LYRCH DEV // CYBERNETIC WORK MANAGEMENT &amp; PORTFOLIO CMS
+        </div>
+    </div>
+    """
+
+    if resend_key:
+        try:
+            from_email = os.getenv("RESEND_FROM", "LYRCH Dispatch <onboarding@resend.dev>")
+            payload = {
+                "from": from_email,
+                "to": [recipient_email],
+                "reply_to": sender_email,
+                "subject": subject,
+                "html": body_html
+            }
+            req = urllib.request.Request(
+                "https://api.resend.com/emails",
+                data=json.dumps(payload).encode("utf-8"),
+                headers={
+                    "Authorization": f"Bearer {resend_key}",
+                    "Content-Type": "application/json",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                }
+            )
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                return True, f"Transmission emailed to {recipient_email} via Resend API!"
+        except Exception as e:
+            return False, f"Resend notice: {str(e)}"
+
+    if not smtp_user or not smtp_password:
+        return False, "SMTP credentials not configured."
+
+    try:
+        msg = MIMEMultipart()
+        msg["From"] = smtp_from
+        msg["To"] = recipient_email
+        msg["Reply-To"] = sender_email
+        msg["Subject"] = subject
+        msg.attach(MIMEText(body_html, "html"))
+
+        if use_tls:
+            server = smtplib.SMTP(smtp_host, smtp_port, timeout=20)
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+        else:
+            server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=20)
+            server.ehlo()
+
+        server.login(smtp_user, smtp_password)
+        server.send_message(msg)
+        server.quit()
+        return True, f"Transmission successfully emailed to {recipient_email}"
+    except Exception as e:
+        return False, f"Email sending failed: {str(e)}"
+

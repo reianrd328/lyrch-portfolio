@@ -14,6 +14,7 @@ from .blog import BlogPost
 from .activity import ActivityLog
 from .settings import SiteSetting
 from .profile import PortfolioProfile
+from .message import ContactMessage
 
 __all__ = [
     "db",
@@ -30,5 +31,6 @@ __all__ = [
     "ActivityLog",
     "SiteSetting",
     "PortfolioProfile",
+    "ContactMessage",
 ]
 
