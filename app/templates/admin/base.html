@@ -92,12 +92,21 @@
                         <li class="sidebar-section-title">
                             <i class="fa-solid fa-terminal" style="font-size: 9px; color: var(--neon-cyan);"></i> Workspace
                         </li>
+                        {% if current_user.role == 'profile_user' %}
+                        <li class="sidebar-item {% if request.endpoint == 'admin_profiles.my_profile' %}active{% endif %}">
+                            <a href="{{ url_for('admin_profiles.my_profile') }}" class="sidebar-link">
+                                <i class="fa-solid fa-id-card-clip"></i>
+                                <span>My Portfolio</span>
+                            </a>
+                        </li>
+                        {% else %}
                         <li class="sidebar-item {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
                             <a href="{{ url_for('admin.dashboard') }}" class="sidebar-link">
                                 <i class="fa-solid fa-gauge-high"></i>
                                 <span>Dashboard</span>
                             </a>
                         </li>
+                        {% endif %}
                         <li class="sidebar-item {% if 'message' in request.endpoint %}active{% endif %}">
                             <a href="{{ url_for('admin.messages') }}" class="sidebar-link">
                                 <i class="fa-solid fa-satellite-dish"></i>
@@ -114,12 +123,14 @@
                         <li class="sidebar-section-title" style="margin-top: 6px;">
                             <i class="fa-solid fa-layer-group" style="font-size: 9px; color: var(--neon-purple);"></i> Portfolio
                         </li>
-                        <li class="sidebar-item {% if 'profile' in request.endpoint %}active{% endif %}">
+                        {% if current_user.role != 'profile_user' %}
+                        <li class="sidebar-item {% if 'profile' in request.endpoint and request.endpoint != 'admin_profiles.my_profile' %}active{% endif %}">
                             <a href="{{ url_for('admin_profiles.index') }}" class="sidebar-link">
                                 <i class="fa-solid fa-user-astronaut"></i>
                                 <span>Profiles</span>
                             </a>
                         </li>
+                        {% endif %}
                         <li class="sidebar-item {% if 'project' in request.endpoint %}active{% endif %}">
                             <a href="{{ url_for('admin_projects.index') }}" class="sidebar-link">
                                 <i class="fa-solid fa-code"></i>
@@ -168,7 +179,8 @@
                             </a>
                         </li>
 
-                        <!-- SYSTEM -->
+                        <!-- SYSTEM (Superadmin Only) -->
+                        {% if current_user.role != 'profile_user' %}
                         <li class="sidebar-section-title" style="margin-top: 6px;">
                             <i class="fa-solid fa-sliders" style="font-size: 9px; color: #94a3b8;"></i> System
                         </li>
@@ -178,10 +190,11 @@
                                 <span>Settings &amp; Backup</span>
                             </a>
                         </li>
+                        {% endif %}
                     </ul>
 
                     <!-- Storage Indicator Widget -->
-                    {% if storage %}
+                    {% if storage and current_user.role != 'profile_user' %}
                     <div class="sidebar-storage-widget">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <span style="font-size: 10px; color: var(--text-muted); font-weight: 700; letter-spacing: 0.5px;">
@@ -217,8 +230,8 @@
                     <div style="font-size: 13px; font-weight: 700; color: #ffffff;">
                         {{ current_user.display_name }}
                     </div>
-                    <div style="font-size: 10px; color: var(--neon-cyan);">
-                        SUPERADMIN CLEARANCE
+                    <div style="font-size: 10px; color: {% if current_user.role == 'profile_user' %}var(--neon-purple){% else %}var(--neon-cyan){% endif %}; font-family: var(--font-mono); font-weight: 700;">
+                        {% if current_user.role == 'profile_user' %}PROFILE EDITOR{% else %}SUPERADMIN CLEARANCE{% endif %}
                     </div>
                 </div>
             </aside>

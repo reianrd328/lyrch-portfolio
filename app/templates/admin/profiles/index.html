@@ -134,9 +134,66 @@
                 </div>
 
                 <!-- Snapshot Stats -->
-                <div style="display: flex; gap: 14px; font-family: var(--font-mono); font-size: 11px; color: #64748b; margin-bottom: 16px;">
+                <div style="display: flex; gap: 14px; font-family: var(--font-mono); font-size: 11px; color: #64748b; margin-bottom: 14px;">
                     <span><i class="fa-solid fa-code" style="color: var(--neon-cyan);"></i> {{ profile.project_count }} Projects</span>
                     <span><i class="fa-solid fa-microchip" style="color: var(--neon-purple);"></i> {{ profile.skill_count }} Skills</span>
+                </div>
+
+                <!-- User Login Account & Activation Controls -->
+                <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid {% if profile.user_account and profile.user_account.is_active_account %}rgba(34, 197, 94, 0.35){% elif profile.user_account %}rgba(239, 68, 68, 0.35){% else %}rgba(255, 255, 255, 0.08){% endif %}; border-radius: 8px; padding: 10px 12px; margin-bottom: 14px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-size: 10px; font-family: var(--font-mono); color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">
+                            <i class="fa-solid fa-user-shield"></i> LOGIN ACCOUNT
+                        </span>
+                        {% if profile.user_account %}
+                            {% if profile.user_account.is_active_account %}
+                            <span style="background: rgba(34, 197, 94, 0.15); border: 1px solid #22c55e; color: #4ade80; font-family: var(--font-mono); font-size: 9.5px; font-weight: 700; padding: 1px 6px; border-radius: 3px;">
+                                <i class="fa-solid fa-circle-check"></i> ACTIVE
+                            </span>
+                            {% else %}
+                            <span style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #f87171; font-family: var(--font-mono); font-size: 9.5px; font-weight: 700; padding: 1px 6px; border-radius: 3px;">
+                                <i class="fa-solid fa-ban"></i> DISABLED
+                            </span>
+                            {% endif %}
+                        {% else %}
+                            <span style="background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.3); color: #94a3b8; font-family: var(--font-mono); font-size: 9.5px; padding: 1px 6px; border-radius: 3px;">
+                                NO ACCOUNT
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    {% if profile.user_account %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                        <div style="font-size: 12px; color: #e2e8f0; font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            <i class="fa-solid fa-at" style="color: var(--neon-cyan);"></i> <strong>{{ profile.user_account.username }}</strong>
+                        </div>
+                        <div style="display: flex; gap: 5px;">
+                            <!-- Toggle Active/Disabled -->
+                            <form action="{{ url_for('admin_profiles.toggle_account', profile_id=profile.id) }}" method="POST" style="margin: 0;">
+                                {% if profile.user_account.is_active_account %}
+                                <button type="submit" class="telemetry-btn" title="Disable account (prevent login)" style="color: #f87171; width: 26px; height: 26px; font-size: 10px;" onclick="return confirm('Disable login access for @{{ profile.user_account.username }}?');">
+                                    <i class="fa-solid fa-user-xmark"></i>
+                                </button>
+                                {% else %}
+                                <button type="submit" class="telemetry-btn" title="Activate account (allow login)" style="color: #4ade80; width: 26px; height: 26px; font-size: 10px;" onclick="return confirm('Activate login access for @{{ profile.user_account.username }}?');">
+                                    <i class="fa-solid fa-user-check"></i>
+                                </button>
+                                {% endif %}
+                            </form>
+                            <!-- Edit credentials modal -->
+                            <button type="button" class="telemetry-btn" title="Change password / credentials" style="width: 26px; height: 26px; font-size: 10px; color: var(--neon-cyan);" onclick="openAccountModal({{ profile.id }}, '{{ profile.name|replace("'", "\\'") }}', '{{ profile.user_account.username }}', '{{ profile.user_account.display_name|replace("'", "\\'") }}', '{{ profile.user_account.email }}')">
+                                <i class="fa-solid fa-key"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 11px; color: var(--text-muted);">No login credentials yet</span>
+                        <button type="button" class="btn-command-secondary" style="font-size: 10.5px; padding: 3px 9px; color: var(--neon-cyan); border-color: rgba(0, 240, 255, 0.35);" onclick="openAccountModal({{ profile.id }}, '{{ profile.name|replace("'", "\\'") }}', '', '{{ (profile.client_name or profile.name)|replace("'", "\\'") }}', '')">
+                            <i class="fa-solid fa-plus"></i> Set Credentials
+                        </button>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
@@ -243,6 +300,23 @@
                 <textarea name="description" rows="2" placeholder="Notes about this client or target market..." class="command-input" style="width: 100%;"></textarea>
             </div>
 
+            <!-- Optional Login Credentials -->
+            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;">
+                <span style="font-size: 11px; font-weight: 700; color: var(--neon-cyan); text-transform: uppercase; font-family: var(--font-mono); display: block; margin-bottom: 8px;">
+                    <i class="fa-solid fa-user-lock"></i> Optional: Setup Login Account
+                </span>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label style="display: block; font-size: 11px; color: #94a3b8; margin-bottom: 4px;">Username</label>
+                        <input type="text" name="account_username" placeholder="e.g. john_smith" class="command-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 11px; color: #94a3b8; margin-bottom: 4px;">Password</label>
+                        <input type="password" name="account_password" placeholder="Create password" class="command-input" style="width: 100%;">
+                    </div>
+                </div>
+            </div>
+
             <input type="hidden" name="submitted_from_form" value="1">
             <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
                 <input type="checkbox" name="is_published" id="createPublishedInput" value="1" checked style="width: 16px; height: 16px; accent-color: var(--neon-cyan); cursor: pointer;">
@@ -318,6 +392,46 @@
     </div>
 </div>
 
+<!-- MANAGE ACCOUNT CREDENTIALS MODAL -->
+<div class="command-modal-overlay" id="accountModal" style="display: none; position: fixed; inset: 0; background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(6px); z-index: 99999; align-items: center; justify-content: center;">
+    <div style="background: #0b1120; border: 1px solid rgba(0, 240, 255, 0.4); border-radius: 12px; width: 100%; max-width: 480px; padding: 26px; box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+            <h3 style="font-family: var(--font-display); font-size: 17px; color: #fff; margin: 0;">
+                <i class="fa-solid fa-user-shield" style="color: var(--neon-cyan);"></i> LOGIN CREDENTIALS // <span id="accountProfileName" style="color: var(--neon-cyan);"></span>
+            </h3>
+            <button type="button" class="alert-close" onclick="closeModal('accountModal')">&times;</button>
+        </div>
+
+        <form id="accountForm" method="POST">
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px;">Username *</label>
+                <input type="text" name="username" id="accountUsernameInput" required placeholder="e.g. john_smith" class="command-input" style="width: 100%;">
+            </div>
+
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px;">Display Name</label>
+                <input type="text" name="display_name" id="accountDisplayNameInput" placeholder="e.g. John Smith" class="command-input" style="width: 100%;">
+            </div>
+
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px;">Password</label>
+                <input type="password" name="password" id="accountPasswordInput" placeholder="Enter password" class="command-input" style="width: 100%;">
+                <span id="accountPasswordHelp" style="font-size: 11px; color: #94a3b8; display: block; margin-top: 4px;">Leave blank to preserve current password.</span>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px;">Email Address (Optional)</label>
+                <input type="email" name="email" id="accountEmailInput" placeholder="user@example.com" class="command-input" style="width: 100%;">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn-command-secondary" onclick="closeModal('accountModal')">Cancel</button>
+                <button type="submit" class="btn-command-primary">Save Credentials</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- IMPORT JSON MODAL -->
 <div class="command-modal-overlay" id="importModal" style="display: none; position: fixed; inset: 0; background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(6px); z-index: 99999; align-items: center; justify-content: center;">
     <div style="background: #0b1120; border: 1px solid rgba(0, 240, 255, 0.4); border-radius: 12px; width: 100%; max-width: 480px; padding: 26px; box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
@@ -375,6 +489,25 @@ function openEditModal(id, name, client, slug, theme, desc, is_published) {
     document.getElementById('editDescInput').value = desc || '';
     document.getElementById('editPublishedInput').checked = (is_published === true || is_published === 'true');
     openModal('editModal');
+}
+
+function openAccountModal(id, profileName, username, displayName, email) {
+    document.getElementById('accountForm').action = "/admin/profiles/" + id + "/account";
+    document.getElementById('accountProfileName').textContent = profileName;
+    document.getElementById('accountUsernameInput').value = username || '';
+    document.getElementById('accountDisplayNameInput').value = displayName || profileName;
+    document.getElementById('accountEmailInput').value = email || '';
+    document.getElementById('accountPasswordInput').value = '';
+    const help = document.getElementById('accountPasswordHelp');
+    const pwdInput = document.getElementById('accountPasswordInput');
+    if (!username) {
+        pwdInput.required = true;
+        help.textContent = "Required for initial account creation.";
+    } else {
+        pwdInput.required = false;
+        help.textContent = "Leave blank to preserve current password.";
+    }
+    openModal('accountModal');
 }
 </script>
 {% endblock %}

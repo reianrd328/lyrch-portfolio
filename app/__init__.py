@@ -78,6 +78,25 @@ def create_app(config_name="default"):
         from datetime import datetime
 
         if not app.config.get("TESTING") and current_user.is_authenticated and request.path.startswith("/admin"):
+            # If admin has deactivated this account, terminate session immediately
+            if not current_user.is_active_account:
+                session.pop("admin_session_token", None)
+                logout_user()
+                flash("ACCESS RESTRICTED: Your account has been disabled by the Administrator.", "danger")
+                return redirect(url_for("auth.login"))
+
+            # Restrict profile_user from accessing superadmin settings, cron, or full profile management
+            if current_user.role == "profile_user":
+                restricted_endpoints = [
+                    "/admin/settings",
+                    "/admin/cron",
+                    "/admin/profiles/create",
+                    "/admin/profiles/import"
+                ]
+                if any(request.path.startswith(prefix) for prefix in restricted_endpoints):
+                    flash("Access restricted to Superadmin.", "warning")
+                    return redirect(url_for("admin_profiles.my_profile"))
+
             sess_token = session.get("admin_session_token")
 
             # Conflict: DB has a token from another device that differs from this browser

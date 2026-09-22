@@ -32,8 +32,15 @@ def login():
             logout_user()
         flash("Admin session closed: Your session was terminated or opened on another device.", "warning")
 
-    # When already authenticated and not in conflict, direct straight to admin dashboard!
+    # When already authenticated and not in conflict, direct to appropriate dashboard
     if current_user.is_authenticated:
+        if not current_user.is_active_account:
+            session.pop("admin_session_token", None)
+            logout_user()
+            flash("ACCESS RESTRICTED: Your account has been disabled by the Administrator.", "warning")
+            return redirect(url_for("auth.login"))
+        if current_user.role == "profile_user":
+            return redirect(url_for("admin_profiles.my_profile"))
         return redirect(url_for("admin.dashboard"))
 
     active_conflict = False
@@ -51,6 +58,15 @@ def login():
         ).first()
 
         if user and user.check_password(password):
+            if not user.is_active_account:
+                flash("ACCESS RESTRICTED: This account has been disabled by the Administrator. Please contact support.", "danger")
+                return render_template(
+                    "auth/login.html",
+                    active_conflict=False,
+                    conflicting_device="",
+                    prefill_username=prefill_username
+                )
+
             now = datetime.utcnow()
             current_sess_token = session.get("admin_session_token")
 
@@ -92,16 +108,20 @@ def login():
             login_user(user, remember=remember)
 
             log = ActivityLog(
-                title=f"Admin session opened on {device_desc}",
+                title=f"User session opened ({user.username}) on {device_desc}",
                 activity_type="project",
                 time_label="Just now"
             )
             db.session.add(log)
             db.session.commit()
 
-            flash(f"Welcome back, Commander {user.display_name}. Single-device lock engaged.", "success")
             next_page = request.args.get("next")
-            return redirect(next_page or url_for("admin.dashboard"))
+            if user.role == "profile_user":
+                flash(f"Welcome, {user.display_name}. Profile Editor active.", "success")
+                return redirect(next_page or url_for("admin_profiles.my_profile"))
+            else:
+                flash(f"Welcome back, Commander {user.display_name}. Single-device lock engaged.", "success")
+                return redirect(next_page or url_for("admin.dashboard"))
         else:
             flash("Invalid credentials or clearance level denied.", "danger")
 

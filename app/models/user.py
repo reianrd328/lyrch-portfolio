@@ -13,8 +13,11 @@ class User(UserMixin, db.Model):
     display_name = db.Column(db.String(100), default="LYRCH Admin")
     role = db.Column(db.String(20), default="admin")
     is_active_account = db.Column(db.Boolean, default=True)
+    profile_id = db.Column(db.Integer, db.ForeignKey("portfolio_profiles.id", ondelete="SET NULL"), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime, nullable=True)
+
+    profile = db.relationship("PortfolioProfile", backref=db.backref("user_accounts", lazy="dynamic"), foreign_keys=[profile_id])
 
     # Single-device active session tracking
     active_session_token = db.Column(db.String(64), nullable=True)

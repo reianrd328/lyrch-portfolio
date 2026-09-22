@@ -1,8 +1,8 @@
 import json
 import re
 from datetime import datetime
-from flask import Blueprint, render_template, request, flash, redirect, url_for, Response, jsonify
-from flask_login import login_required
+from flask import Blueprint, render_template, request, flash, redirect, url_for, Response, jsonify, abort
+from flask_login import login_required, current_user
 from app.models import db, PortfolioProfile, ActivityLog, SiteSetting, User
 from app.services.profile_service import (
     capture_current_portfolio_dict,
@@ -95,8 +95,190 @@ def create():
     db.session.add(log)
     db.session.commit()
 
-    flash(f"Profile '{name}' created! Dedicated public URL: /p/{slug}", "success")
+    # Optional: Create initial login account if credentials provided
+    account_username = request.form.get("account_username", "").strip()
+    account_password = request.form.get("account_password", "").strip()
+    if account_username and account_password:
+        existing = User.query.filter((User.username == account_username) | (User.email == f"{account_username}@{slug}.local")).first()
+        if not existing:
+            user = User(
+                username=account_username,
+                email=f"{account_username}@{slug}.local",
+                display_name=client_name or name,
+                role="profile_user",
+                is_active_account=True,
+                profile_id=new_profile.id
+            )
+            user.set_password(account_password)
+            db.session.add(user)
+            db.session.commit()
+            flash(f"Profile '{name}' created with login account '@{account_username}'!", "success")
+        else:
+            flash(f"Profile '{name}' created, but username '@{account_username}' is already taken.", "warning")
+    else:
+        flash(f"Profile '{name}' created! Dedicated public URL: /p/{slug}", "success")
     return redirect(url_for("admin_profiles.index"))
+
+@profiles_bp.route("/<int:profile_id>/account", methods=["POST"])
+@login_required
+def manage_account(profile_id):
+    """Super Admin route to create or update credentials for a profile."""
+    if current_user.role != "admin":
+        abort(403)
+    profile = PortfolioProfile.query.get_or_404(profile_id)
+    username = request.form.get("username", "").strip()
+    password = request.form.get("password", "").strip()
+    display_name = request.form.get("display_name", "").strip() or profile.client_name or profile.name
+    email = request.form.get("email", "").strip() or f"{username}@{profile.slug}.local"
+
+    user = User.query.filter_by(profile_id=profile.id).first()
+
+    if not user:
+        if not username or not password:
+            flash("Username and password are required to create a login account.", "danger")
+            return redirect(url_for("admin_profiles.index"))
+        
+        existing = User.query.filter((User.username == username) | (User.email == email)).first()
+        if existing:
+            flash(f"Username '{username}' or email '{email}' is already taken.", "danger")
+            return redirect(url_for("admin_profiles.index"))
+
+        user = User(
+            username=username,
+            email=email,
+            display_name=display_name,
+            role="profile_user",
+            is_active_account=True,
+            profile_id=profile.id
+        )
+        user.set_password(password)
+        db.session.add(user)
+        flash(f"Login account '@{username}' successfully created for '{profile.name}'!", "success")
+    else:
+        if username and username != user.username:
+            existing = User.query.filter(User.username == username, User.id != user.id).first()
+            if existing:
+                flash(f"Username '{username}' is already in use by another account.", "danger")
+                return redirect(url_for("admin_profiles.index"))
+            user.username = username
+        if display_name:
+            user.display_name = display_name
+        if email:
+            user.email = email
+        if password:
+            user.set_password(password)
+            user.active_session_token = None
+            user.active_session_heartbeat = None
+            flash(f"Credentials & password for '{profile.name}' updated!", "success")
+        else:
+            flash(f"Account details for '{profile.name}' updated.", "success")
+
+    db.session.commit()
+    return redirect(url_for("admin_profiles.index"))
+
+@profiles_bp.route("/<int:profile_id>/toggle-account", methods=["POST"])
+@login_required
+def toggle_account(profile_id):
+    """Super Admin route to activate or disable a profile's login account."""
+    if current_user.role != "admin":
+        abort(403)
+    profile = PortfolioProfile.query.get_or_404(profile_id)
+    user = User.query.filter_by(profile_id=profile.id).first()
+    if not user:
+        flash(f"No login account configured for '{profile.name}'. Please create an account first.", "warning")
+        return redirect(url_for("admin_profiles.index"))
+
+    user.is_active_account = not user.is_active_account
+    if not user.is_active_account:
+        # Invalidate active session immediately
+        user.active_session_token = None
+        user.active_session_heartbeat = None
+    db.session.commit()
+
+    status_label = "ACTIVE" if user.is_active_account else "DISABLED"
+    flash(f"Login account '@{user.username}' for '{profile.name}' is now {status_label}.", "success" if user.is_active_account else "warning")
+    return redirect(url_for("admin_profiles.index"))
+
+@profiles_bp.route("/my-profile", methods=["GET", "POST"])
+@login_required
+def my_profile():
+    """Scoped workspace for a profile user to view and edit their own portfolio."""
+    if current_user.role == "profile_user":
+        if not current_user.profile_id:
+            flash("No portfolio profile assigned to this account. Please contact the administrator.", "danger")
+            return redirect(url_for("auth.logout"))
+        profile = PortfolioProfile.query.get_or_404(current_user.profile_id)
+    else:
+        # Superadmin viewing workspace
+        profile = PortfolioProfile.query.filter_by(is_active=True).first() or PortfolioProfile.query.first()
+        if not profile:
+            return redirect(url_for("admin_profiles.index"))
+
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        client_name = request.form.get("client_name", "").strip()
+        description = request.form.get("description", "").strip()
+        theme_preset = request.form.get("theme_preset", profile.theme_preset).strip()
+        job_title = request.form.get("job_title", "").strip()
+        location = request.form.get("location", "").strip()
+        contact_email = request.form.get("contact_email", "").strip()
+        hero_bio = request.form.get("hero_bio", "").strip()
+
+        if name:
+            profile.name = name
+        profile.client_name = client_name
+        profile.description = description
+        profile.theme_preset = theme_preset
+        profile.updated_at = datetime.utcnow()
+
+        # Update snapshot data
+        data = profile.get_data()
+        if "settings" not in data:
+            data["settings"] = {}
+
+        display = client_name or name
+        if display:
+            data["settings"]["display_name"] = display
+        data["settings"]["default_theme"] = theme_preset
+        if job_title:
+            data["settings"]["job_title"] = job_title
+        if location:
+            data["settings"]["location"] = location
+        if contact_email:
+            data["settings"]["contact_email"] = contact_email
+        if hero_bio:
+            data["settings"]["hero_bio"] = hero_bio
+
+        # Check password change
+        new_pw = request.form.get("new_password", "").strip()
+        if new_pw:
+            current_user.set_password(new_pw)
+            flash("Your login password has been updated.", "info")
+
+        profile.set_data(data)
+
+        # If this profile is active on root website, sync live SiteSetting as well
+        if profile.is_active:
+            site_settings = SiteSetting.get_settings()
+            if display:
+                site_settings.display_name = display
+            site_settings.default_theme = theme_preset
+            if job_title:
+                site_settings.job_title = job_title
+            if location:
+                site_settings.location = location
+            if contact_email:
+                site_settings.contact_email = contact_email
+            if hero_bio:
+                site_settings.hero_bio = hero_bio
+
+        db.session.commit()
+        flash(f"Your profile '{profile.name}' was successfully updated!", "success")
+        return redirect(url_for("admin_profiles.my_profile"))
+
+    data = profile.get_data()
+    settings_dict = data.get("settings", {})
+    return render_template("admin/profiles/workspace.html", profile=profile, settings_dict=settings_dict)
 
 @profiles_bp.route("/<int:profile_id>/activate", methods=["POST"])
 @login_required

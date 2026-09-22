@@ -1,0 +1,130 @@
+{% extends "admin/base.html" %}
+
+{% block title %}My Portfolio Workspace — {{ profile.name }}{% endblock %}
+
+{% block admin_content %}
+<div class="telemetry-card" style="max-width: 950px; margin: 0 auto;">
+    <div class="card-header-bar">
+        <div class="header-label">
+            <i class="fa-solid fa-id-card-clip"></i>
+            <span>MY PORTFOLIO WORKSPACE // {{ profile.name|upper }}</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <a href="{{ url_for('public.profile_preview', slug=profile.slug) }}" target="_blank" class="btn-command-secondary" style="font-size: 11.5px; padding: 6px 14px;">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> View Live Site
+            </a>
+        </div>
+    </div>
+
+    <!-- Live Status Banner -->
+    <div style="background: linear-gradient(135deg, rgba(0, 240, 255, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 10px; padding: 16px 20px; margin: 18px 0 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                {% if profile.is_published %}
+                <span style="background: rgba(34, 197, 94, 0.15); border: 1px solid #22c55e; color: #4ade80; font-family: var(--font-mono); font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 4px;">
+                    <i class="fa-solid fa-signal"></i> ONLINE &amp; LIVE
+                </span>
+                {% else %}
+                <span style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #f87171; font-family: var(--font-mono); font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 4px;">
+                    <i class="fa-solid fa-ban"></i> OFFLINE (DRAFT)
+                </span>
+                {% endif %}
+
+                {% if profile.is_active %}
+                <span style="background: var(--neon-cyan); color: #020617; font-family: var(--font-mono); font-weight: 800; font-size: 11px; padding: 3px 8px; border-radius: 4px;">
+                    <i class="fa-solid fa-star"></i> PRIMARY DOMAIN (/)
+                </span>
+                {% endif %}
+
+                <span style="color: var(--neon-purple); font-family: var(--font-mono); font-size: 11px;">
+                    THEME: {{ profile.theme_preset|upper }}
+                </span>
+            </div>
+            <div style="font-size: 13px; color: #cbd5e1; font-family: var(--font-mono);">
+                Public Link: <a href="{{ url_for('public.profile_preview', slug=profile.slug) }}" target="_blank" style="color: var(--neon-cyan); text-decoration: underline;">/p/{{ profile.slug }}</a>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; font-family: var(--font-mono); font-size: 12px; color: #94a3b8;">
+            <span><i class="fa-solid fa-code" style="color: var(--neon-cyan);"></i> {{ profile.project_count }} Projects</span>
+            <span><i class="fa-solid fa-microchip" style="color: var(--neon-purple);"></i> {{ profile.skill_count }} Skills</span>
+        </div>
+    </div>
+
+    <!-- Edit Profile Form -->
+    <form action="{{ url_for('admin_profiles.my_profile') }}" method="POST">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 20px;">
+            <div class="form-group">
+                <label class="form-label">Full Name / Profile Name *</label>
+                <input type="text" name="name" class="form-input" value="{{ profile.name }}" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Client / Organization / Company</label>
+                <input type="text" name="client_name" class="form-input" value="{{ profile.client_name }}" placeholder="e.g. Acme Corp or Personal">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Professional Job Title</label>
+                <input type="text" name="job_title" class="form-input" value="{{ settings_dict.get('job_title', '') }}" placeholder="e.g. Senior IT Systems Engineer">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Location / Region</label>
+                <input type="text" name="location" class="form-input" value="{{ settings_dict.get('location', '') }}" placeholder="e.g. Manila, Philippines">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Contact Email</label>
+                <input type="email" name="contact_email" class="form-input" value="{{ settings_dict.get('contact_email', '') }}" placeholder="contact@example.com">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Visual Theme Preset</label>
+                <select name="theme_preset" class="form-input">
+                    <option value="cyber" {% if profile.theme_preset == 'cyber' %}selected{% endif %}>Cyberpunk (Cyan &amp; Purple Neon)</option>
+                    <option value="matrix" {% if profile.theme_preset == 'matrix' %}selected{% endif %}>Matrix (Terminal Green &amp; Phosphor)</option>
+                    <option value="synthwave" {% if profile.theme_preset == 'synthwave' %}selected{% endif %}>Synthwave (Hot Pink &amp; Cyan)</option>
+                    <option value="cobalt" {% if profile.theme_preset == 'cobalt' %}selected{% endif %}>Cobalt (Deep Blue &amp; Ice Blue)</option>
+                    <option value="crimson" {% if profile.theme_preset == 'crimson' %}selected{% endif %}>Crimson (Stealth Carbon &amp; Red)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label class="form-label">Hero Bio / Professional Summary</label>
+            <textarea name="hero_bio" class="form-input" rows="4" placeholder="Brief elevator pitch or executive summary displayed on your portfolio hero section...">{{ settings_dict.get('hero_bio', '') }}</textarea>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 24px;">
+            <label class="form-label">Internal Description / Notes</label>
+            <input type="text" name="description" class="form-input" value="{{ profile.description }}" placeholder="Notes about this portfolio profile...">
+        </div>
+
+        <!-- Account Security Section -->
+        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 18px; margin-bottom: 24px;">
+            <h4 style="font-family: var(--font-display); font-size: 14px; color: #fff; margin: 0 0 12px; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-shield-halved" style="color: var(--neon-cyan);"></i>
+                <span>ACCOUNT CREDENTIALS</span>
+            </h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-input" value="{{ current_user.username }}" disabled style="opacity: 0.7; cursor: not-allowed;">
+                    <span style="font-size: 11px; color: var(--text-muted);">To change username, please contact the Superadmin.</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Change Password (leave blank to keep current)</label>
+                    <input type="password" name="new_password" class="form-input" placeholder="Enter new password...">
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+            <button type="submit" class="btn-command-primary" style="padding: 10px 24px; font-size: 13px;">
+                <i class="fa-solid fa-floppy-disk"></i> SAVE PROFILE CHANGES
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

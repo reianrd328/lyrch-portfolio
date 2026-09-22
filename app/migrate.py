@@ -54,7 +54,8 @@ def check_and_apply_migrations(app):
                     ("active_session_token", "VARCHAR(64) NULL"),
                     ("active_session_device", "VARCHAR(255) NULL"),
                     ("active_session_heartbeat", "DATETIME NULL"),
-                    ("active_session_ip", "VARCHAR(64) NULL")
+                    ("active_session_ip", "VARCHAR(64) NULL"),
+                    ("profile_id", "INTEGER NULL")
                 ]
                 for col_name, col_def in new_user_cols:
                     if col_name not in existing_user_cols:

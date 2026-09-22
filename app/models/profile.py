@@ -38,6 +38,12 @@ class PortfolioProfile(db.Model):
         data = self.get_data()
         return len(data.get("skills", []))
 
+    @property
+    def user_account(self):
+        """Returns the primary user account linked to this profile."""
+        from app.models.user import User
+        return User.query.filter_by(profile_id=self.id).first()
+
     def __repr__(self):
         return f"<PortfolioProfile {self.name} (slug={self.slug}, active={self.is_active})>"
 
