@@ -224,14 +224,19 @@
                 </div>
 
                 <div class="sidebar-inspiration-card">
-                    <div style="font-size: 11px; color: var(--text-muted);">
+                    <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 6px;">
                         AUTHENTICATED AS:
                     </div>
-                    <div style="font-size: 13px; font-weight: 700; color: #ffffff;">
-                        {{ current_user.display_name }}
-                    </div>
-                    <div style="font-size: 10px; color: {% if current_user.role == 'profile_user' %}var(--neon-purple){% else %}var(--neon-cyan){% endif %}; font-family: var(--font-mono); font-weight: 700;">
-                        {% if current_user.role == 'profile_user' %}PROFILE EDITOR{% else %}SUPERADMIN CLEARANCE{% endif %}
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <img src="{{ current_user.avatar_url }}" alt="{{ current_user.display_name }}" style="width: 34px; height: 34px; min-width: 34px; border-radius: 50%; object-fit: cover; border: 1.5px solid {% if current_user.role == 'profile_user' %}var(--neon-purple){% else %}var(--neon-cyan){% endif %};" onerror="this.src='https://ui-avatars.com/api/?name={{ current_user.display_name|replace(' ', '+') }}&background=0b112c&color=00f0ff&size=100'">
+                        <div style="overflow: hidden; flex: 1;">
+                            <div style="font-size: 13px; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                {{ current_user.display_name }}
+                            </div>
+                            <div style="font-size: 9.5px; color: {% if current_user.role == 'profile_user' %}var(--neon-purple){% else %}var(--neon-cyan){% endif %}; font-family: var(--font-mono); font-weight: 700;">
+                                {% if current_user.role == 'profile_user' %}PROFILE EDITOR{% else %}SUPERADMIN CLEARANCE{% endif %}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </aside>

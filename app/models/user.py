@@ -35,6 +35,35 @@ class User(UserMixin, db.Model):
     def is_active(self):
         return self.is_active_account
 
+    @property
+    def avatar_url(self) -> str:
+        """Returns the avatar photo for this user, from linked profile or site settings."""
+        if self.profile:
+            return self.profile.avatar_url
+        try:
+            from app.models.settings import SiteSetting
+            settings = SiteSetting.get_settings()
+            return (settings.avatar_url if settings and settings.avatar_url else "/static/images/profile/avatar.jpg")
+        except Exception:
+            return "/static/images/profile/avatar.jpg"
+
+    @avatar_url.setter
+    def avatar_url(self, value: str):
+        """Sets avatar url on linked profile or site settings."""
+        if self.profile:
+            data = self.profile.get_data()
+            if "settings" not in data:
+                data["settings"] = {}
+            data["settings"]["avatar_url"] = value
+            self.profile.set_data(data)
+        try:
+            from app.models.settings import SiteSetting
+            settings = SiteSetting.get_settings()
+            if settings:
+                settings.avatar_url = value
+        except Exception:
+            pass
+
     def __repr__(self):
         return f"<User {self.username}>"
 

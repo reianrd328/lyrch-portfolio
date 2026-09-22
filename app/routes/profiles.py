@@ -11,6 +11,7 @@ from app.services.profile_service import (
     switch_active_profile,
     bootstrap_default_profile_if_needed
 )
+from app.services.upload_service import save_upload_file, delete_file
 
 profiles_bp = Blueprint("admin_profiles", __name__)
 
@@ -74,6 +75,16 @@ def create():
     else:
         # Generate clean starter template
         data = get_starter_template_data(name, client_name=client_name, theme_preset=theme_preset)
+
+    # Optional avatar picture upload or URL
+    avatar_file = request.files.get("avatar")
+    avatar_url_text = request.form.get("avatar_url_text", "").strip()
+    if avatar_file and avatar_file.filename:
+        success, res = save_upload_file(avatar_file, subfolder="profile", allowed_types="image")
+        if success:
+            data.setdefault("settings", {})["avatar_url"] = res
+    elif avatar_url_text:
+        data.setdefault("settings", {})["avatar_url"] = avatar_url_text
 
     new_profile = PortfolioProfile(
         name=name,
@@ -199,6 +210,55 @@ def toggle_account(profile_id):
     flash(f"Login account '@{user.username}' for '{profile.name}' is now {status_label}.", "success" if user.is_active_account else "warning")
     return redirect(url_for("admin_profiles.index"))
 
+@profiles_bp.route("/upload-avatar", methods=["POST"])
+@login_required
+def upload_profile_avatar():
+    """Instant AJAX avatar uploader for profile workspace or admin desk."""
+    avatar_file = request.files.get("avatar")
+    if not avatar_file or not avatar_file.filename:
+        return jsonify({"success": False, "error": "No image file provided."}), 400
+
+    profile_id = request.form.get("profile_id")
+    if current_user.role == "profile_user":
+        if not current_user.profile_id:
+            return jsonify({"success": False, "error": "No profile assigned."}), 403
+        profile = PortfolioProfile.query.get_or_404(current_user.profile_id)
+    else:
+        if profile_id:
+            profile = PortfolioProfile.query.get_or_404(profile_id)
+        else:
+            profile = PortfolioProfile.query.filter_by(is_active=True).first() or PortfolioProfile.query.first()
+            if not profile:
+                return jsonify({"success": False, "error": "No profile found."}), 404
+
+    success, res = save_upload_file(avatar_file, subfolder="profile", allowed_types="image")
+    if not success:
+        return jsonify({"success": False, "error": res}), 400
+
+    data = profile.get_data()
+    if "settings" not in data:
+        data["settings"] = {}
+
+    old_avatar = data["settings"].get("avatar_url")
+    if old_avatar and old_avatar.startswith("/uploads/"):
+        delete_file(old_avatar)
+
+    data["settings"]["avatar_url"] = res
+    profile.set_data(data)
+    profile.updated_at = datetime.utcnow()
+
+    if profile.is_active:
+        site_settings = SiteSetting.get_settings()
+        site_settings.avatar_url = res
+
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "avatar_url": res,
+        "message": "Profile picture updated and applied live!"
+    })
+
 @profiles_bp.route("/my-profile", methods=["GET", "POST"])
 @login_required
 def my_profile():
@@ -249,6 +309,22 @@ def my_profile():
         if hero_bio:
             data["settings"]["hero_bio"] = hero_bio
 
+        # Check avatar file upload or direct URL
+        avatar_file = request.files.get("avatar")
+        avatar_url_text = request.form.get("avatar_url_text", "").strip()
+        new_avatar = None
+        if avatar_file and avatar_file.filename:
+            success, res = save_upload_file(avatar_file, subfolder="profile", allowed_types="image")
+            if success:
+                new_avatar = res
+            else:
+                flash(f"Avatar upload notice: {res}", "warning")
+        elif avatar_url_text:
+            new_avatar = avatar_url_text
+
+        if new_avatar:
+            data["settings"]["avatar_url"] = new_avatar
+
         # Check password change
         new_pw = request.form.get("new_password", "").strip()
         if new_pw:
@@ -271,6 +347,8 @@ def my_profile():
                 site_settings.contact_email = contact_email
             if hero_bio:
                 site_settings.hero_bio = hero_bio
+            if new_avatar:
+                site_settings.avatar_url = new_avatar
 
         db.session.commit()
         flash(f"Your profile '{profile.name}' was successfully updated!", "success")
@@ -341,18 +419,37 @@ def edit(profile_id):
     profile.is_published = is_published
     profile.updated_at = datetime.utcnow()
 
-    # Also update theme & display name in internal snapshot settings
+    # Also update theme, display name & avatar in internal snapshot settings
     data = profile.get_data()
-    if "settings" in data:
-        data["settings"]["default_theme"] = theme_preset
-        display = client_name or name
-        if display:
-            data["settings"]["display_name"] = display
-        profile.set_data(data)
+    if "settings" not in data:
+        data["settings"] = {}
+
+    avatar_file = request.files.get("avatar")
+    avatar_url_text = request.form.get("avatar_url_text", "").strip()
+    new_avatar = None
+    if avatar_file and avatar_file.filename:
+        success, res = save_upload_file(avatar_file, subfolder="profile", allowed_types="image")
+        if success:
+            new_avatar = res
+        else:
+            flash(f"Avatar upload notice: {res}", "warning")
+    elif avatar_url_text:
+        new_avatar = avatar_url_text
+
+    if new_avatar:
+        data["settings"]["avatar_url"] = new_avatar
+
+    data["settings"]["default_theme"] = theme_preset
+    display = client_name or name
+    if display:
+        data["settings"]["display_name"] = display
+    profile.set_data(data)
 
     # If this profile is currently active on the main website, immediately apply to live SiteSetting
     if profile.is_active:
         site_settings = SiteSetting.get_settings()
+        if new_avatar:
+            site_settings.avatar_url = new_avatar
         display = client_name or name
         if display:
             site_settings.display_name = display

@@ -52,7 +52,51 @@
     </div>
 
     <!-- Edit Profile Form -->
-    <form action="{{ url_for('admin_profiles.my_profile') }}" method="POST">
+    <form action="{{ url_for('admin_profiles.my_profile') }}" method="POST" enctype="multipart/form-data">
+        <!-- Profile Picture / Avatar Section -->
+        <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(0, 240, 255, 0.25); border-radius: 10px; padding: 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">
+            <!-- Avatar Circle Preview -->
+            <div style="text-align: center; display: flex; flex-direction: column; align-items: center; min-width: 120px;">
+                <div class="avatar-customizer-wrap" id="workspaceAvatarWrap" title="Click or drop photo here to change" style="width: 105px; height: 105px; margin: 0 auto 8px;">
+                    <div class="avatar-preview-circle" style="border-width: 3px;">
+                        <img id="workspaceAvatarImg" src="{{ settings_dict.get('avatar_url') or profile.avatar_url }}" alt="{{ profile.name }}" onerror="this.src='https://ui-avatars.com/api/?name={{ profile.name|replace(' ', '+') }}&background=0b112c&color=00f0ff&size=180'">
+                        <div class="avatar-hover-overlay">
+                            <i class="fa-solid fa-camera" style="font-size: 18px;"></i>
+                            <span>Change</span>
+                        </div>
+                    </div>
+                </div>
+
+                <input type="file" id="workspaceAvatarFile" name="avatar" accept="image/png, image/jpeg, image/jpg, image/webp, image/gif, image/svg+xml, image/jfif, image/bmp" style="display: none;">
+                
+                <button type="button" class="btn-command-secondary" onclick="document.getElementById('workspaceAvatarFile').click()" style="font-size: 11px; padding: 5px 12px; border-color: var(--neon-cyan);">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Choose Photo
+                </button>
+
+                <div id="workspaceAvatarStatus" class="avatar-status-pill" style="max-width: 160px; font-size: 10.5px;">
+                    Click photo to change
+                </div>
+            </div>
+
+            <!-- Avatar Info & Direct Link -->
+            <div style="flex: 1; min-width: 260px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                    <i class="fa-solid fa-circle-user" style="color: var(--neon-cyan); font-size: 16px;"></i>
+                    <h4 style="font-family: var(--font-display); font-size: 14px; color: #fff; margin: 0; letter-spacing: 0.5px;">
+                        PROFILE PICTURE / AVATAR
+                    </h4>
+                </div>
+                <p style="font-size: 12px; color: #94a3b8; line-height: 1.5; margin: 0 0 12px;">
+                    Upload your profile portrait or headshot photo. This image will appear across your dedicated portfolio (<code style="color: var(--neon-cyan);">/p/{{ profile.slug }}</code>) hero banner, about page, and command dashboard.
+                </p>
+
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 10.5px; color: var(--text-muted);">IMAGE URL (OPTIONAL DIRECT LINK)</label>
+                    <input type="text" name="avatar_url_text" id="workspaceAvatarUrlInput" value="{{ settings_dict.get('avatar_url', '') }}" placeholder="Or paste direct image URL (e.g. https://...)" class="form-input" style="font-size: 12px;">
+                </div>
+            </div>
+        </div>
+
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 20px;">
             <div class="form-group">
                 <label class="form-label">Full Name / Profile Name *</label>
@@ -127,4 +171,111 @@
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const avatarInput = document.getElementById("workspaceAvatarFile");
+    const avatarWrap = document.getElementById("workspaceAvatarWrap");
+    const avatarImg = document.getElementById("workspaceAvatarImg");
+    const avatarStatus = document.getElementById("workspaceAvatarStatus");
+    const avatarUrlInput = document.getElementById("workspaceAvatarUrlInput");
+
+    if (avatarWrap && avatarInput) {
+        avatarWrap.addEventListener("click", () => avatarInput.click());
+
+        // Drag & drop
+        avatarWrap.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            avatarWrap.style.transform = "scale(1.05)";
+        });
+        avatarWrap.addEventListener("dragleave", (e) => {
+            e.preventDefault();
+            avatarWrap.style.transform = "scale(1)";
+        });
+        avatarWrap.addEventListener("drop", (e) => {
+            e.preventDefault();
+            avatarWrap.style.transform = "scale(1)";
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                avatarInput.files = e.dataTransfer.files;
+                handleWorkspaceAvatarFile(e.dataTransfer.files[0]);
+            }
+        });
+    }
+
+    if (avatarInput) {
+        avatarInput.addEventListener("change", (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                handleWorkspaceAvatarFile(e.target.files[0]);
+            }
+        });
+    }
+
+    function handleWorkspaceAvatarFile(file) {
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+            alert("Please select a valid image file (PNG, JPG, JPEG, WEBP, GIF).");
+            return;
+        }
+
+        // Live preview via FileReader
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            if (avatarImg) {
+                avatarImg.src = evt.target.result;
+                avatarImg.style.transition = "all 0.3s ease";
+                avatarImg.style.filter = "brightness(1.2)";
+                setTimeout(() => { avatarImg.style.filter = "brightness(1)"; }, 350);
+            }
+
+            if (avatarStatus) {
+                avatarStatus.innerHTML = '<span style="color: var(--neon-cyan);"><i class="fa-solid fa-spinner fa-spin"></i> Uploading photo...</span>';
+            }
+
+            // AJAX instant upload
+            const formData = new FormData();
+            formData.append("avatar", file);
+            formData.append("profile_id", "{{ profile.id }}");
+
+            fetch("{{ url_for('admin_profiles.upload_profile_avatar') }}", {
+                method: "POST",
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (avatarStatus) {
+                        const sizeKb = Math.round(file.size / 1024);
+                        avatarStatus.innerHTML = `<span style="color: #4ade80; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Saved Live!</span> (${sizeKb} KB)`;
+                    }
+                    if (avatarUrlInput) {
+                        avatarUrlInput.value = data.avatar_url;
+                    }
+                } else {
+                    if (avatarStatus) {
+                        avatarStatus.innerHTML = `<span style="color: #f87171;"><i class="fa-solid fa-triangle-exclamation"></i> ${data.error || 'Upload error'}</span>`;
+                    }
+                }
+            })
+            .catch(err => {
+                console.warn("Avatar AJAX upload:", err);
+                if (avatarStatus) {
+                    avatarStatus.innerHTML = '<span style="color: #4ade80;"><i class="fa-solid fa-check"></i> Ready</span> <br><small style="color: var(--neon-cyan);">Click Save below</small>';
+                }
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+
+    if (avatarUrlInput && avatarImg) {
+        avatarUrlInput.addEventListener("input", function(e) {
+            const val = e.target.value.trim();
+            if (val.startsWith("http://") || val.startsWith("https://") || val.startsWith("/static/") || val.startsWith("/uploads/")) {
+                avatarImg.src = val;
+            }
+        });
+    }
+});
+</script>
+</div>
 {% endblock %}
+

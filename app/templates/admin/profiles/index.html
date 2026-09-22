@@ -105,15 +105,20 @@
                     </span>
                 </div>
 
-                <!-- Profile Title & Client -->
-                <h3 style="font-family: var(--font-display); font-size: 18px; color: #f8fafc; margin: 0 0 4px;">
-                    {{ profile.name }}
-                </h3>
-                {% if profile.client_name %}
-                <div style="font-size: 12px; color: var(--neon-cyan); margin-bottom: 8px;">
-                    Client: <strong>{{ profile.client_name }}</strong>
+                <!-- Profile Title, Avatar & Client -->
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                    <img src="{{ profile.avatar_url }}" alt="{{ profile.name }}" style="width: 44px; height: 44px; min-width: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--neon-cyan); box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);" onerror="this.src='https://ui-avatars.com/api/?name={{ profile.name|replace(' ', '+') }}&background=0b112c&color=00f0ff&size=100'">
+                    <div style="overflow: hidden; flex: 1;">
+                        <h3 style="font-family: var(--font-display); font-size: 17px; color: #f8fafc; margin: 0 0 2px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">
+                            {{ profile.name }}
+                        </h3>
+                        {% if profile.client_name %}
+                        <div style="font-size: 11.5px; color: var(--neon-cyan); text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">
+                            Client: <strong>{{ profile.client_name }}</strong>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
-                {% endif %}
 
                 <!-- Description -->
                 <p style="font-size: 12px; color: #94a3b8; line-height: 1.4; margin: 0 0 14px; min-height: 34px;">
@@ -219,7 +224,7 @@
 
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 2px;">
                     <div style="display: flex; gap: 6px;">
-                        <button type="button" class="telemetry-btn" title="Edit Metadata" onclick="openEditModal({{ profile.id }}, '{{ profile.name|replace("'", "\\'") }}', '{{ profile.client_name|replace("'", "\\'") }}', '{{ profile.slug }}', '{{ profile.theme_preset }}', '{{ profile.description|replace("'", "\\'") }}', {{ 'true' if profile.is_published else 'false' }})">
+                        <button type="button" class="telemetry-btn" title="Edit Metadata" onclick="openEditModal({{ profile.id }}, '{{ profile.name|replace("'", "\\'") }}', '{{ profile.client_name|replace("'", "\\'") }}', '{{ profile.slug }}', '{{ profile.theme_preset }}', '{{ profile.description|replace("'", "\\'") }}', {{ 'true' if profile.is_published else 'false' }}, '{{ profile.avatar_url }}')">
                             <i class="fa-solid fa-pen-to-square"></i>
                         </button>
                         <a href="{{ url_for('admin_profiles.export', profile_id=profile.id) }}" class="telemetry-btn" title="Export JSON">
@@ -258,7 +263,7 @@
             <button type="button" class="alert-close" onclick="closeModal('createModal')">&times;</button>
         </div>
 
-        <form action="{{ url_for('admin_profiles.create') }}" method="POST">
+        <form action="{{ url_for('admin_profiles.create') }}" method="POST" enctype="multipart/form-data">
             <div style="margin-bottom: 14px;">
                 <label style="display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px;">Profile / Portfolio Name *</label>
                 <input type="text" name="name" required placeholder="e.g. Apex Construction Portfolio or Dr. John Smith" class="command-input" style="width: 100%;" oninput="autoGenerateSlug(this.value, 'createSlugInput')">
@@ -295,9 +300,26 @@
                 </div>
             </div>
 
-            <div style="margin-bottom: 20px;">
+            <div style="margin-bottom: 14px;">
                 <label style="display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px;">Description / Notes</label>
                 <textarea name="description" rows="2" placeholder="Notes about this client or target market..." class="command-input" style="width: 100%;"></textarea>
+            </div>
+
+            <!-- Optional Profile Picture -->
+            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;">
+                <span style="font-size: 11px; font-weight: 700; color: var(--neon-cyan); text-transform: uppercase; font-family: var(--font-mono); display: block; margin-bottom: 8px;">
+                    <i class="fa-solid fa-camera"></i> Optional: Profile Picture / Photo
+                </span>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label style="display: block; font-size: 11px; color: #94a3b8; margin-bottom: 4px;">Upload Image</label>
+                        <input type="file" name="avatar" accept="image/*" class="command-input" style="width: 100%; font-size: 11px; padding: 4px 6px;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 11px; color: #94a3b8; margin-bottom: 4px;">Or Direct Image URL</label>
+                        <input type="text" name="avatar_url_text" placeholder="https://..." class="command-input" style="width: 100%; font-size: 11px;">
+                    </div>
+                </div>
             </div>
 
             <!-- Optional Login Credentials -->
@@ -343,7 +365,21 @@
             <button type="button" class="alert-close" onclick="closeModal('editModal')">&times;</button>
         </div>
 
-        <form id="editForm" method="POST">
+        <form id="editForm" method="POST" enctype="multipart/form-data">
+            <!-- Profile Avatar Preview & Upload -->
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 8px; padding: 12px 14px;">
+                <div style="text-align: center;">
+                    <img id="editAvatarPreview" src="/static/images/profile/avatar.jpg" alt="Preview" style="width: 56px; height: 56px; min-width: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--neon-purple); box-shadow: 0 0 10px rgba(168, 85, 247, 0.3); display: block;" onerror="this.src='/static/images/profile/avatar.jpg'">
+                </div>
+                <div style="flex: 1;">
+                    <label style="display: block; font-size: 11px; font-weight: 700; color: #cbd5e1; margin-bottom: 4px;">
+                        <i class="fa-solid fa-camera" style="color: var(--neon-purple);"></i> PROFILE PICTURE / PHOTO
+                    </label>
+                    <input type="file" name="avatar" id="editAvatarFileInput" accept="image/*" class="command-input" style="width: 100%; font-size: 11px; padding: 4px 6px;">
+                    <input type="text" name="avatar_url_text" id="editAvatarUrlInput" placeholder="Or paste image URL (https://...)" class="command-input" style="width: 100%; font-size: 11px; margin-top: 6px;">
+                </div>
+            </div>
+
             <div style="margin-bottom: 14px;">
                 <label style="display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px;">Profile Name *</label>
                 <input type="text" name="name" id="editNameInput" required class="command-input" style="width: 100%;">
@@ -480,7 +516,7 @@ function autoGenerateSlug(text, targetId) {
     target.value = clean;
 }
 
-function openEditModal(id, name, client, slug, theme, desc, is_published) {
+function openEditModal(id, name, client, slug, theme, desc, is_published, avatar_url) {
     document.getElementById('editForm').action = "/admin/profiles/" + id + "/edit";
     document.getElementById('editNameInput').value = name;
     document.getElementById('editClientInput').value = client || '';
@@ -488,8 +524,47 @@ function openEditModal(id, name, client, slug, theme, desc, is_published) {
     document.getElementById('editThemeSelect').value = theme || 'cyber';
     document.getElementById('editDescInput').value = desc || '';
     document.getElementById('editPublishedInput').checked = (is_published === true || is_published === 'true');
+    
+    // Set current avatar preview
+    const preview = document.getElementById('editAvatarPreview');
+    const avatarInput = document.getElementById('editAvatarFileInput');
+    const avatarUrlInput = document.getElementById('editAvatarUrlInput');
+    if (preview) {
+        preview.src = avatar_url || '/static/images/profile/avatar.jpg';
+    }
+    if (avatarUrlInput) {
+        avatarUrlInput.value = (avatar_url && !avatar_url.includes('ui-avatars.com') && avatar_url !== '/static/images/profile/avatar.jpg') ? avatar_url : '';
+    }
+    if (avatarInput) {
+        avatarInput.value = '';
+    }
     openModal('editModal');
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const editFile = document.getElementById('editAvatarFileInput');
+    const editUrl = document.getElementById('editAvatarUrlInput');
+    const editPrev = document.getElementById('editAvatarPreview');
+
+    if (editFile && editPrev) {
+        editFile.addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const r = new FileReader();
+                r.onload = ev => { editPrev.src = ev.target.result; };
+                r.readAsDataURL(e.target.files[0]);
+            }
+        });
+    }
+
+    if (editUrl && editPrev) {
+        editUrl.addEventListener('input', function(e) {
+            const v = e.target.value.trim();
+            if (v.startsWith('http://') || v.startsWith('https://') || v.startsWith('/static/') || v.startsWith('/uploads/')) {
+                editPrev.src = v;
+            }
+        });
+    }
+});
 
 function openAccountModal(id, profileName, username, displayName, email) {
     document.getElementById('accountForm').action = "/admin/profiles/" + id + "/account";

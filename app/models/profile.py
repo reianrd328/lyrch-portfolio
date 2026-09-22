@@ -44,6 +44,12 @@ class PortfolioProfile(db.Model):
         from app.models.user import User
         return User.query.filter_by(profile_id=self.id).first()
 
+    @property
+    def avatar_url(self) -> str:
+        """Returns the profile picture URL configured in snapshot settings or default."""
+        data = self.get_data()
+        return data.get("settings", {}).get("avatar_url") or "/static/images/profile/avatar.jpg"
+
     def __repr__(self):
         return f"<PortfolioProfile {self.name} (slug={self.slug}, active={self.is_active})>"
 

@@ -319,6 +319,54 @@ class PortfolioProfilesTestCase(unittest.TestCase):
             still_there = db.session.get(PortfolioProfile, master_id)
             self.assertIsNotNone(still_there)
 
+    def test_profile_avatar_update_and_ajax_upload(self):
+        self.login_admin()
+        # Create a new profile
+        res = self.client.post("/admin/profiles/create", data={
+            "name": "Sarah Connor",
+            "slug": "sarah-connor",
+            "avatar_url_text": "https://example.com/sarah.jpg",
+            "submitted_from_form": "1",
+            "is_published": "1"
+        }, follow_redirects=True)
+        self.assertEqual(res.status_code, 200)
+
+        with self.app.app_context():
+            profile = PortfolioProfile.query.filter_by(slug="sarah-connor").first()
+            self.assertIsNotNone(profile)
+            self.assertEqual(profile.avatar_url, "https://example.com/sarah.jpg")
+            prof_id = profile.id
+
+        # Update avatar via edit route
+        edit_res = self.client.post(f"/admin/profiles/{prof_id}/edit", data={
+            "name": "Sarah Connor",
+            "slug": "sarah-connor",
+            "avatar_url_text": "https://example.com/sarah_new.jpg",
+            "submitted_from_form": "1",
+            "is_published": "1"
+        }, follow_redirects=True)
+        self.assertEqual(edit_res.status_code, 200)
+
+        with self.app.app_context():
+            profile = PortfolioProfile.query.get(prof_id)
+            self.assertEqual(profile.avatar_url, "https://example.com/sarah_new.jpg")
+
+        # Test AJAX instant avatar upload
+        fake_img = (io.BytesIO(b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR"), "avatar.png")
+        ajax_res = self.client.post("/admin/profiles/upload-avatar", data={
+            "avatar": fake_img,
+            "profile_id": prof_id
+        })
+        self.assertEqual(ajax_res.status_code, 200)
+        data = json.loads(ajax_res.data)
+        self.assertTrue(data["success"])
+        self.assertIn("avatar_url", data)
+
+        with self.app.app_context():
+            profile = PortfolioProfile.query.get(prof_id)
+            self.assertEqual(profile.avatar_url, data["avatar_url"])
+
 if __name__ == "__main__":
     unittest.main()
+
 
