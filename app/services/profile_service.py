@@ -59,6 +59,16 @@ def capture_current_portfolio_dict() -> dict:
         ]
         projects_list.append(p_data)
 
+    active_p = PortfolioProfile.query.filter_by(is_active=True).first()
+    if active_p:
+        gallery_query = GalleryItem.query.filter((GalleryItem.profile_id == active_p.id) | (GalleryItem.profile_id.is_(None)))
+        video_query = Video.query.filter((Video.profile_id == active_p.id) | (Video.profile_id.is_(None)))
+        doc_query = Document.query.filter((Document.profile_id == active_p.id) | (Document.profile_id.is_(None)))
+    else:
+        gallery_query = GalleryItem.query
+        video_query = Video.query
+        doc_query = Document.query
+
     return {
         "metadata": {
             "version": "1.0",
@@ -67,9 +77,9 @@ def capture_current_portfolio_dict() -> dict:
         "settings": settings_dict,
         "categories": [serialize_row(c, exclude_cols=["id"]) for c in Category.query.all()],
         "projects": projects_list,
-        "videos": [serialize_row(v, exclude_cols=["id", "created_at"]) for v in Video.query.all()],
-        "gallery": [serialize_row(g, exclude_cols=["id", "created_at"]) for g in GalleryItem.query.all()],
-        "documents": [serialize_row(d, exclude_cols=["id", "created_at"]) for d in Document.query.all()],
+        "videos": [serialize_row(v, exclude_cols=["id", "created_at"]) for v in video_query.all()],
+        "gallery": [serialize_row(g, exclude_cols=["id", "created_at"]) for g in gallery_query.all()],
+        "documents": [serialize_row(d, exclude_cols=["id", "created_at"]) for d in doc_query.all()],
         "skills": [serialize_row(s, exclude_cols=["id"]) for s in Skill.query.all()],
         "experiences": [serialize_row(e, exclude_cols=["id"]) for e in Experience.query.all()],
         "blog_posts": [serialize_row(b, exclude_cols=["id", "created_at", "updated_at"]) for b in BlogPost.query.all()],
@@ -80,7 +90,7 @@ def filter_valid_columns(model_cls, data_dict: dict) -> dict:
     col_names = {c.name for c in model_cls.__table__.columns}
     return {k: v for k, v in data_dict.items() if k in col_names and k != "id"}
 
-def apply_portfolio_dict_to_database(data: dict) -> tuple[bool, str]:
+def apply_portfolio_dict_to_database(data: dict, target_profile_id: int = None) -> tuple[bool, str]:
     """
     Replaces the current active portfolio content in the database with the given data.
     Safely preserves system credentials and user accounts.
@@ -97,9 +107,20 @@ def apply_portfolio_dict_to_database(data: dict) -> tuple[bool, str]:
         # 2. Clear content tables safely (child items first to respect foreign keys)
         ProjectImage.query.delete()
         Project.query.delete()
-        Video.query.delete()
-        GalleryItem.query.delete()
-        Document.query.delete()
+        if target_profile_id:
+            Video.query.filter(
+                (Video.profile_id == target_profile_id) | (Video.profile_id.is_(None))
+            ).delete(synchronize_session=False)
+            GalleryItem.query.filter(
+                (GalleryItem.profile_id == target_profile_id) | (GalleryItem.profile_id.is_(None))
+            ).delete(synchronize_session=False)
+            Document.query.filter(
+                (Document.profile_id == target_profile_id) | (Document.profile_id.is_(None))
+            ).delete(synchronize_session=False)
+        else:
+            Video.query.delete()
+            GalleryItem.query.delete()
+            Document.query.delete()
         Skill.query.delete()
         Experience.query.delete()
         BlogPost.query.delete()
@@ -132,15 +153,24 @@ def apply_portfolio_dict_to_database(data: dict) -> tuple[bool, str]:
 
         # 7. Populate Videos
         for v_data in data.get("videos", []):
-            db.session.add(Video(**filter_valid_columns(Video, v_data)))
+            clean = filter_valid_columns(Video, dict(v_data))
+            if target_profile_id:
+                clean["profile_id"] = target_profile_id
+            db.session.add(Video(**clean))
 
         # 8. Populate Gallery
         for g_data in data.get("gallery", []):
-            db.session.add(GalleryItem(**filter_valid_columns(GalleryItem, g_data)))
+            clean = filter_valid_columns(GalleryItem, dict(g_data))
+            if target_profile_id:
+                clean["profile_id"] = target_profile_id
+            db.session.add(GalleryItem(**clean))
 
         # 9. Populate Documents
         for d_data in data.get("documents", []):
-            db.session.add(Document(**filter_valid_columns(Document, d_data)))
+            clean = filter_valid_columns(Document, dict(d_data))
+            if target_profile_id:
+                clean["profile_id"] = target_profile_id
+            db.session.add(Document(**clean))
 
         # 10. Populate Blog Posts
         for b_data in data.get("blog_posts", []):
@@ -297,7 +327,7 @@ def switch_active_profile(target_profile_id: int) -> tuple[bool, str]:
 
     # 2. Apply target profile data
     target_data = target.get_data()
-    success, msg = apply_portfolio_dict_to_database(target_data)
+    success, msg = apply_portfolio_dict_to_database(target_data, target_profile_id=target.id)
     if not success:
         return False, msg
 

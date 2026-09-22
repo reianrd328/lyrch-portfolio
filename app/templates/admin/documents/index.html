@@ -9,10 +9,46 @@
             <i class="fa-solid fa-folder-open"></i>
             <span>DOCUMENT REPOSITORY &amp; WHITE PAPERS</span>
         </div>
-        <a href="{{ url_for('admin_documents.upload') }}" class="btn-command-primary" style="font-size: 12px; padding: 6px 14px;">
-            <i class="fa-solid fa-cloud-arrow-up"></i> Upload Document
-        </a>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            {% if not is_profile_user %}
+            <form id="docProfileFilterForm" method="GET" action="{{ url_for('admin_documents.index') }}" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">PROFILE:</span>
+                <select name="profile_id" onchange="document.getElementById('docProfileFilterForm').submit();" style="border-radius: 6px; padding: 5px 10px; border: 1px solid rgba(168, 85, 247, 0.45); background: rgba(30, 27, 75, 0.65); color: #e9d5ff; font-weight: 600; font-size: 12px; cursor: pointer;">
+                    <option value="all" {% if selected_profile == 'all' or not selected_profile %}selected{% endif %}>🌐 All Portfolios</option>
+                    {% for prof in all_profiles %}
+                        <option value="{{ prof.id }}" {% if selected_profile == prof.id|string %}selected{% endif %}>
+                            👤 {{ prof.name }}{% if prof.is_active %} (Active Root){% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+            {% endif %}
+
+            <a href="{{ url_for('admin_documents.upload', profile_id=selected_profile) }}" class="btn-command-primary" style="font-size: 12px; padding: 6px 14px;">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload Document
+            </a>
+        </div>
     </div>
+
+    <!-- Active Profile Scope Indicator Banner -->
+    {% if scoped_profile %}
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; margin: 16px 0 6px; background: rgba(168, 85, 247, 0.12); border: 1px solid rgba(168, 85, 247, 0.35); border-radius: 8px; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-id-badge" style="color: var(--neon-purple); font-size: 20px;"></i>
+            <div>
+                <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #c084fc; font-weight: 700;">DOCUMENT SCOPE:</span>
+                <strong style="color: #fff; font-size: 14px; margin-left: 6px;">{{ scoped_profile.name }}</strong>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            {% if not is_profile_user %}
+            <a href="{{ url_for('admin_documents.index', profile_id='all') }}" class="btn-command-secondary" style="padding: 5px 10px; font-size: 11px; color: #cbd5e1; text-decoration: none;">
+                <i class="fa-solid fa-xmark"></i> Show All
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 
     <div style="margin-top: 18px; overflow-x: auto;">
         <table style="width: 100%; border-collapse: collapse; font-size: 12px; color: #cbd5e1;">

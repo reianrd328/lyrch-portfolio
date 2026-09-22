@@ -26,6 +26,10 @@ class Video(db.Model):
     visibility = db.Column(db.String(20), default="published", index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # Portfolio Profile Scoping
+    profile_id = db.Column(db.Integer, db.ForeignKey("portfolio_profiles.id", ondelete="SET NULL"), nullable=True, index=True)
+    profile = db.relationship("PortfolioProfile", backref=db.backref("videos", lazy="dynamic"), foreign_keys=[profile_id])
+
     @property
     def tools_list(self):
         if not self.tools_used:
@@ -38,6 +42,32 @@ class Video(db.Model):
             return []
         return [p.strip() for p in self.platforms.split(",") if p.strip()]
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "slug": self.slug,
+            "description": self.description or "",
+            "video_url": self.video_url or "",
+            "thumbnail_url": self.thumbnail_url or "",
+            "album": self.album or "",
+            "category": self.category or "AI Creative",
+            "tools_used": self.tools_used or "",
+            "tools_list": self.tools_list,
+            "platforms": self.platforms or "",
+            "platforms_list": self.platforms_list,
+            "duration": self.duration or "00:10",
+            "aspect_ratio": self.aspect_ratio or "9:16",
+            "prompt_text": self.prompt_text or "",
+            "workflow_notes": self.workflow_notes or "",
+            "featured": self.featured,
+            "visibility": self.visibility or "published",
+            "profile_id": self.profile_id,
+            "profile_name": self.profile.name if self.profile else None,
+            "created_at": self.created_at.strftime("%b %d, %Y") if self.created_at else ""
+        }
+
     def __repr__(self):
         return f"<Video {self.title}>"
+
 

@@ -13,6 +13,21 @@
     </div>
 
     <form method="POST" action="{{ url_for('admin_documents.upload') }}" enctype="multipart/form-data" style="margin-top: 18px; display: flex; flex-direction: column; gap: 14px;">
+        {% if not is_profile_user %}
+        <div>
+            <label style="font-size: 11px; color: #c084fc; display: block; margin-bottom: 4px; font-weight: 700;">PORTFOLIO PROFILE</label>
+            <select name="profile_id" style="width: 100%; background: #0f172a; border: 1px solid rgba(168,85,247,0.5); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px; cursor: pointer;">
+                {% for prof in all_profiles %}
+                <option value="{{ prof.id }}" {% if active_profile and prof.id == active_profile.id %}selected{% endif %}>
+                    {{ prof.name }} ({{ prof.slug }}){% if prof.is_active %} [ACTIVE ROOT]{% endif %}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% else %}
+        <input type="hidden" name="profile_id" value="{{ current_user.profile_id }}">
+        {% endif %}
+
         <div>
             <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">DOCUMENT TITLE</label>
             <input type="text" name="title" required placeholder="PAWSHOP System Documentation" style="width: 100%; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px;">

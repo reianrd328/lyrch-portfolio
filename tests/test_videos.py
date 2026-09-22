@@ -256,5 +256,131 @@ class VideoTestCase(unittest.TestCase):
             self.assertEqual(va.album, "Epic Boss Series")
             self.assertEqual(vb.album, "Epic Boss Series")
 
+    def test_video_profile_scoping_admin(self):
+        from app.models import PortfolioProfile
+        self.login_admin()
+
+        with self.app.app_context():
+            prof1 = PortfolioProfile(name="Richard Master", slug="richard-master", is_active=True, is_published=True, data_json="{}")
+            prof2 = PortfolioProfile(name="Tobias Client", slug="tobias-client", is_active=False, is_published=True, data_json="{}")
+            db.session.add_all([prof1, prof2])
+            db.session.commit()
+            p1_id = prof1.id
+            p2_id = prof2.id
+
+        # Upload video for Profile 1
+        res1 = self.client.post("/admin/videos/create", data={
+            "title": "Master Video Reel",
+            "album_select": "Master Series",
+            "category": "AI Creative",
+            "profile_id": str(p1_id),
+            "visibility": "published"
+        }, follow_redirects=True)
+        self.assertEqual(res1.status_code, 200)
+
+        # Upload video for Profile 2 (Tobias)
+        res2 = self.client.post("/admin/videos/create", data={
+            "title": "Tobias Special Video",
+            "album_select": "Tobias Album",
+            "category": "AI Creative",
+            "profile_id": str(p2_id),
+            "visibility": "published"
+        }, follow_redirects=True)
+        self.assertEqual(res2.status_code, 200)
+
+        # Admin views Profile 2 scope (Hub view shows albums and standalone)
+        res_scope2 = self.client.get(f"/admin/videos/?profile_id={p2_id}")
+        self.assertEqual(res_scope2.status_code, 200)
+        self.assertIn(b"Tobias Album", res_scope2.data)
+        self.assertNotIn(b"Master Series", res_scope2.data)
+        self.assertNotIn(b"Master Video Reel", res_scope2.data)
+
+        # Inside Album view for Profile 2 shows the individual video
+        res_inside_tobias = self.client.get(f"/admin/videos/?album=Tobias+Album&profile_id={p2_id}")
+        self.assertEqual(res_inside_tobias.status_code, 200)
+        self.assertIn(b"Tobias Special Video", res_inside_tobias.data)
+        self.assertNotIn(b"Master Video Reel", res_inside_tobias.data)
+
+        # Admin views Profile 1 scope
+        res_scope1 = self.client.get(f"/admin/videos/?profile_id={p1_id}")
+        self.assertEqual(res_scope1.status_code, 200)
+        self.assertIn(b"Master Series", res_scope1.data)
+        self.assertNotIn(b"Tobias Album", res_scope1.data)
+
+        # Public /p/tobias-client/video-studio renders Tobias's video
+        res_pub_tobias = self.client.get("/p/tobias-client/video-studio")
+        self.assertEqual(res_pub_tobias.status_code, 200)
+        self.assertIn(b"Tobias Special Video", res_pub_tobias.data)
+        self.assertIn(b"Tobias Album", res_pub_tobias.data)
+        self.assertNotIn(b"Master Video Reel", res_pub_tobias.data)
+
+        # Public root /video-studio renders active profile items
+        res_pub_root = self.client.get("/video-studio")
+        self.assertEqual(res_pub_root.status_code, 200)
+        self.assertIn(b"Master Video Reel", res_pub_root.data)
+        self.assertNotIn(b"Tobias Special Video", res_pub_root.data)
+
+    def test_video_profile_user_permissions(self):
+        from app.models import PortfolioProfile
+        with self.app.app_context():
+            prof1 = PortfolioProfile(name="Richard Master", slug="richard-master", is_active=True, is_published=True, data_json="{}")
+            prof2 = PortfolioProfile(name="Tobias Client", slug="tobias-client", is_active=False, is_published=True, data_json="{}")
+            db.session.add_all([prof1, prof2])
+            db.session.commit()
+
+            # Create video for prof1
+            v_master = Video(title="Richard Exclusive", slug="richard-exclusive", profile_id=prof1.id, visibility="published")
+            db.session.add(v_master)
+
+            # Create profile user for prof2 (Tobias)
+            user_tobias = User(username="tobias_tester", email="tobias@test.dev", role="profile_user", profile_id=prof2.id)
+            user_tobias.set_password("tobiaspass")
+            db.session.add(user_tobias)
+            db.session.commit()
+            v_master_id = v_master.id
+            p2_id = prof2.id
+
+        # Log in as profile user Tobias
+        self.client.post("/auth/login", data={
+            "username": "tobias_tester",
+            "password": "tobiaspass"
+        }, follow_redirects=True)
+
+        # Tobias accesses /admin/videos/
+        res_index = self.client.get("/admin/videos/")
+        self.assertEqual(res_index.status_code, 200)
+        # Should NOT see Richard Exclusive
+        self.assertNotIn(b"Richard Exclusive", res_index.data)
+
+        # Tobias uploads a new video
+        res_upload = self.client.post("/admin/videos/create", data={
+            "title": "Tobias Personal Story",
+            "category": "AI Creative",
+            "duration": "0:10",
+            "visibility": "published"
+        }, follow_redirects=True)
+        self.assertEqual(res_upload.status_code, 200)
+
+        with self.app.app_context():
+            v_new = Video.query.filter_by(title="Tobias Personal Story").first()
+            self.assertIsNotNone(v_new)
+            # Must be strictly assigned to Tobias's profile
+            self.assertEqual(v_new.profile_id, p2_id)
+
+            # Check profile data_json was automatically synced
+            prof2_check = PortfolioProfile.query.get(p2_id)
+            videos_json = prof2_check.get_data().get("videos", [])
+            self.assertTrue(any(v.get("title") == "Tobias Personal Story" for v in videos_json))
+
+        # Tobias attempts to edit or delete Richard Exclusive (must get 403 Forbidden)
+        res_edit_forbidden = self.client.post(f"/admin/videos/edit/{v_master_id}", data={
+            "title": "Hacked Title"
+        })
+        self.assertEqual(res_edit_forbidden.status_code, 403)
+
+        res_delete_forbidden = self.client.post(f"/admin/videos/delete/{v_master_id}")
+        self.assertEqual(res_delete_forbidden.status_code, 403)
+
 if __name__ == "__main__":
     unittest.main()
+

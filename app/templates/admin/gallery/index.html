@@ -884,6 +884,20 @@
                     <input type="text" name="q" value="{{ query_text }}" placeholder="Search by title, tags, or description..." class="search-input-field">
                 </div>
 
+                <!-- Profile Scope Dropdown (Admin) -->
+                {% if not is_profile_user %}
+                <select name="profile_id" class="filter-select" onchange="document.getElementById('filterForm').submit();" style="border-color: rgba(168, 85, 247, 0.45); background: rgba(30, 27, 75, 0.65); color: #e9d5ff; font-weight: 600;">
+                    <option value="all" {% if selected_profile == 'all' or not selected_profile %}selected{% endif %}>🌐 All Portfolios</option>
+                    {% for prof in all_profiles %}
+                        <option value="{{ prof.id }}" {% if selected_profile == prof.id|string %}selected{% endif %}>
+                            👤 {{ prof.name }}{% if prof.is_active %} (Active Root){% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+                {% else %}
+                <input type="hidden" name="profile_id" value="{{ current_user.profile_id }}">
+                {% endif %}
+
                 <!-- Project Dropdown -->
                 <select name="project_id" class="filter-select" onchange="document.getElementById('filterForm').submit();">
                     <option value="">📁 All Projects</option>
@@ -910,7 +924,7 @@
 
                 <input type="hidden" name="cat" id="hiddenCatInput" value="{{ selected_cat }}">
                 <button type="submit" class="btn-command-secondary" style="padding: 7px 14px; font-size: 12px;">Filter</button>
-                {% if query_text or (selected_cat and selected_cat != 'All') or selected_project or (selected_status and selected_status != 'all') %}
+                {% if query_text or (selected_cat and selected_cat != 'All') or selected_project or (selected_status and selected_status != 'all') or (selected_profile and selected_profile != 'all') %}
                     <a href="{{ url_for('admin_gallery.index') }}" class="btn-command-secondary" style="padding: 7px 12px; font-size: 12px; color: #f87171;" title="Reset Filters">
                         <i class="fa-solid fa-xmark"></i> Clear
                     </a>
@@ -937,13 +951,13 @@
                 <div class="status-pills-list" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                     {% if selected_cat == 'Projects' and not current_project %}
                     <div style="display: flex; gap: 3px; background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 2px;">
-                        <a href="{{ url_for('admin_gallery.index', cat='Projects', view='albums', q=query_text, sort=sort_by, status=selected_status) }}"
+                        <a href="{{ url_for('admin_gallery.index', cat='Projects', view='albums', q=query_text, sort=sort_by, status=selected_status, profile_id=selected_profile) }}"
                            class="btn-command-secondary"
                            style="padding: 3px 8px; font-size: 10.5px; border: none; {% if view_mode == 'albums' %}background: rgba(168,85,247,0.3); color: #e9d5ff; font-weight: 700; border: 1px solid rgba(168,85,247,0.5);{% else %}color: var(--text-muted); background: transparent;{% endif %}"
                            title="Grouped Project Albums View">
                             <i class="fa-solid fa-folder"></i> Albums ({{ project_stats|length }})
                         </a>
-                        <a href="{{ url_for('admin_gallery.index', cat='Projects', view='flat', q=query_text, sort=sort_by, status=selected_status) }}"
+                        <a href="{{ url_for('admin_gallery.index', cat='Projects', view='flat', q=query_text, sort=sort_by, status=selected_status, profile_id=selected_profile) }}"
                            class="btn-command-secondary"
                            style="padding: 3px 8px; font-size: 10.5px; border: none; {% if view_mode == 'flat' %}background: rgba(0,240,255,0.2); color: #fff; font-weight: 700; border: 1px solid rgba(0,240,255,0.4);{% else %}color: var(--text-muted); background: transparent;{% endif %}"
                            title="Flat Assets Grid">
@@ -966,6 +980,34 @@
             </div>
         </form>
     </div>
+
+    <!-- Active Profile Scope Indicator Banner -->
+    {% if scoped_profile %}
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 18px; background: rgba(168, 85, 247, 0.12); border: 1px solid rgba(168, 85, 247, 0.35); border-radius: 8px; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-id-badge" style="color: var(--neon-purple); font-size: 18px;"></i>
+            <div>
+                <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #c084fc; font-weight: 700;">PORTFOLIO SCOPE:</span>
+                <strong style="color: #fff; font-size: 13.5px; margin-left: 6px;">{{ scoped_profile.name }}</strong>
+                {% if scoped_profile.is_active %}
+                    <span class="badge" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); font-size: 10px; margin-left: 6px; padding: 2px 7px; border-radius: 4px;">ACTIVE ROOT</span>
+                {% else %}
+                    <span class="badge" style="background: rgba(168, 85, 247, 0.2); color: #e9d5ff; border: 1px solid rgba(168, 85, 247, 0.4); font-size: 10px; margin-left: 6px; padding: 2px 7px; border-radius: 4px;">DEDICATED PROFILE</span>
+                {% endif %}
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <a href="{{ url_for('public.profile_gallery', slug=scoped_profile.slug) }}" target="_blank" class="btn-command-secondary" style="padding: 5px 12px; font-size: 11px; border-color: rgba(168,85,247,0.4); color: #e9d5ff; text-decoration: none;">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> View Profile Gallery (/p/{{ scoped_profile.slug }}/gallery)
+            </a>
+            {% if not is_profile_user %}
+            <a href="{{ url_for('admin_gallery.index', profile_id='all') }}" class="btn-command-secondary" style="padding: 5px 10px; font-size: 11px; text-decoration: none;" title="Show All Profiles">
+                <i class="fa-solid fa-layer-group"></i> View All Portfolios
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 
     <!-- 3. Bulk Action Toolbar (appears when 1 or more items checked) -->
     <div id="bulkToolbar" class="bulk-toolbar">
@@ -1007,6 +1049,17 @@
             </select>
             <button type="button" class="btn-command-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="executeBulkAction('move_to_project')">Move</button>
 
+            <!-- Assign to Profile (Admin only) -->
+            {% if not is_profile_user %}
+            <select id="bulkProfileSelect" class="filter-select" style="padding: 5px 10px; font-size: 11px; border-color: rgba(168, 85, 247, 0.4); background: rgba(30, 27, 75, 0.6); color: #e9d5ff;">
+                <option value="">👤 Move to Portfolio...</option>
+                {% for prof in all_profiles %}
+                    <option value="{{ prof.id }}">{{ prof.name }}</option>
+                {% endfor %}
+            </select>
+            <button type="button" class="btn-command-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="executeBulkAction('assign_to_profile')">Assign</button>
+            {% endif %}
+
             <!-- Delete Selected -->
             <button type="button" class="btn-command-secondary" style="padding: 5px 12px; font-size: 11px; color: #f87171; border-color: rgba(239, 68, 68, 0.4);" onclick="executeBulkAction('delete')">
                 <i class="fa-regular fa-trash-can"></i> Delete
@@ -1025,6 +1078,7 @@
         <input type="hidden" name="new_category" id="bulkFormNewCat">
         <input type="hidden" name="new_visibility" id="bulkFormNewVis">
         <input type="hidden" name="new_project_id" id="bulkFormNewProj">
+        <input type="hidden" name="new_profile_id" id="bulkFormNewProf">
     </form>
 
     <!-- 4. Inside Project Album (Drilldown View) -->
@@ -1160,6 +1214,8 @@
                          data-category="{{ item.category }}"
                          data-project="{{ item.project.title if item.project else '' }}"
                          data-project-id="{{ item.project_id or '' }}"
+                         data-profile-id="{{ item.profile_id or '' }}"
+                         data-profile-name="{{ item.profile.name if item.profile else '' }}"
                          data-description="{{ item.description or '' }}"
                          data-tags="{{ item.tags or '' }}"
                          data-visibility="{{ item.visibility }}"
@@ -1199,6 +1255,13 @@
                                     <span class="asset-meta-project" title="Linked Project: {{ item.project.title }}">
                                         <i class="fa-solid fa-diagram-project" style="font-size: 9.5px;"></i>
                                         {{ item.project.title }}
+                                    </span>
+                                {% endif %}
+                                {% if item.profile and (not target_profile_id or selected_profile == 'all') %}
+                                    <span>•</span>
+                                    <span style="color: #c084fc; font-size: 11px; display: inline-flex; align-items: center; gap: 3px;" title="Assigned Portfolio: {{ item.profile.name }}">
+                                        <i class="fa-solid fa-user-circle" style="font-size: 10px;"></i>
+                                        {{ item.profile.name }}
                                     </span>
                                 {% endif %}
                             </div>
@@ -1433,6 +1496,22 @@
                 </div>
             </div>
 
+            <!-- Portfolio Profile Scope -->
+            {% if not is_profile_user %}
+            <div>
+                <label class="inspector-label" style="display: block; margin-bottom: 4px; color: #c084fc;">ASSIGN TO PORTFOLIO PROFILE</label>
+                <select name="profile_id" id="uploadProfileSelect" class="filter-select" style="width: 100%; border-color: rgba(168, 85, 247, 0.45); background: rgba(30, 27, 75, 0.65); color: #e9d5ff;">
+                    {% for prof in all_profiles %}
+                        <option value="{{ prof.id }}" {% if (target_profile_id and target_profile_id == prof.id) or (not target_profile_id and prof.is_active) %}selected{% endif %}>
+                            👤 {{ prof.name }}{% if prof.is_active %} (Active Root){% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% else %}
+            <input type="hidden" name="profile_id" value="{{ current_user.profile_id }}">
+            {% endif %}
+
             <!-- Description -->
             <div>
                 <label class="inspector-label" style="display: block; margin-bottom: 4px;">DESCRIPTION</label>
@@ -1533,6 +1612,20 @@
                     </select>
                 </div>
             </div>
+
+            <!-- Portfolio Profile Scope -->
+            {% if not is_profile_user %}
+            <div>
+                <label class="inspector-label" style="display: block; margin-bottom: 4px; color: #c084fc;">ASSIGN TO PORTFOLIO PROFILE</label>
+                <select name="profile_id" id="editProfileSelect" class="filter-select" style="width: 100%; border-color: rgba(168, 85, 247, 0.45); background: rgba(30, 27, 75, 0.65); color: #e9d5ff;">
+                    {% for prof in all_profiles %}
+                        <option value="{{ prof.id }}">
+                            👤 {{ prof.name }}{% if prof.is_active %} (Active Root){% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
 
             <!-- Description -->
             <div>
@@ -1727,6 +1820,13 @@ function executeBulkAction(actionName) {
     } else if (actionName === 'move_to_project') {
         const proj = document.getElementById('bulkProjectSelect').value;
         document.getElementById('bulkFormNewProj').value = proj;
+    } else if (actionName === 'assign_to_profile') {
+        const prof = document.getElementById('bulkProfileSelect') ? document.getElementById('bulkProfileSelect').value : '';
+        if (!prof) {
+            alert('Please select a portfolio profile to assign.');
+            return;
+        }
+        document.getElementById('bulkFormNewProf').value = prof;
     }
 
     document.getElementById('bulkFormAction').value = actionName;
@@ -1857,6 +1957,15 @@ function openUploadModal() {
     if (mainText) mainText.textContent = 'Drop images here or click to browse';
     const subText = document.getElementById('dropzoneSubText');
     if (subText) subText.textContent = 'Select or drop multiple assets at the same time';
+
+    const uploadProfSelect = document.getElementById('uploadProfileSelect');
+    if (uploadProfSelect) {
+        {% if target_profile_id %}
+        uploadProfSelect.value = '{{ target_profile_id }}';
+        {% elif active_profile %}
+        uploadProfSelect.value = '{{ active_profile.id }}';
+        {% endif %}
+    }
 
     document.getElementById('uploadModal').classList.add('active');
 }
@@ -2053,6 +2162,11 @@ function openEditModal(id) {
     if (editCatInput) editCatInput.value = '';
 
     document.getElementById('editProjectSelect').value = projId;
+    const profId = card.dataset.profileId || '';
+    const editProfSelect = document.getElementById('editProfileSelect');
+    if (editProfSelect) {
+        editProfSelect.value = profId;
+    }
     document.getElementById('editDescriptionInput').value = desc;
     document.getElementById('editTagsInput').value = tags;
     document.getElementById('editVisibilitySelect').value = vis;

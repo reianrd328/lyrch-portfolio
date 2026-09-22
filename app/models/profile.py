@@ -13,7 +13,7 @@ class PortfolioProfile(db.Model):
     theme_preset = db.Column(db.String(50), default="cyber")
     is_active = db.Column(db.Boolean, default=False, index=True)
     is_published = db.Column(db.Boolean, default=True, index=True)  # True = LIVE & ONLINE, False = DRAFT & OFFLINE
-    data_json = db.Column(db.Text, nullable=False)
+    data_json = db.Column(db.Text, nullable=False, default="{}")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

@@ -106,6 +106,15 @@ def create():
     db.session.add(log)
     db.session.commit()
 
+    if data.get("gallery"):
+        from app.models import GalleryItem
+        from app.services.profile_service import filter_valid_columns
+        for g_data in data["gallery"]:
+            clean = filter_valid_columns(GalleryItem, dict(g_data))
+            clean["profile_id"] = new_profile.id
+            db.session.add(GalleryItem(**clean))
+        db.session.commit()
+
     # Optional: Create initial login account if credentials provided
     account_username = request.form.get("account_username", "").strip()
     account_password = request.form.get("account_password", "").strip()

@@ -16,18 +16,52 @@
             </div>
         </div>
 
-        <div style="display: flex; gap: 10px; align-items: center;">
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            {% if is_profile_user %}
+            <a href="{{ url_for('admin_profiles.my_profile') }}" class="btn-command-secondary" style="font-size: 11.5px; padding: 7px 14px; border-color: var(--neon-cyan); color: var(--neon-cyan);">
+                <i class="fa-solid fa-id-card-clip"></i> My Profile
+            </a>
+            {% endif %}
+
             {% if selected_album %}
-            <a href="{{ url_for('admin_videos.index') }}" class="btn-command-secondary" style="font-size: 11.5px; padding: 7px 14px;">
+            <a href="{{ url_for('admin_videos.index', profile_id=selected_profile) }}" class="btn-command-secondary" style="font-size: 11.5px; padding: 7px 14px;">
                 <i class="fa-solid fa-arrow-left"></i> Back to Studio Hub
             </a>
             {% endif %}
 
-            <a href="{{ url_for('admin_videos.create', album=selected_album if selected_album and selected_album != '__standalone__' else '') }}" class="btn-command-primary" style="font-size: 12px; padding: 7px 18px; font-weight: 700; box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);">
+            <a href="{{ url_for('admin_videos.create', album=selected_album if selected_album and selected_album != '__standalone__' else '', profile_id=selected_profile) }}" class="btn-command-primary" style="font-size: 12px; padding: 7px 18px; font-weight: 700; box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);">
                 <i class="fa-solid fa-cloud-arrow-up"></i> {% if selected_album and selected_album != '__standalone__' %}+ Upload to Album{% else %}+ Upload Video(s){% endif %}
             </a>
         </div>
     </div>
+
+    <!-- Active Profile Scope Indicator Banner -->
+    {% if scoped_profile %}
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; margin: 16px 0 6px; background: rgba(168, 85, 247, 0.12); border: 1px solid rgba(168, 85, 247, 0.35); border-radius: 8px; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-id-badge" style="color: var(--neon-purple); font-size: 20px;"></i>
+            <div>
+                <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #c084fc; font-weight: 700;">PORTFOLIO STUDIO SCOPE:</span>
+                <strong style="color: #fff; font-size: 14px; margin-left: 6px;">{{ scoped_profile.name }}</strong>
+                {% if scoped_profile.is_active %}
+                    <span class="badge" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); font-size: 10px; margin-left: 6px; padding: 2px 7px; border-radius: 4px;">ACTIVE ROOT</span>
+                {% else %}
+                    <span class="badge" style="background: rgba(168, 85, 247, 0.2); color: #e9d5ff; border: 1px solid rgba(168, 85, 247, 0.4); font-size: 10px; margin-left: 6px; padding: 2px 7px; border-radius: 4px;">DEDICATED PROFILE</span>
+                {% endif %}
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <a href="{{ url_for('public.profile_video_studio', slug=scoped_profile.slug) }}" target="_blank" class="btn-command-secondary" style="padding: 5px 12px; font-size: 11px; border-color: rgba(168,85,247,0.4); color: #e9d5ff; text-decoration: none;">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> View Profile Studio Live
+            </a>
+            {% if not is_profile_user %}
+            <a href="{{ url_for('admin_videos.index', profile_id='all', tab=active_tab) }}" class="btn-command-secondary" style="padding: 5px 10px; font-size: 11px; color: #cbd5e1; text-decoration: none;">
+                <i class="fa-solid fa-xmark"></i> Show All
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 
     <!-- ============================================================= -->
     <!-- VIEW A: MAIN STUDIO DASHBOARD (Albums & Standalone)           -->
@@ -36,27 +70,46 @@
 
     <!-- 1. VIDEO LIBRARY Telemetry Filter Bar -->
     <div style="background: rgba(15,23,42,0.65); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px 18px; margin: 18px 0 24px;">
-        <div style="font-size: 11px; font-family: var(--font-mono); color: var(--neon-cyan); text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-layer-group"></i> VIDEO LIBRARY
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+            <div style="font-size: 11px; font-family: var(--font-mono); color: var(--neon-cyan); text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-layer-group"></i> VIDEO LIBRARY
+            </div>
+
+            <!-- Profile Scope Filter (Admin) -->
+            {% if not is_profile_user %}
+            <form id="videoProfileFilterForm" method="GET" action="{{ url_for('admin_videos.index') }}" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                <input type="hidden" name="tab" value="{{ active_tab }}">
+                <span style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">PROFILE:</span>
+                <select name="profile_id" onchange="document.getElementById('videoProfileFilterForm').submit();" style="border-radius: 6px; padding: 5px 10px; border: 1px solid rgba(168, 85, 247, 0.45); background: rgba(30, 27, 75, 0.65); color: #e9d5ff; font-weight: 600; font-size: 12px; cursor: pointer;">
+                    <option value="all" {% if selected_profile == 'all' or not selected_profile %}selected{% endif %}>🌐 All Portfolios</option>
+                    {% for prof in all_profiles %}
+                        <option value="{{ prof.id }}" {% if selected_profile == prof.id|string %}selected{% endif %}>
+                            👤 {{ prof.name }}{% if prof.is_active %} (Active Root){% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+            {% endif %}
         </div>
+
         <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
             <!-- All Videos Pill -->
-            <a href="{{ url_for('admin_videos.index', tab='all') }}" class="pill-filter {% if active_tab == 'all' %}active{% endif %}">
+            <a href="{{ url_for('admin_videos.index', tab='all', profile_id=selected_profile) }}" class="pill-filter {% if active_tab == 'all' %}active{% endif %}">
                 <span class="pill-label">All Videos</span>
                 <span class="pill-count">{{ total_videos_count }}</span>
             </a>
             <!-- Albums Pill -->
-            <a href="{{ url_for('admin_videos.index', tab='albums') }}" class="pill-filter {% if active_tab == 'albums' %}active{% endif %}">
+            <a href="{{ url_for('admin_videos.index', tab='albums', profile_id=selected_profile) }}" class="pill-filter {% if active_tab == 'albums' %}active{% endif %}">
                 <span class="pill-label">Albums</span>
                 <span class="pill-count">{{ albums|length }}</span>
             </a>
             <!-- Standalone Pill -->
-            <a href="{{ url_for('admin_videos.index', tab='standalone') }}" class="pill-filter {% if active_tab == 'standalone' %}active{% endif %}">
+            <a href="{{ url_for('admin_videos.index', tab='standalone', profile_id=selected_profile) }}" class="pill-filter {% if active_tab == 'standalone' %}active{% endif %}">
                 <span class="pill-label">Standalone</span>
                 <span class="pill-count">{{ standalone_count }}</span>
             </a>
             <!-- Drafts Pill -->
-            <a href="{{ url_for('admin_videos.index', tab='drafts') }}" class="pill-filter {% if active_tab == 'drafts' %}active{% endif %}">
+            <a href="{{ url_for('admin_videos.index', tab='drafts', profile_id=selected_profile) }}" class="pill-filter {% if active_tab == 'drafts' %}active{% endif %}">
                 <span class="pill-label">Drafts</span>
                 <span class="pill-count">{{ drafts_count }}</span>
             </a>

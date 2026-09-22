@@ -1,7 +1,7 @@
 import io
 import unittest
 from app import create_app
-from app.models import db, GalleryItem, Project, User, SiteSetting
+from app.models import db, GalleryItem, Project, User, SiteSetting, PortfolioProfile
 from app.services.storage_service import format_bytes, get_storage_stats
 
 class GalleryTestCase(unittest.TestCase):
@@ -394,6 +394,118 @@ class GalleryTestCase(unittest.TestCase):
         self.assertIn(b"HUD Analytics Interface", res_drilldown.data)
         # PawShop asset should NOT be in this project album
         self.assertNotIn(b"PawShop Checkout Flow", res_drilldown.data)
+
+    def test_gallery_profile_scoping_admin(self):
+        self.login_admin()
+        with self.app.app_context():
+            # Setup Profile A (active root) and Profile B (secondary)
+            prof_a = PortfolioProfile(name="Master Drop Farmd", slug="master-drop", is_active=True, is_published=True)
+            prof_b = PortfolioProfile(name="Client John Doe", slug="john-doe", is_active=False, is_published=True)
+            db.session.add_all([prof_a, prof_b])
+            db.session.commit()
+            prof_a_id = prof_a.id
+            prof_b_id = prof_b.id
+
+        # Upload image for Profile A
+        img_a = (io.BytesIO(b"fake data A"), "image_a.png")
+        res_a = self.client.post("/admin/gallery/create", data={
+            "title": "Master Brand Asset",
+            "category": "Branding",
+            "profile_id": str(prof_a_id),
+            "visibility": "published",
+            "images": [img_a]
+        }, follow_redirects=True)
+        self.assertEqual(res_a.status_code, 200)
+
+        # Upload image for Profile B
+        img_b = (io.BytesIO(b"fake data B"), "image_b.png")
+        res_b = self.client.post("/admin/gallery/create", data={
+            "title": "Client Secret Visual",
+            "category": "UI / UX",
+            "profile_id": str(prof_b_id),
+            "visibility": "published",
+            "images": [img_b]
+        }, follow_redirects=True)
+        self.assertEqual(res_b.status_code, 200)
+
+        # Admin views Profile B gallery scope
+        res_scoped_b = self.client.get(f"/admin/gallery/?profile_id={prof_b_id}")
+        self.assertEqual(res_scoped_b.status_code, 200)
+        self.assertIn(b"Client Secret Visual", res_scoped_b.data)
+        self.assertNotIn(b"Master Brand Asset", res_scoped_b.data)
+
+        # Admin views Profile A gallery scope
+        res_scoped_a = self.client.get(f"/admin/gallery/?profile_id={prof_a_id}")
+        self.assertEqual(res_scoped_a.status_code, 200)
+        self.assertIn(b"Master Brand Asset", res_scoped_a.data)
+        self.assertNotIn(b"Client Secret Visual", res_scoped_a.data)
+
+        # Public /p/john-doe/gallery only renders Client Secret Visual
+        res_pub_b = self.client.get("/p/john-doe/gallery")
+        self.assertEqual(res_pub_b.status_code, 200)
+        self.assertIn(b"Client Secret Visual", res_pub_b.data)
+        self.assertNotIn(b"Master Brand Asset", res_pub_b.data)
+
+        # Public /gallery (root) only renders active profile items
+        res_pub_root = self.client.get("/gallery")
+        self.assertEqual(res_pub_root.status_code, 200)
+        self.assertIn(b"Master Brand Asset", res_pub_root.data)
+        self.assertNotIn(b"Client Secret Visual", res_pub_root.data)
+
+    def test_gallery_profile_user_permissions(self):
+        with self.app.app_context():
+            prof_c = PortfolioProfile(name="Profile User Test", slug="prof-user-test", is_active=False, is_published=True)
+            db.session.add(prof_c)
+            db.session.commit()
+            prof_c_id = prof_c.id
+
+            # Create profile user account
+            pu = User(username="client_user", email="client@test.local", role="profile_user", profile_id=prof_c_id)
+            pu.set_password("clientpass")
+            db.session.add(pu)
+
+            # Create asset for another profile
+            other_item = GalleryItem(
+                title="Other Profile Asset",
+                category="UI / UX",
+                image_url="/static/images/placeholder.jpg",
+                visibility="published"
+            )
+            # Create asset for this profile user
+            user_item = GalleryItem(
+                title="My Own Profile Asset",
+                category="UI / UX",
+                profile_id=prof_c_id,
+                image_url="/static/images/placeholder.jpg",
+                visibility="published"
+            )
+            db.session.add_all([other_item, user_item])
+            db.session.commit()
+            other_id = other_item.id
+            user_id = user_item.id
+
+        # Login as profile user
+        self.client.post("/auth/login", data={"username": "client_user", "password": "clientpass"}, follow_redirects=True)
+
+        # Admin gallery is automatically scoped to their profile
+        res = self.client.get("/admin/gallery/")
+        self.assertEqual(res.status_code, 200)
+        self.assertIn(b"My Own Profile Asset", res.data)
+        self.assertNotIn(b"Other Profile Asset", res.data)
+
+        # Trying to api_item or delete other profile's asset returns 403 Forbidden
+        res_api_other = self.client.get(f"/admin/gallery/api/item/{other_id}")
+        self.assertEqual(res_api_other.status_code, 403)
+
+        res_del_other = self.client.post(f"/admin/gallery/delete/{other_id}")
+        self.assertEqual(res_del_other.status_code, 403)
+
+        # Can delete own asset
+        res_del_own = self.client.post(f"/admin/gallery/delete/{user_id}", follow_redirects=True)
+        self.assertEqual(res_del_own.status_code, 200)
+        with self.app.app_context():
+            deleted_check = db.session.get(GalleryItem, user_id)
+            self.assertIsNone(deleted_check)
 
 if __name__ == "__main__":
     unittest.main()

@@ -67,7 +67,7 @@ def check_and_apply_migrations(app):
                             db.session.rollback()
                             app.logger.warning(f"Migration notice for users.{col_name}: {err}")
 
-            # Check and migrate videos table for album column
+            # Check and migrate videos table for album and profile_id columns
             if "videos" in inspector.get_table_names():
                 video_cols = {c["name"] for c in inspector.get_columns("videos")}
                 if "album" not in video_cols:
@@ -79,11 +79,73 @@ def check_and_apply_migrations(app):
                         db.session.rollback()
                         app.logger.warning(f"Migration notice for videos.album: {err}")
 
+                if "profile_id" not in video_cols:
+                    try:
+                        db.session.execute(text("ALTER TABLE videos ADD COLUMN profile_id INTEGER NULL"))
+                        db.session.commit()
+                        app.logger.info("Added column profile_id to videos table.")
+                    except Exception as err:
+                        db.session.rollback()
+                        app.logger.warning(f"Migration notice for videos.profile_id: {err}")
+
+                # Ensure existing videos are linked to proper profiles and sync profile data_json
+                try:
+                    from app.models import PortfolioProfile, Video
+                    tobias_p = PortfolioProfile.query.filter((PortfolioProfile.slug == "tobias-lyrch-lnz-n-ong") | (PortfolioProfile.name.ilike("%tobias%"))).first()
+                    active_p = PortfolioProfile.query.filter_by(is_active=True).first()
+
+                    # Assign Tobias's videos
+                    if tobias_p:
+                        db.session.execute(text(
+                            f"UPDATE videos SET profile_id = {tobias_p.id} WHERE (album IN ('tobias', 'dsadadsda') OR title LIKE '%tobias%') AND (profile_id IS NULL OR profile_id != {tobias_p.id})"
+                        ))
+                        db.session.commit()
+
+                    # Assign all remaining unassigned videos to active profile
+                    if active_p:
+                        db.session.execute(text(f"UPDATE videos SET profile_id = {active_p.id} WHERE profile_id IS NULL"))
+                        db.session.commit()
+
+                    # Sync all profiles' data_json["videos"]
+                    for p in PortfolioProfile.query.all():
+                        p_videos = Video.query.filter_by(profile_id=p.id).order_by(Video.id.desc()).all()
+                        if p_videos:
+                            p_data = p.get_data()
+                            p_data["videos"] = [v.to_dict() for v in p_videos]
+                            p.set_data(p_data)
+                    db.session.commit()
+                except Exception as err:
+                    db.session.rollback()
+                    app.logger.warning(f"Videos profile migration notice: {err}")
+
+            # Check and migrate documents table for profile_id
+            if "documents" in inspector.get_table_names():
+                doc_cols = {c["name"] for c in inspector.get_columns("documents")}
+                if "profile_id" not in doc_cols:
+                    try:
+                        db.session.execute(text("ALTER TABLE documents ADD COLUMN profile_id INTEGER NULL"))
+                        db.session.commit()
+                        app.logger.info("Added column profile_id to documents table.")
+                    except Exception as err:
+                        db.session.rollback()
+                        app.logger.warning(f"Migration notice for documents.profile_id: {err}")
+
+                try:
+                    from app.models import PortfolioProfile
+                    active_p = PortfolioProfile.query.filter_by(is_active=True).first()
+                    if active_p:
+                        db.session.execute(text(f"UPDATE documents SET profile_id = {active_p.id} WHERE profile_id IS NULL"))
+                        db.session.commit()
+                except Exception as err:
+                    db.session.rollback()
+                    app.logger.warning(f"Documents profile migration notice: {err}")
+
             # Check and migrate gallery table for project_id, visibility, tags, file_size_bytes
             if "gallery" in inspector.get_table_names():
                 gallery_cols = {c["name"] for c in inspector.get_columns("gallery")}
                 new_gallery_cols = [
                     ("project_id", "INTEGER NULL"),
+                    ("profile_id", "INTEGER NULL"),
                     ("visibility", "VARCHAR(20) DEFAULT 'published'"),
                     ("tags", "VARCHAR(255) NULL"),
                     ("file_size_bytes", "INTEGER DEFAULT 0")
@@ -97,6 +159,32 @@ def check_and_apply_migrations(app):
                         except Exception as err:
                             db.session.rollback()
                             app.logger.warning(f"Migration notice for gallery.{col_name}: {err}")
+
+                # Ensure existing legacy items are linked to the active profile
+                try:
+                    from app.models import PortfolioProfile, GalleryItem
+                    from app.services.profile_service import filter_valid_columns
+                    active_p = PortfolioProfile.query.filter_by(is_active=True).first()
+                    if active_p:
+                        db.session.execute(text(f"UPDATE gallery SET profile_id = {active_p.id} WHERE profile_id IS NULL"))
+                        db.session.commit()
+
+                    # Also seed gallery items from inactive profiles' data_json if not yet in SQL
+                    for prof in PortfolioProfile.query.all():
+                        if active_p and prof.id == active_p.id:
+                            continue
+                        data = prof.get_data()
+                        prof_gallery = data.get("gallery", [])
+                        if prof_gallery:
+                            count = GalleryItem.query.filter_by(profile_id=prof.id).count()
+                            if count == 0:
+                                for g_data in prof_gallery:
+                                    clean = filter_valid_columns(GalleryItem, dict(g_data))
+                                    clean["profile_id"] = prof.id
+                                    db.session.add(GalleryItem(**clean))
+                                db.session.commit()
+                except Exception as err:
+                    db.session.rollback()
         except Exception as e:
             app.logger.warning(f"Migration checker notice: {e}")
 

@@ -223,7 +223,13 @@
                 </div>
 
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 2px;">
-                    <div style="display: flex; gap: 6px;">
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        <a href="{{ url_for('admin_videos.index', profile_id=profile.id) }}" class="telemetry-btn" style="width: auto; padding: 0 10px; font-size: 11px; gap: 5px; color: #c084fc; text-decoration: none;" title="Manage AI Videos for this Profile">
+                            <i class="fa-solid fa-video"></i> Videos
+                        </a>
+                        <a href="{{ url_for('admin_gallery.index', profile_id=profile.id) }}" class="telemetry-btn" style="width: auto; padding: 0 10px; font-size: 11px; gap: 5px; color: var(--neon-cyan); text-decoration: none;" title="Manage Visual Gallery for this Profile">
+                            <i class="fa-regular fa-images"></i> Gallery
+                        </a>
                         <button type="button" class="telemetry-btn" title="Edit Metadata" onclick="openEditModal({{ profile.id }}, '{{ profile.name|replace("'", "\\'") }}', '{{ profile.client_name|replace("'", "\\'") }}', '{{ profile.slug }}', '{{ profile.theme_preset }}', '{{ profile.description|replace("'", "\\'") }}', {{ 'true' if profile.is_published else 'false' }}, '{{ profile.avatar_url }}')">
                             <i class="fa-solid fa-pen-to-square"></i>
                         </button>

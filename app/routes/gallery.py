@@ -1,8 +1,25 @@
 import os
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
-from flask_login import login_required
-from app.models import db, GalleryItem, Project
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app, abort
+from flask_login import login_required, current_user
+from app.models import db, GalleryItem, Project, PortfolioProfile
 from app.services.upload_service import save_upload_file, delete_file
+
+def sync_profile_gallery_json(profile_id):
+    """Keep portfolio_profile.data_json['gallery'] in sync with SQL gallery items."""
+    if not profile_id:
+        return
+    try:
+        profile = db.session.get(PortfolioProfile, profile_id)
+        if not profile:
+            return
+        items = GalleryItem.query.filter_by(profile_id=profile_id).order_by(GalleryItem.order_index.asc(), GalleryItem.id.asc()).all()
+        data = profile.get_data()
+        data["gallery"] = [item.to_dict() for item in items]
+        profile.set_data(data)
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.warning(f"Error syncing profile gallery JSON: {e}")
+
 
 import re
 from pathlib import Path
@@ -98,8 +115,35 @@ def index():
     selected_status = request.args.get("status", "all").strip()
     sort_by = request.args.get("sort", "newest").strip()
     view_mode = request.args.get("view", "").strip()
+    selected_profile_raw = request.args.get("profile_id", "").strip()
 
-    all_items = GalleryItem.query.all()
+    is_profile_user = (getattr(current_user, "role", "") == "profile_user")
+    all_profiles = PortfolioProfile.query.order_by(PortfolioProfile.is_active.desc(), PortfolioProfile.name.asc()).all()
+    active_profile = PortfolioProfile.query.filter_by(is_active=True).first()
+
+    if is_profile_user:
+        target_profile_id = current_user.profile_id
+        scoped_profile = PortfolioProfile.query.get(target_profile_id) if target_profile_id else None
+        selected_profile = str(target_profile_id) if target_profile_id else ""
+    else:
+        if selected_profile_raw and selected_profile_raw.isdigit():
+            target_profile_id = int(selected_profile_raw)
+            scoped_profile = PortfolioProfile.query.get(target_profile_id)
+            selected_profile = str(target_profile_id)
+        elif selected_profile_raw == "all":
+            target_profile_id = None
+            scoped_profile = None
+            selected_profile = "all"
+        else:
+            target_profile_id = None
+            scoped_profile = None
+            selected_profile = "all"
+
+    if target_profile_id:
+        all_items = GalleryItem.query.filter(GalleryItem.profile_id == target_profile_id).all()
+    else:
+        all_items = GalleryItem.query.all()
+
     projects = Project.query.order_by(Project.title.asc()).all()
     categories = get_gallery_categories()
 
@@ -187,6 +231,10 @@ def index():
     # Base query for filtered results
     query = GalleryItem.query
 
+    # Profile scoping filter
+    if target_profile_id:
+        query = query.filter(GalleryItem.profile_id == target_profile_id)
+
     # Search filter
     if query_text:
         search_pattern = f"%{query_text}%"
@@ -242,7 +290,13 @@ def index():
         selected_cat=selected_cat,
         selected_project=selected_project,
         selected_status=selected_status,
-        sort_by=sort_by
+        sort_by=sort_by,
+        all_profiles=all_profiles,
+        active_profile=active_profile,
+        scoped_profile=scoped_profile,
+        selected_profile=selected_profile,
+        target_profile_id=target_profile_id,
+        is_profile_user=is_profile_user
     )
 
 @gallery_bp.route("/categories/update", methods=["POST"])
@@ -285,6 +339,17 @@ def create():
         tags = request.form.get("tags", "").strip()
         visibility = request.form.get("visibility", "published").strip()
         featured = bool(request.form.get("featured"))
+
+        # Profile ID scoping
+        if getattr(current_user, "role", "") == "profile_user":
+            profile_id = current_user.profile_id
+        else:
+            profile_id_raw = (request.form.get("profile_id", "") or (request.json.get("profile_id", "") if request.is_json else "")).strip()
+            if profile_id_raw and profile_id_raw.isdigit():
+                profile_id = int(profile_id_raw)
+            else:
+                active_p = PortfolioProfile.query.filter_by(is_active=True).first()
+                profile_id = active_p.id if active_p else None
 
         # Collect uploaded image files (supports 'images' and 'image' input names, single or multiple)
         raw_files = request.files.getlist("images")
@@ -331,6 +396,7 @@ def create():
                 title=item_title,
                 category=category,
                 project_id=project_id,
+                profile_id=profile_id,
                 description=description,
                 tags=tags,
                 visibility=visibility,
@@ -350,6 +416,9 @@ def create():
 
         db.session.commit()
 
+        if profile_id:
+            sync_profile_gallery_json(profile_id)
+
         if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return jsonify({
                 "success": True,
@@ -367,22 +436,32 @@ def create():
         if failed_files:
             flash(f"Note: {len(failed_files)} file(s) could not be uploaded due to invalid formats.", "warning")
 
-        return redirect(url_for("admin_gallery.index"))
+        redirect_kwargs = {}
+        if profile_id and getattr(current_user, "role", "") != "profile_user":
+            redirect_kwargs["profile_id"] = profile_id
+        return redirect(url_for("admin_gallery.index", **redirect_kwargs))
 
     projects = Project.query.order_by(Project.title.asc()).all()
     categories = get_gallery_categories()
-    return render_template("admin/gallery/create.html", projects=projects, categories=categories)
+    all_profiles = PortfolioProfile.query.order_by(PortfolioProfile.is_active.desc(), PortfolioProfile.name.asc()).all()
+    return render_template("admin/gallery/create.html", projects=projects, categories=categories, all_profiles=all_profiles)
 
 @gallery_bp.route("/api/item/<int:id>", methods=["GET"])
 @login_required
 def api_item(id):
     item = GalleryItem.query.get_or_404(id)
+    if getattr(current_user, "role", "") == "profile_user" and item.profile_id != current_user.profile_id:
+        abort(403)
     return jsonify({"success": True, "item": item.to_dict()})
 
 @gallery_bp.route("/edit/<int:id>", methods=["POST"])
 @login_required
 def edit(id):
     item = GalleryItem.query.get_or_404(id)
+    if getattr(current_user, "role", "") == "profile_user" and item.profile_id != current_user.profile_id:
+        abort(403)
+
+    old_profile_id = item.profile_id
 
     # Handle form or JSON body
     if request.is_json:
@@ -398,6 +477,10 @@ def edit(id):
         tags = data.get("tags", item.tags)
         visibility = data.get("visibility", item.visibility)
         featured = bool(data.get("featured", item.featured))
+        if getattr(current_user, "role", "") != "profile_user" and "profile_id" in data:
+            p_val = str(data.get("profile_id", "")).strip()
+            if p_val and p_val.isdigit():
+                item.profile_id = int(p_val)
     else:
         title = request.form.get("title", "").strip()
         category_raw = request.form.get("category", item.category)
@@ -410,6 +493,10 @@ def edit(id):
         tags = request.form.get("tags", item.tags)
         visibility = request.form.get("visibility", item.visibility)
         featured = bool(request.form.get("featured"))
+        if getattr(current_user, "role", "") != "profile_user":
+            p_val = request.form.get("profile_id", "").strip()
+            if p_val and p_val.isdigit():
+                item.profile_id = int(p_val)
 
     if title:
         item.title = title
@@ -431,11 +518,19 @@ def edit(id):
 
     db.session.commit()
 
+    if old_profile_id and old_profile_id != item.profile_id:
+        sync_profile_gallery_json(old_profile_id)
+    if item.profile_id:
+        sync_profile_gallery_json(item.profile_id)
+
     if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return jsonify({"success": True, "item": item.to_dict(), "message": "Asset metadata updated successfully."})
 
     flash(f"Asset '{item.title}' updated successfully.", "success")
-    return redirect(url_for("admin_gallery.index"))
+    redirect_kwargs = {}
+    if item.profile_id and getattr(current_user, "role", "") != "profile_user":
+        redirect_kwargs["profile_id"] = item.profile_id
+    return redirect(url_for("admin_gallery.index", **redirect_kwargs))
 
 @gallery_bp.route("/bulk-action", methods=["POST"])
 @login_required
@@ -452,8 +547,13 @@ def bulk_action():
         flash("No assets selected for bulk action.", "warning")
         return redirect(url_for("admin_gallery.index"))
 
-    items = GalleryItem.query.filter(GalleryItem.id.in_(ids)).all()
+    query = GalleryItem.query.filter(GalleryItem.id.in_(ids))
+    if getattr(current_user, "role", "") == "profile_user":
+        query = query.filter(GalleryItem.profile_id == current_user.profile_id)
+    items = query.all()
     count = len(items)
+
+    affected_profile_ids = {item.profile_id for item in items if item.profile_id}
 
     if action == "delete":
         for item in items:
@@ -480,8 +580,23 @@ def bulk_action():
             item.project_id = new_proj_id
         db.session.commit()
         msg = f"Assigned {count} assets to project."
+    elif action == "assign_to_profile":
+        if getattr(current_user, "role", "") == "profile_user":
+            msg = "Permission denied."
+        else:
+            new_prof_raw = request.form.get("new_profile_id") or (request.json.get("new_profile_id") if request.is_json else None)
+            new_prof_id = int(new_prof_raw) if new_prof_raw and str(new_prof_raw).isdigit() else None
+            for item in items:
+                item.profile_id = new_prof_id
+            db.session.commit()
+            if new_prof_id:
+                affected_profile_ids.add(new_prof_id)
+            msg = f"Assigned {count} assets to selected portfolio profile."
     else:
         msg = "Unknown bulk action."
+
+    for pid in affected_profile_ids:
+        sync_profile_gallery_json(pid)
 
     if request.is_json:
         return jsonify({"success": True, "message": msg, "count": count})
@@ -493,8 +608,16 @@ def bulk_action():
 @login_required
 def delete(id):
     item = GalleryItem.query.get_or_404(id)
+    if getattr(current_user, "role", "") == "profile_user" and item.profile_id != current_user.profile_id:
+        abort(403)
+    prof_id = item.profile_id
     delete_file(item.image_url)
     db.session.delete(item)
     db.session.commit()
+    if prof_id:
+        sync_profile_gallery_json(prof_id)
     flash(f"Asset '{item.title}' deleted.", "info")
-    return redirect(url_for("admin_gallery.index"))
+    redirect_kwargs = {}
+    if prof_id and getattr(current_user, "role", "") != "profile_user":
+        redirect_kwargs["profile_id"] = prof_id
+    return redirect(url_for("admin_gallery.index", **redirect_kwargs))

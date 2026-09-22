@@ -96,19 +96,40 @@ def ai_lab():
 
 @public_bp.route("/video-studio")
 def video_studio():
-    videos = Video.query.filter(Video.visibility == "published").order_by(Video.id.desc()).all()
+    active_profile = PortfolioProfile.query.filter_by(is_active=True).first()
+    if active_profile:
+        videos = Video.query.filter(
+            Video.visibility == "published",
+            (Video.profile_id == active_profile.id) | (Video.profile_id.is_(None))
+        ).order_by(Video.id.desc()).all()
+    else:
+        videos = Video.query.filter(Video.visibility == "published").order_by(Video.id.desc()).all()
     albums = sorted(list({v.album for v in videos if v.album}))
     has_standalone = any(not v.album for v in videos)
     return render_template("public/video_studio.html", videos=videos, albums=albums, has_standalone=has_standalone)
 
 @public_bp.route("/gallery")
 def gallery():
-    items = GalleryItem.query.filter(GalleryItem.visibility == "published").order_by(GalleryItem.order_index.asc(), GalleryItem.id.desc()).all()
+    active_profile = PortfolioProfile.query.filter_by(is_active=True).first()
+    if active_profile:
+        items = GalleryItem.query.filter(
+            GalleryItem.visibility == "published",
+            (GalleryItem.profile_id == active_profile.id) | (GalleryItem.profile_id.is_(None))
+        ).order_by(GalleryItem.order_index.asc(), GalleryItem.id.desc()).all()
+    else:
+        items = GalleryItem.query.filter(GalleryItem.visibility == "published").order_by(GalleryItem.order_index.asc(), GalleryItem.id.desc()).all()
     return render_template("public/gallery.html", items=items)
 
 @public_bp.route("/files")
 def files():
-    documents = Document.query.filter_by(is_public=True).order_by(Document.id.desc()).all()
+    active_profile = PortfolioProfile.query.filter_by(is_active=True).first()
+    if active_profile:
+        documents = Document.query.filter(
+            Document.is_public == True,
+            (Document.profile_id == active_profile.id) | (Document.profile_id.is_(None))
+        ).order_by(Document.id.desc()).all()
+    else:
+        documents = Document.query.filter_by(is_public=True).order_by(Document.id.desc()).all()
     return render_template("public/files.html", documents=documents)
 
 @public_bp.route("/download-resume")
@@ -200,8 +221,13 @@ def profile_preview(slug):
     if not featured:
         featured = [ProfileProxy(p) for p in projects_data if p.get("visibility") != "draft"][:4]
 
-    videos_data = data.get("videos", [])
-    featured_video = ProfileProxy(videos_data[0]) if videos_data else None
+    videos = Video.query.filter(
+        Video.profile_id == profile.id,
+        Video.visibility == "published"
+    ).order_by(Video.id.desc()).all()
+    if not videos and data.get("videos"):
+        videos = [ProfileProxy(v) for v in data.get("videos", []) if v.get("visibility", "published") == "published"]
+    featured_video = videos[0] if videos else None
 
     metrics = {
         "branches": getattr(preview_settings, "metric2_num", "100+"),
@@ -292,10 +318,41 @@ def profile_video_studio(slug):
         return video_studio()
     data = profile.get_data()
     preview_settings = ProfileProxy(data.get("settings", {}))
-    videos = [ProfileProxy(v) for v in data.get("videos", []) if v.get("visibility") == "published"]
+
+    # Query database for videos scoped to this profile
+    videos = Video.query.filter(
+        Video.profile_id == profile.id,
+        Video.visibility == "published"
+    ).order_by(Video.id.desc()).all()
+
+    # Fallback to data_json if no videos in DB yet
+    if not videos and data.get("videos"):
+        videos = [ProfileProxy(v) for v in data.get("videos", []) if v.get("visibility", "published") == "published"]
+
     albums = sorted(list({v.album for v in videos if getattr(v, "album", None)}))
     has_standalone = any(not getattr(v, "album", None) for v in videos)
     return render_template("public/video_studio.html", videos=videos, albums=albums, has_standalone=has_standalone, preview_profile=profile, settings=preview_settings)
+
+@public_bp.route("/p/<slug>/files")
+def profile_files(slug):
+    profile = PortfolioProfile.query.filter_by(slug=slug).first_or_404()
+    if not profile.is_published and not current_user.is_authenticated:
+        abort(404)
+
+    if profile.is_active:
+        return files()
+    data = profile.get_data()
+    preview_settings = ProfileProxy(data.get("settings", {}))
+
+    documents = Document.query.filter(
+        Document.profile_id == profile.id,
+        Document.is_public == True
+    ).order_by(Document.id.desc()).all()
+
+    if not documents and data.get("documents"):
+        documents = [ProfileProxy(d) for d in data.get("documents", []) if d.get("is_public", True)]
+
+    return render_template("public/files.html", documents=documents, preview_profile=profile, settings=preview_settings)
 
 @public_bp.route("/p/<slug>/gallery")
 def profile_gallery(slug):
@@ -303,11 +360,19 @@ def profile_gallery(slug):
     if not profile.is_published and not current_user.is_authenticated:
         abort(404)
 
-    if profile.is_active:
-        return gallery()
     data = profile.get_data()
     preview_settings = ProfileProxy(data.get("settings", {}))
-    items = [ProfileProxy(g) for g in data.get("gallery", [])]
+
+    # Query database for gallery items scoped to this profile
+    items = GalleryItem.query.filter(
+        GalleryItem.profile_id == profile.id,
+        GalleryItem.visibility == "published"
+    ).order_by(GalleryItem.order_index.asc(), GalleryItem.id.desc()).all()
+
+    # Fallback to data_json if no items in DB yet (e.g. freshly imported snapshot)
+    if not items and data.get("gallery"):
+        items = [ProfileProxy(g) for g in data.get("gallery", []) if g.get("visibility", "published") == "published"]
+
     return render_template("public/gallery.html", items=items, preview_profile=profile, settings=preview_settings)
 
 @public_bp.route("/p/<slug>/contact", methods=["GET", "POST"])

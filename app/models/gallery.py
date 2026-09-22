@@ -18,6 +18,10 @@ class GalleryItem(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey("projects.id", ondelete="SET NULL"), nullable=True)
     project = db.relationship("Project", backref=db.backref("gallery_items", lazy="dynamic"))
 
+    # Portfolio Profile Scoping
+    profile_id = db.Column(db.Integer, db.ForeignKey("portfolio_profiles.id", ondelete="SET NULL"), nullable=True, index=True)
+    profile = db.relationship("PortfolioProfile", backref=db.backref("gallery_items", lazy="dynamic"), foreign_keys=[profile_id])
+
     # Status: 'published', 'draft', 'private'
     visibility = db.Column(db.String(20), default="published", index=True)
     tags = db.Column(db.String(255), nullable=True)
@@ -47,6 +51,8 @@ class GalleryItem(db.Model):
             "created_at": self.created_at.strftime("%b %d, %Y") if self.created_at else "",
             "project_id": self.project_id,
             "project_title": self.project.title if self.project else None,
+            "profile_id": self.profile_id,
+            "profile_name": self.profile.name if self.profile else None,
             "visibility": self.visibility or "published",
             "tags": self.tags or "",
             "tags_list": self.tags_list,
