@@ -1226,7 +1226,7 @@
 
                         <!-- Thumbnail with 16:9 ratio -->
                         <div class="asset-thumb-wrap">
-                            <img src="{{ item.image_url }}" alt="{{ item.title }}" class="asset-thumb-img" loading="lazy">
+                            <img src="{{ item.image_url }}" alt="{{ item.title }}" class="asset-thumb-img" loading="lazy" onerror="this.onerror=null; this.src='{{ item.project.thumbnail_url if item.project and item.project.thumbnail_url else url_for('static', filename='images/branding/gallery_hub_icon.jpg') }}';">
                             
                             <!-- Category Badge -->
                             <span class="asset-badge-category">{{ item.category }}</span>

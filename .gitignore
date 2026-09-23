@@ -24,13 +24,18 @@ instance/
 *.sqlite3
 *.db
 
-# Uploaded media (track projects and videos so Render free-tier deployments retain all assets)
+# Uploaded media (track uploads so Render free-tier deployments retain all assets)
 uploads/profile/*
 !uploads/profile/.gitkeep
+!uploads/profile/182bf806114e_2by2.jpg
+!uploads/profile/971cd761885b_99d3ed35-7194-4cb5-b88b-2b0c17613c01.jpg
 !uploads/projects/*
 !uploads/videos/*
 uploads/gallery/*
 !uploads/gallery/.gitkeep
+!uploads/gallery/2e500f1a0b57_pages.png
+!uploads/gallery/b12c92beb5b7_invetory.png
+!uploads/gallery/dd1036d06fd9_login.png
 uploads/documents/*
 !uploads/documents/.gitkeep
 
