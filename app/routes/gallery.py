@@ -508,15 +508,17 @@ def edit(id):
     item.featured = featured
 
     # Optional image replacement
+    old_img = item.image_url
     img_file = request.files.get("image")
     if img_file and img_file.filename:
         success, res = save_upload_file(img_file, subfolder="gallery", allowed_types="image")
         if success:
-            if item.image_url:
-                delete_file(item.image_url)
             item.image_url = res
 
     db.session.commit()
+
+    if img_file and img_file.filename and old_img and old_img != item.image_url:
+        delete_file(old_img)
 
     if old_profile_id and old_profile_id != item.profile_id:
         sync_profile_gallery_json(old_profile_id)
@@ -556,10 +558,12 @@ def bulk_action():
     affected_profile_ids = {item.profile_id for item in items if item.profile_id}
 
     if action == "delete":
+        imgs_to_delete = [item.image_url for item in items if item.image_url]
         for item in items:
-            delete_file(item.image_url)
             db.session.delete(item)
         db.session.commit()
+        for img in imgs_to_delete:
+            delete_file(img)
         msg = f"Successfully deleted {count} creative assets."
     elif action == "change_category":
         new_cat = request.form.get("new_category") or (request.json.get("new_category") if request.is_json else "UI / UX")
@@ -611,12 +615,15 @@ def delete(id):
     if getattr(current_user, "role", "") == "profile_user" and item.profile_id != current_user.profile_id:
         abort(403)
     prof_id = item.profile_id
-    delete_file(item.image_url)
+    img_to_delete = item.image_url
+    title = item.title
     db.session.delete(item)
     db.session.commit()
+    if img_to_delete:
+        delete_file(img_to_delete)
     if prof_id:
         sync_profile_gallery_json(prof_id)
-    flash(f"Asset '{item.title}' deleted.", "info")
+    flash(f"Asset '{title}' deleted.", "info")
     redirect_kwargs = {}
     if prof_id and getattr(current_user, "role", "") != "profile_user":
         redirect_kwargs["profile_id"] = prof_id

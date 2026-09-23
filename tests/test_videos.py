@@ -381,6 +381,42 @@ class VideoTestCase(unittest.TestCase):
         res_delete_forbidden = self.client.post(f"/admin/videos/delete/{v_master_id}")
         self.assertEqual(res_delete_forbidden.status_code, 403)
 
+    def test_safe_shared_thumbnail_deletion(self):
+        import os
+        from app.models import Video
+
+        self.login_admin()
+        upload_folder = self.app.config["UPLOAD_FOLDER"]
+        video_dir = os.path.join(upload_folder, "videos")
+        os.makedirs(video_dir, exist_ok=True)
+        test_thumb_file = os.path.join(video_dir, "test_shared_thumb_safe.png")
+        with open(test_thumb_file, "wb") as f:
+            f.write(b"fake image data")
+
+        shared_url = "/uploads/videos/test_shared_thumb_safe.png"
+
+        with self.app.app_context():
+            v_ep1 = Video(title="Series Ep 1", slug="series-ep-1", album="My Series", thumbnail_url=shared_url, visibility="published")
+            v_ep2 = Video(title="Series Ep 2", slug="series-ep-2", album="My Series", thumbnail_url=shared_url, visibility="published")
+            db.session.add_all([v_ep1, v_ep2])
+            db.session.commit()
+            ep1_id = v_ep1.id
+            ep2_id = v_ep2.id
+
+        # Delete Ep 1
+        res = self.client.post(f"/admin/videos/delete/{ep1_id}", follow_redirects=True)
+        self.assertEqual(res.status_code, 200)
+
+        # File must STILL exist because Ep 2 is still using it!
+        self.assertTrue(os.path.exists(test_thumb_file), "Shared thumbnail file must NOT be deleted while Ep 2 references it")
+
+        # Now delete Ep 2 (last remaining reference)
+        res2 = self.client.post(f"/admin/videos/delete/{ep2_id}", follow_redirects=True)
+        self.assertEqual(res2.status_code, 200)
+
+        # Now the file should be deleted
+        self.assertFalse(os.path.exists(test_thumb_file), "Thumbnail file should be deleted when the last video referencing it is deleted")
+
 if __name__ == "__main__":
     unittest.main()
 

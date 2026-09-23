@@ -364,25 +364,29 @@ def edit(id):
         video.featured = bool(request.form.get("featured"))
         video.visibility = request.form.get("visibility", "published")
 
+        old_thumb = video.thumbnail_url
+        old_vid = video.video_url
+
         thumbnail_file = request.files.get("thumbnail")
         if thumbnail_file and thumbnail_file.filename:
             success, res = save_upload_file(thumbnail_file, subfolder="videos", allowed_types="image")
             if success:
-                if video.thumbnail_url:
-                    delete_file(video.thumbnail_url)
                 video.thumbnail_url = res
 
         video_file = request.files.get("video")
         if video_file and video_file.filename:
             success, res = save_upload_file(video_file, subfolder="videos", allowed_types="video")
             if success:
-                if video.video_url and video.video_url.startswith("/uploads/"):
-                    delete_file(video.video_url)
                 video.video_url = res
         elif request.form.get("video_external_url"):
             video.video_url = request.form.get("video_external_url")
 
         db.session.commit()
+
+        if old_thumb and old_thumb != video.thumbnail_url:
+            delete_file(old_thumb)
+        if old_vid and old_vid != video.video_url and old_vid.startswith("/uploads/"):
+            delete_file(old_vid)
 
         if video.profile_id:
             sync_profile_videos_json(video.profile_id)
@@ -414,13 +418,17 @@ def delete(id):
         abort(403)
 
     target_profile_id = video.profile_id
-    if video.thumbnail_url:
-        delete_file(video.thumbnail_url)
-    if video.video_url and video.video_url.startswith("/uploads/"):
-        delete_file(video.video_url)
+    thumb_to_delete = video.thumbnail_url
+    vid_to_delete = video.video_url
     title = video.title
+
     db.session.delete(video)
     db.session.commit()
+
+    if thumb_to_delete:
+        delete_file(thumb_to_delete)
+    if vid_to_delete and vid_to_delete.startswith("/uploads/"):
+        delete_file(vid_to_delete)
 
     if target_profile_id:
         sync_profile_videos_json(target_profile_id)

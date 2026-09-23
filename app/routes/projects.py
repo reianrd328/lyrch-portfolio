@@ -100,15 +100,16 @@ def edit(id):
         project.demo_url = request.form.get("demo_url", project.demo_url)
 
         # Thumbnail update
+        old_thumb = project.thumbnail_url
         thumbnail_file = request.files.get("thumbnail")
         if thumbnail_file and thumbnail_file.filename:
             success, res = save_upload_file(thumbnail_file, subfolder="projects", allowed_types="image")
             if success:
-                if project.thumbnail_url:
-                    delete_file(project.thumbnail_url)
                 project.thumbnail_url = res
 
         db.session.commit()
+        if thumbnail_file and thumbnail_file.filename and old_thumb and old_thumb != project.thumbnail_url:
+            delete_file(old_thumb)
         flash(f"Project '{project.title}' updated successfully.", "success")
         return redirect(url_for("admin_projects.index"))
 
@@ -118,11 +119,15 @@ def edit(id):
 @login_required
 def delete(id):
     project = Project.query.get_or_404(id)
-    if project.thumbnail_url:
-        delete_file(project.thumbnail_url)
+    thumb_to_delete = project.thumbnail_url
+    banner_to_delete = getattr(project, "banner_url", None)
     title = project.title
     db.session.delete(project)
     db.session.commit()
+    if thumb_to_delete:
+        delete_file(thumb_to_delete)
+    if banner_to_delete:
+        delete_file(banner_to_delete)
     flash(f"Project '{title}' deleted.", "info")
     return redirect(url_for("admin_projects.index"))
 

@@ -132,9 +132,12 @@ def delete(id):
         abort(403)
 
     target_profile_id = doc.profile_id
-    delete_file(doc.file_path)
+    file_to_delete = doc.file_path
     db.session.delete(doc)
     db.session.commit()
+
+    if file_to_delete:
+        delete_file(file_to_delete)
 
     if target_profile_id:
         sync_profile_documents_json(target_profile_id)

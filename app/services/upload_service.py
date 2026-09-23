@@ -42,11 +42,49 @@ def save_upload_file(file_storage, subfolder: str = "projects", allowed_types: s
     relative_url = f"/uploads/{subfolder}/{unique_name}"
     return True, relative_url
 
-def delete_file(relative_url: str) -> bool:
+def count_file_references(relative_url: str) -> int:
+    """
+    Counts how many database records currently reference this uploaded file.
+    Protects shared media (e.g. batch-uploaded videos sharing one thumbnail)
+    from being deleted when only one item is removed.
+    """
+    if not relative_url or not relative_url.startswith("/uploads/"):
+        return 0
+    total = 0
+    try:
+        from app.models.video import Video
+        from app.models.gallery import GalleryItem
+        from app.models.document import Document
+        from app.models.project import Project
+        from app.models.profile import PortfolioProfile
+        from app.models.settings import SiteSetting
+
+        total += Video.query.filter(
+            (Video.thumbnail_url == relative_url) | (Video.video_url == relative_url)
+        ).count()
+        total += GalleryItem.query.filter(GalleryItem.image_url == relative_url).count()
+        total += Document.query.filter(Document.file_path == relative_url).count()
+        total += Project.query.filter(
+            (Project.thumbnail_url == relative_url) | (Project.banner_url == relative_url)
+        ).count()
+        total += PortfolioProfile.query.filter(PortfolioProfile.avatar_url == relative_url).count()
+        total += SiteSetting.query.filter(
+            (SiteSetting.avatar_url == relative_url) | (SiteSetting.resume_url == relative_url)
+        ).count()
+    except Exception:
+        pass
+    return total
+
+def delete_file(relative_url: str, check_references: bool = True) -> bool:
     """Deletes a file given its relative URL e.g. /uploads/projects/xyz.png"""
     if not relative_url or not relative_url.startswith("/uploads/"):
         return False
     
+    if check_references:
+        # If any record in DB still references this file, do not delete from disk
+        if count_file_references(relative_url) > 0:
+            return False
+
     clean_path = relative_url.replace("/uploads/", "")
     full_path = os.path.join(current_app.config["UPLOAD_FOLDER"], clean_path)
     if os.path.exists(full_path):

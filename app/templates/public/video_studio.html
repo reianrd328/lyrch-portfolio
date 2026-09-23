@@ -75,9 +75,9 @@
                         <!-- Thumbnail & Play Overlay -->
                         <div class="video-preview-wrapper" style="height: 190px; border-radius: 8px; overflow: hidden; cursor: pointer; position: relative;" onclick="openVideoPlayerModal({{ v.id }})">
                             {% if v.thumbnail_url %}
-                                <img src="{{ v.thumbnail_url }}" alt="{{ v.title }}" class="video-thumb-img" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}';">
+                                <img src="{{ v.thumbnail_url }}" alt="{{ v.title }}" class="video-thumb-img" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/branding/ai_video_studio_album.jpg') }}';">
                             {% else %}
-                                <img src="{{ url_for('static', filename='images/projects/kungfu_thumb.jpg') }}" alt="{{ v.title }}" class="video-thumb-img" style="width: 100%; height: 100%; object-fit: cover;">
+                                <img src="{{ url_for('static', filename='images/branding/ai_video_studio_album.jpg') }}" alt="{{ v.title }}" class="video-thumb-img" style="width: 100%; height: 100%; object-fit: cover;">
                             {% endif %}
 
                             <div class="video-play-overlay">
@@ -428,7 +428,7 @@ function openVideoPlayerModal(videoId) {
         }
         screen.innerHTML = `<iframe src="${embedUrl}" style="width: 100%; height: 100%; border: none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
     } else {
-        const thumb = v.thumbnail_url || '/static/images/projects/kungfu_thumb.jpg';
+        const thumb = v.thumbnail_url || '/static/images/branding/ai_video_studio_album.jpg';
         screen.innerHTML = `
             <div style="position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
                 <img src="${thumb}" alt="${v.title}" style="width: 100%; height: 100%; object-fit: cover;">
@@ -473,7 +473,7 @@ function openVideoPlayerModal(videoId) {
         listContainer.innerHTML = '';
         currentAlbumSiblings.forEach((sib, idx) => {
             const isPlaying = (sib.id === v.id);
-            const thumb = sib.thumbnail_url || '/static/images/projects/kungfu_thumb.jpg';
+            const thumb = sib.thumbnail_url || '/static/images/branding/ai_video_studio_album.jpg';
             const itemDiv = document.createElement('div');
             itemDiv.className = 'playlist-row-item' + (isPlaying ? ' active-item' : '');
             itemDiv.onclick = () => openVideoPlayerModal(sib.id);
